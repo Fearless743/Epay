@@ -725,8 +725,8 @@ class alipay_plugin
 			//资金授权订单号
 			$auth_no = $_POST['auth_no'];
 
-			$buyer_id = $result['payer_user_id'];
-			
+			$buyer_id = null;
+
 			if($out_trade_no == TRADE_NO){
 				$bizContent = [
 					'out_trade_no' => TRADE_NO,
@@ -742,6 +742,7 @@ class alipay_plugin
 				try{
 					$aop = new \Alipay\AlipayTradeService($alipay_config);
 					$result = $aop->scanPay($bizContent);
+					$buyer_id = $result['payer_user_id'];
 				}catch(Exception $e){
 					\lib\Payment::updateOrder(TRADE_NO, $auth_no, $buyer_id, 4);
 					return ['type'=>'html','data'=>'success'];

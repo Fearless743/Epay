@@ -23,6 +23,7 @@ class MsgNotice
         }else{
             $userrow = $DB->find('user', 'phone,email,wx_uid,codename,msgconfig,voice_order,voice_devid,print_order,print_config', ['uid'=>$uid]);
             $userrow['msgconfig'] = unserialize($userrow['msgconfig']);
+        if(!is_array($userrow['msgconfig'])) $userrow['msgconfig'] = [];
 
             if($conf['voicenotice'] == 1 && $scene == 'order' && $userrow['voice_order'] == 1 && $param['name']!='付款码收款'){
                 self::send_voice($userrow['voice_devid'], $param['type'], $param['money']);

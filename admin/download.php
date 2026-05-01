@@ -433,6 +433,7 @@ if($sheet == 'mybank'){
 	if(!$wxinfo)sysmsg("支付通道绑定的微信公众号不存在");
 
 	$i=0;
+	$batch = date("Ymd").rand(111,999);
 	$table="商家明细单号（必填）,收款用户openid（必填）,收款用户姓名（选填）,收款用户身份证（选填）,转账金额（必填，单位：元）,转账备注（必填）\r\n";
 	$allmoney = 0;
 	while($row = $rs->fetch())

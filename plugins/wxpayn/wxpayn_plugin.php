@@ -689,8 +689,6 @@ class wxpayn_plugin
 		}
 		$batch_id = $result['batch_id'];
 
-		return ['code'=>0, 'status'=>0, 'orderid'=>$bizParam['out_biz_no'], 'paydate'=>date('Y-m-d H:i:s')];
-
 		usleep(500000);
 
 		try{

@@ -465,7 +465,7 @@ function getSubstr($str, $leftStr, $rightStr)
 	$left = strpos($str, $leftStr);
 	$start = $left+strlen($leftStr);
 	$right = strpos($str, $rightStr, $start);
-	if($left < 0) return '';
+	if($left === false) return '';
 	if($right>0){
 		return substr($str, $start, $right-$start);
 	}else{

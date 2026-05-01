@@ -19,6 +19,8 @@ img.logo{width:14px;height:14px;margin:0 5px 0 3px;}
           <tbody>
 <?php
 $pagesize=15;
+$numrows=$DB->getColumn("SELECT count(*) from pre_batch");
+$link = '';
 $pages=ceil($numrows/$pagesize);
 $page=isset($_GET['page'])?intval($_GET['page']):1;
 $offset=$pagesize*($page - 1);

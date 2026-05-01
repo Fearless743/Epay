@@ -39,10 +39,6 @@ $siteurl = (is_https() ? 'https://' : 'http://').$_SERVER['HTTP_HOST'].'/';
 include_once(SYSTEM_ROOT."autoloader.php");
 Autoloader::register();
 
-if($is_defend){
-	include_once(SYSTEM_ROOT."txprotect.php");
-}
-
 require ROOT.'config.php';
 define('DBQZ', $dbconfig['dbqz']);
 
@@ -79,6 +75,10 @@ if ($conf['version'] < DB_VERSION) {
 
 include_once(SYSTEM_ROOT."functions.php");
 include_once(SYSTEM_ROOT."member.php");
+
+if($is_defend){
+	include_once(SYSTEM_ROOT."txprotect.php");
+}
 
 require_once SYSTEM_ROOT."vendor/autoload.php";
 

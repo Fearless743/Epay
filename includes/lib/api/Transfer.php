@@ -105,7 +105,7 @@ class Transfer
             $order = $DB->find('transfer', 'biz_no', ['biz_no'=>$biz_no, 'uid'=>$pid]);
         }elseif(!empty($queryArr['out_biz_no'])){
             $out_biz_no = trim($queryArr['out_biz_no']);
-            $order = $DB->find('transfer', 'biz_no', ['biz_no'=>$out_biz_no, 'uid'=>$pid]);
+    	    $order = $DB->find('transfer', 'biz_no', ['out_biz_no'=>$out_biz_no, 'uid'=>$pid]);
         }else{
             throw new Exception('转账交易号不能为空');
         }

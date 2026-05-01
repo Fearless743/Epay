@@ -350,7 +350,7 @@ class helipay_plugin
 		$params['appId'] = 'wxd11af679e86cdf65';
 		$params['successToUrl'] = $siteurl . 'pay/return/' . TRADE_NO . '/';
 		if($order['profits'] > 0){
-			self::handleProfits($param);
+			self::handleProfits($params);
 		}
 		
 		return \lib\Payment::lockPayData(TRADE_NO, function() use($params) {
