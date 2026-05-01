@@ -38,9 +38,9 @@ case 'transferList':
 	}
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
 		if($_POST['column']=='username'||$_POST['column']=='desc'){
-			$sql.=" AND `{$_POST['column']}` LIKE '%{$_POST['value']}%'";
+			$sql.=" AND `{$_POST['column']}` LIKE '%".daddslashes($_POST['value'])."%'";
 		}else{
-			$sql.=" AND `{$_POST['column']}`='{$_POST['value']}'";
+			$sql.=" AND `{$_POST['column']}`='".daddslashes($_POST['value'])."'";
 		}
 	}
 	$offset = intval($_POST['offset']);
@@ -91,9 +91,9 @@ case 'statistics':
 	}
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
 		if($_POST['column']=='username'||$_POST['column']=='desc'){
-			$sql.=" AND `{$_POST['column']}` LIKE '%{$_POST['value']}%'";
+			$sql.=" AND `{$_POST['column']}` LIKE '%".daddslashes($_POST['value'])."%'";
 		}else{
-			$sql.=" AND `{$_POST['column']}`='{$_POST['value']}'";
+			$sql.=" AND `{$_POST['column']}`='".daddslashes($_POST['value'])."'";
 		}
 	}
 	$totalMoney = $DB->getColumn("SELECT SUM(money) FROM pre_transfer WHERE{$sql} AND status<>2");
@@ -240,7 +240,7 @@ case 'stat':
 	$sql="`addtime`>='{$startday} 00:00:00' AND `addtime`<='{$endday} 23:59:59' AND status=1";
 	if(isset($_POST['type']) && !empty($_POST['type'])) {
 		$type = trim($_POST['type']);
-		$sql.=" AND `type`='$type'";
+		$sql.=" AND `type`='".daddslashes($type)."'";
 	}
 	$list = $DB->getAll("SELECT account,username,COUNT(*) AS order_count,SUM(money) AS money
 		FROM pre_transfer

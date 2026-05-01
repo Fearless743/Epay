@@ -7,7 +7,7 @@ include("../includes/common.php");
 
 if(isset($_GET['logout'])){
 	if(!checkRefererHost())exit();
-	setcookie("user_token", "", time() - 2592000);
+	setcookie("user_token", "", time() - 2592000, null, null, null, true);
 	@header('Content-Type: text/html; charset=UTF-8');
 	exit("<script language='javascript'>alert('您已成功注销本次登录！');window.location.href='./login.php';</script>");
 }elseif($islogin2==1){
@@ -44,10 +44,10 @@ $_SESSION['csrf_token'] = $csrf_token;
 </div>
 <?php if(!$conf['close_keylogin']){?>
 <ul class="nav nav-tabs">
-    <li style="width: 50%;" align="center" class="<?php echo $_GET['m']!='key'?'active':null;?>">
+    <li style="width: 50%;" align="center" class="<?php echo @$_GET['m']!='key'?'active':null;?>">
   <a href="./login.php">密码登录(New)</a>
 </li>
-    <li style="width: 50%;" align="center" class="<?php echo $_GET['m']=='key'?'active':null;?>">
+    <li style="width: 50%;" align="center" class="<?php echo @$_GET['m']=='key'?'active':null;?>">
   <a href="./login.php?m=key">密钥登录</a>
 </li>
 </ul><?php }?>

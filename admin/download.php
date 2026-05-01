@@ -14,6 +14,8 @@ function display_type($type){
 		return 'QQ钱包';
 	elseif($type==4)
 		return '银行卡';
+	elseif($type==5)
+		return 'USDT';
 	else
 		return 1;
 }
@@ -37,7 +39,7 @@ function text_encoding($text){
 switch($act){
 case 'settle':
 $type = isset($_GET['type'])?trim($_GET['type']):'common';
-$batch=$_GET['batch'];
+$batch=daddslashes($_GET['batch']);
 $remark = text_encoding($conf['transfer_desc']);
 
 if($type == 'mybank'){

@@ -15,6 +15,8 @@ function display_type($type){
 		return 'QQ钱包';
 	elseif($type==4)
 		return '银行卡';
+	elseif($type==5)
+		return 'USDT';
 	else
 		return 1;
 }
@@ -28,6 +30,8 @@ function convert_type($type){
 		return 'qqpay';
 	elseif($type==4)
 		return 'bank';
+	elseif($type==5)
+		return 'usdt';
 	else
 		return null;
 }
@@ -109,6 +113,7 @@ if(isset($_GET['act']) && $_GET['act']=='do'){
 				}else{
 					$message='转账失败 '.$result['msg'];
 					$DB->update('settle', ['status'=>3, 'result'=>$result["msg"], 'transfer_status'=>2, 'transfer_result'=>$message], ['id'=>$settleid]);
+					changeUserMoney($uid, $money, true, '提现失败退回');
 					\lib\MsgNotice::send('apply', 0, ['uid'=>$uid, 'money'=>$money, 'realmoney'=>$realmoney, 'type'=>display_type($userrow['settle_id']), 'account'=>$userrow['account'], 'username'=>$userrow['username']]);
 					exit("<script language='javascript'>alert('申请提现成功，但转账失败，请联系客服处理！');window.location.href='./settle.php';</script>");
 				}

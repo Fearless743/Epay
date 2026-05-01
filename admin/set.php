@@ -939,6 +939,10 @@ $("select[name='pay_verify']").change(function(){
 	  <div class="col-sm-9"><select class="form-control" name="settle_bank" default="<?php echo $conf['settle_bank']?>"><option value="0">关闭</option><option value="1">开启</option></select></div>
 	</div><br/>
 	<div class="form-group">
+	  <label class="col-sm-3 control-label">USDT结算开关</label>
+	  <div class="col-sm-9"><select class="form-control" name="settle_usdt" default="<?php echo $conf['settle_usdt']?>"><option value="0">关闭</option><option value="1">开启</option></select></div>
+	</div><br/>
+	<div class="form-group">
 	  <label class="col-sm-3 control-label">商户满多少金额自动转账</label>
 	  <div class="col-sm-9"><input type="text" name="auto_settle_money" value="<?php echo $conf['auto_settle_money']; ?>" class="form-control" placeholder="留空为不自动转账"/><font color="green">如开启，需要先开启转账付款功能，填写后，计划任务将出现一个新的url，只支持支付宝结算方式</font></div>
 	</div><br/>
@@ -990,6 +994,7 @@ $("select[name='settle_transfer']").change(function(){
 	$wxpay_channel = $DB->getAll("SELECT id,name,plugin FROM pre_channel WHERE plugin IN (SELECT name FROM pre_plugin WHERE transtypes LIKE '%wxpay%')");
 	$qqpay_channel = $DB->getAll("SELECT id,name,plugin FROM pre_channel WHERE plugin IN (SELECT name FROM pre_plugin WHERE transtypes LIKE '%qqpay%')");
 	$bank_channel = $DB->getAll("SELECT id,name,plugin FROM pre_channel WHERE plugin IN (SELECT name FROM pre_plugin WHERE transtypes LIKE '%bank%')");
+	$usdt_channel = $DB->getAll("SELECT id,name,plugin FROM pre_channel WHERE plugin IN (SELECT name FROM pre_plugin WHERE transtypes LIKE '%usdt%')");
 ?>
 <div class="panel panel-primary">
 <div class="panel-heading"><h3 class="panel-title">转账付款配置</h3></div>
@@ -1060,6 +1065,10 @@ $("select[name='settle_transfer']").change(function(){
 	<div class="form-group">
 	  <label class="col-sm-3 control-label">QQ钱包转账接口通道</label>
 	  <div class="col-sm-9"><select class="form-control" name="transfer_qqpay" default="<?php echo $conf['transfer_qqpay']?>"><option value="0">关闭</option><?php foreach($qqpay_channel as $channel){echo '<option value="'.$channel['id'].'" plugin="'.$channel['plugin'].'">'.$channel['name'].'</option>';} ?><option value="-1">手动转账</option></select><font color="green">请先添加支付插件为qqpay的支付通道。需申请“企业付款”产品。</font></div>
+	</div><br/>
+	<div class="form-group">
+	  <label class="col-sm-3 control-label">USDT转账接口通道</label>
+	  <div class="col-sm-9"><select class="form-control" name="transfer_usdt" default="<?php echo $conf['transfer_usdt']?>"><option value="0">关闭</option><?php foreach($usdt_channel as $channel){echo '<option value="'.$channel['id'].'" plugin="'.$channel['plugin'].'">'.$channel['name'].'</option>';} ?><option value="-1">手动转账</option></select><font color="green">请先添加支付插件支持usdt转账的支付通道。</font></div>
 	</div><br/>
 	<div class="form-group">
 	  <label class="col-sm-3 control-label">银行卡转账接口通道</label>

@@ -21,7 +21,7 @@ if($islogin==1){}else exit("<script language='javascript'>window.location.href='
     <input type="text" class="form-control" name="uid" style="width: 100px;" placeholder="商户号" value="">
   </div>
   <div class="form-group">
-	<select name="type" class="form-control"><option value="0">所有结算方式</option><option value="1">支付宝</option><option value="2">微信</option><option value="3">QQ钱包</option><option value="4">银行卡</option></select>
+	<select name="type" class="form-control"><option value="0">所有结算方式</option><option value="1">支付宝</option><option value="2">微信</option><option value="3">QQ钱包</option><option value="4">银行卡</option><option value="5">USDT</option></select>
   </div>
   <div class="form-group">
 	<select name="dstatus" class="form-control"><option value="-1">全部状态</option><option value="0">待结算</option><option value="1">已完成</option><option value="2">正在结算</option><option value="3">结算失败</option></select>
@@ -90,7 +90,7 @@ $(document).ready(function(){
 					}else if(value == '4'){
 						typename='<img src="/assets/icon/bank.ico" width="16" onerror="this.style.display=\'none\'">银行卡';
 					}else if(value == '5'){
-						typename='支付机构';
+						typename='<img src="/assets/icon/usdt.ico" width="16" onerror="this.style.display=\'none\'">USDT';
 					}
 					if(row.auto!=1) typename+='<small>[手动]</small>'
 					return typename;
@@ -101,7 +101,7 @@ $(document).ready(function(){
 				title: '结算账号/姓名',
 				formatter: function(value, row, index) {
 					if(row.type == '5'){
-						return value+'&nbsp;'+row.username;
+						return '<span onclick="inputInfo('+row.id+')" title="点击直接修改">'+value+'&nbsp;'+row.username+'</span>';
 					}else{
 						return '<span onclick="inputInfo('+row.id+')" title="点击直接修改">'+value+'&nbsp;'+row.username+'</span>';
 					}

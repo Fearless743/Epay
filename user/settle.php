@@ -70,7 +70,7 @@ $(document).ready(function(){
 					}else if(value == '4'){
 						typename='银行卡';
 					}else if(value == '5'){
-						typename='支付机构';
+						typename='USDT';
 					}
 					if(row.auto!=1) typename+='<small>[手动]</small>'
 					return typename;

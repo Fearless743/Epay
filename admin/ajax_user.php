@@ -19,7 +19,7 @@ case 'userList':
 	$sql=" 1=1";
 	if(isset($_POST['dstatus']) && !empty($_POST['dstatus'])) {
 		$dstatus = explode('_',$_POST['dstatus']);
-		$sql.=" AND `{$dstatus[0]}`='{$dstatus[1]}'";
+		$sql.=" AND `{$dstatus[0]}`='".daddslashes($dstatus[1])."'";
 	}
 	if(isset($_POST['gid']) && $_POST['gid']!=='') {
 		$gid = intval($_POST['gid']);
@@ -30,7 +30,7 @@ case 'userList':
 		$sql.=" AND `upid`='$upid'";
 	}
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
-		$sql.=" AND `{$_POST['column']}`='{$_POST['value']}'";
+		$sql.=" AND `{$_POST['column']}`='".daddslashes($_POST['value'])."'";
 	}
 	if(isset($_POST['order_days']) && !empty($_POST['order_days'])) {
 		$order_days = intval($_POST['order_days']);
@@ -38,7 +38,17 @@ case 'userList':
 	}
 	$order = "uid desc";
 	if(isset($_POST['order']) && !empty($_POST['order'])) {
-		$order=str_replace('_', ' ', $_POST['order']);
+		$allowedOrders = ['uid', 'money', 'deposit', 'addtime', 'lasttime', 'status', 'gid', 'pay', 'settle', 'cert'];
+		$orderParts = explode(' ', trim(str_replace('_', ' ', $_POST['order'])));
+		$orderColumn = $orderParts[0];
+		$orderDir = isset($orderParts[1]) ? strtoupper($orderParts[1]) : 'DESC';
+		if(!in_array($orderColumn, $allowedOrders)) {
+			$order = 'uid desc';
+		} elseif($orderDir !== 'ASC' && $orderDir !== 'DESC') {
+			$order = $orderColumn . ' desc';
+		} else {
+			$order = $orderColumn . ' ' . $orderDir;
+		}
 	}
 	$offset = intval($_POST['offset']);
 	$limit = intval($_POST['limit']);
@@ -76,7 +86,7 @@ case 'recordList':
 		}
 	}
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
-		$sql.=" AND `{$_POST['column']}`='{$_POST['value']}'";
+		$sql.=" AND `{$_POST['column']}`='".daddslashes($_POST['value'])."'";
 	}
 	$offset = intval($_POST['offset']);
 	$limit = intval($_POST['limit']);
@@ -103,7 +113,7 @@ case 'record_stats':
 		}
 	}
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
-		$sql.=" AND `{$_POST['column']}`='{$_POST['value']}'";
+		$sql.=" AND `{$_POST['column']}`='".daddslashes($_POST['value'])."'";
 	}
 	$result = $DB->getRow("SELECT 
         SUM(CASE WHEN action = 1 THEN money ELSE 0 END) AS incMoney,
@@ -288,7 +298,7 @@ break;
 case 'logList':
 	$sql=" 1=1";
 	if(isset($_POST['value']) && $_POST['value']!=='') {
-		$sql.=" AND `{$_POST['column']}`='{$_POST['value']}'";
+		$sql.=" AND `{$_POST['column']}`='".daddslashes($_POST['value'])."'";
 	}
 	$offset = intval($_POST['offset']);
 	$limit = intval($_POST['limit']);
@@ -305,7 +315,7 @@ case 'domainList':
 		$sql.=" AND `uid`='$uid'";
 	}
 	if(isset($_POST['kw']) && !empty($_POST['kw'])) {
-		$sql.=" AND `domain`='{$_POST['kw']}'";
+		$sql.=" AND `domain`='".daddslashes($_POST['kw'])."'";
 	}
 	if(isset($_POST['dstatus']) && $_POST['dstatus']>-1) {
 		$dstatus = intval($_POST['dstatus']);
@@ -322,7 +332,7 @@ break;
 case 'blackList':
 	$sql=" 1=1";
 	if(isset($_POST['kw']) && !empty($_POST['kw'])) {
-		$sql.=" AND `content`='{$_POST['kw']}'";
+		$sql.=" AND `content`='".daddslashes($_POST['kw'])."'";
 	}
 	if(isset($_POST['type']) && $_POST['type']>-1) {
 		$type = intval($_POST['type']);
@@ -359,7 +369,7 @@ break;
 case 'saveGroup':
 	if($_POST['action'] == 'add'){
 		$name=trim($_POST['name']);
-		$row=$DB->getRow("select * from pre_group where name='$name' limit 1");
+		$row=$DB->getRow("select * from pre_group where name=:name limit 1", [':name'=>$name]);
 		if($row)
 			exit('{"code":-1,"msg":"用户组名称重复"}');
 		$info=json_encode($_POST['info']);

@@ -56,6 +56,8 @@ if($app=='alipay'){
 	$default_channel = $conf['transfer_qqpay'];
 }elseif($app=='bank'){
 	$default_channel = $conf['transfer_bank'];
+}elseif($app=='usdt'){
+	$default_channel = $conf['transfer_usdt'];
 }
 $copy = [];
 if(isset($_GET['account']) && isset($_GET['username'])){

@@ -22,7 +22,7 @@ include './head.php';
 
 if(!$conf['user_transfer']) showmsg('未开启代付功能');
 
-if(!$conf['transfer_rate'])$conf['transfer_rate'] = $conf['settle_rate'];
+if(!isset($conf['transfer_rate']) || $conf['transfer_rate'] === '') $conf['transfer_rate'] = $conf['settle_rate'];
 
 $app = isset($_GET['app'])?$_GET['app']:'alipay';
 
@@ -42,6 +42,7 @@ if(isset($_POST['submit'])){
 	if($desc && mb_strlen($desc)>32)showmsg('转账备注最多32个字',3);
 	if(!is_numeric($money) || !preg_match('/^[0-9.]+$/', $money) || $money<=0)showmsg('转账金额输入不规范',3);
 	$need_money = round($money + $money*$conf['transfer_rate']/100,2);
+	if($need_money > $enable_money)showmsg('余额不足，可用余额为'.$enable_money.'元',3);
 	if($userrow['settle']==0)showmsg('您的商户出现异常，无法使用代付功能',3);
 
 	$result = \lib\Transfer::add($uid, $app, $out_biz_no, $payee_account, $payee_real_name, $money, $title, $desc);
@@ -92,6 +93,7 @@ if(isset($_GET['copy'])){
 				<?php if($conf['transfer_wxpay']>0 || $conf['transfer_wxpay']==-1){?><li class="<?php echo $app=='wxpay'?'active':null;?>"><a href="?app=wxpay">微信</a></li><?php }?>
 				<?php if($conf['transfer_qqpay']>0 || $conf['transfer_qqpay']==-1){?><li class="<?php echo $app=='qqpay'?'active':null;?>"><a href="?app=qqpay">QQ钱包</a></li><?php }?>
 				<?php if($conf['transfer_bank']>0 || $conf['transfer_bank']==-1){?><li class="<?php echo $app=='bank'?'active':null;?>"><a href="?app=bank">银行卡</a></li><?php }?>
+				<?php if($conf['transfer_usdt']>0 || $conf['transfer_usdt']==-1){?><li class="<?php echo $app=='usdt'?'active':null;?>"><a href="?app=usdt">USDT</a></li><?php }?>
 			</ul>
 
 			<div class="tab-pane active" id="alipay">
@@ -144,6 +146,15 @@ if(isset($_GET['copy'])){
 			<div class="form-group">
 				<div class="input-group"><div class="input-group-addon">姓名</div>
 				<input type="text" name="payee_real_name" value="<?php echo $copy['username']?>" class="form-control" placeholder="收款方银行账户名称"/>
+			</div></div>
+<?php }elseif($app=='usdt'){?>
+			<div class="form-group">
+				<div class="input-group"><div class="input-group-addon">USDT地址</div>
+				<input type="text" name="payee_account" value="<?php echo $copy['account']?>" class="form-control" required placeholder="收款方USDT地址"/>
+			</div></div>
+			<div class="form-group">
+				<div class="input-group"><div class="input-group-addon">姓名</div>
+				<input type="text" name="payee_real_name" value="<?php echo $copy['username']?>" class="form-control" placeholder="不填写则不校验真实姓名"/>
 			</div></div>
 <?php }?>
 			<div class="form-group">

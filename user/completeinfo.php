@@ -34,6 +34,7 @@ include './head.php';
 						<?php }if($conf['settle_wxpay']){?><option value="2" input="<?php echo $conf['transfer_wxpay']?'微信OpenId':'微信号';?>">微信结算</option>
 						<?php }if($conf['settle_qqpay']){?><option value="3" input="ＱＱ号码">QQ钱包结算</option>
 						<?php }if($conf['settle_bank']){?><option value="4" input="银行卡号">银行卡结算</option>
+						<?php }if($conf['settle_usdt']){?><option value="5" input="USDT地址">USDT结算</option>
 						<?php }?></select>
 					</div>
 				</div>

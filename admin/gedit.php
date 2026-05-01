@@ -15,6 +15,7 @@ $alipay_channel = $DB->getAll("SELECT id,name,plugin FROM pre_channel WHERE plug
 $wxpay_channel = $DB->getAll("SELECT id,name,plugin FROM pre_channel WHERE plugin IN (SELECT name FROM pre_plugin WHERE transtypes LIKE '%wxpay%')");
 $qqpay_channel = $DB->getAll("SELECT id,name,plugin FROM pre_channel WHERE plugin IN (SELECT name FROM pre_plugin WHERE transtypes LIKE '%qqpay%')");
 $bank_channel = $DB->getAll("SELECT id,name,plugin FROM pre_channel WHERE plugin IN (SELECT name FROM pre_plugin WHERE transtypes LIKE '%bank%')");
+	$usdt_channel = $DB->getAll("SELECT id,name,plugin FROM pre_channel WHERE plugin IN (SELECT name FROM pre_plugin WHERE transtypes LIKE '%usdt%')");
 
 $grouprow = [];
 $act = isset($_GET['act'])?daddslashes($_GET['act']):null;
@@ -89,6 +90,7 @@ echo '<tr><td><b>'.$value.'</b><input type="hidden" name="info['.$key.'][type]" 
 					<tr><td><b>微信支付</b></td><td><select name="config[transfer_wxpay]" class="form-control"><option value="">缺省（与系统设置一致）</option><?php foreach($wxpay_channel as $channel){echo '<option value="'.$channel['id'].'" plugin="'.$channel['plugin'].'">'.$channel['name'].'</option>';} ?><option value="-1">手动转账</option></select></td></tr>
 					<tr><td><b>QQ钱包</b></td><td><select name="config[transfer_qqpay]" class="form-control"><option value="">缺省（与系统设置一致）</option><?php foreach($qqpay_channel as $channel){echo '<option value="'.$channel['id'].'" plugin="'.$channel['plugin'].'">'.$channel['name'].'</option>';} ?><option value="-1">手动转账</option></select></td></tr>
 					<tr><td><b>银行卡</b></td><td><select name="config[transfer_bank]" class="form-control"><option value="">缺省（与系统设置一致）</option><?php foreach($bank_channel as $channel){echo '<option value="'.$channel['id'].'" plugin="'.$channel['plugin'].'">'.$channel['name'].'</option>';} ?><option value="-1">手动转账</option></select></td></tr>
+						<tr><td><b>USDT</b></td><td><select name="config[transfer_usdt]" class="form-control"><option value="">缺省（与系统设置一致）</option><?php foreach($usdt_channel as $channel){echo '<option value="'.$channel['id'].'" plugin="'.$channel['plugin'].'">'.$channel['name'].'</option>';} ?><option value="-1">手动转账</option></select></td></tr>
 					</tbody>
 				</table>
 			</div>
@@ -165,6 +167,14 @@ echo '<tr><td><b>'.$value.'</b><input type="hidden" name="info['.$key.'][type]" 
 			<label class="col-sm-4 control-label">银行卡结算</label>
 			<div class="col-sm-8">
 				<select name="config[settle_bank]" class="form-control">
+					<option value="">缺省（与系统设置一致）</option><option value="0">关闭</option><option value="1">开启</option>
+				</select>
+			</div>
+		</div>
+		<div class="form-group">
+			<label class="col-sm-4 control-label">USDT结算</label>
+			<div class="col-sm-8">
+				<select name="config[settle_usdt]" class="form-control">
 					<option value="">缺省（与系统设置一致）</option><option value="0">关闭</option><option value="1">开启</option>
 				</select>
 			</div>

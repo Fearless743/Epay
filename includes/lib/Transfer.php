@@ -17,7 +17,7 @@ class Transfer
 	];
 
     //通用转账
-    //type alipay:支付宝,wxpay:微信,qqpay:QQ钱包,bank:银行卡
+    //type alipay:支付宝,wxpay:微信,qqpay:QQ钱包,bank:银行卡,usdt:USDT
     public static function submit($type, $channel, $out_biz_no, $payee_account, $payee_real_name, $money, $title = null, $desc = null){
         global $conf;
 
@@ -59,6 +59,8 @@ class Transfer
                 $channelid = $conf['transfer_qqpay'];
             }elseif($type=='bank'){
                 $channelid = $conf['transfer_bank'];
+            }elseif($type=='usdt'){
+                $channelid = $conf['transfer_usdt'];
             }else{
                 return ['code'=>-1, 'msg'=>'type参数错误'];
             }
@@ -293,6 +295,8 @@ class Transfer
                 $channelid = $conf['transfer_alipay'];
             }elseif($type=='wxpay'){
                 $channelid = $conf['transfer_wxpay'];
+            }elseif($type=='usdt'){
+                $channelid = $conf['transfer_usdt'];
             }else{
                 return ['code'=>-1, 'msg'=>'type参数错误'];
             }
@@ -338,7 +342,7 @@ class Transfer
             changeUserMoney2($uid, $userrow['money'], $need_money, false, '代付', $biz_no);
             $result['cost_money'] = $need_money;
         }
-        $typename = $type == 'alipay' ? '支付宝' : ($type == 'wxpay' ? '微信' : '未知');
+        $typename = $type == 'alipay' ? '支付宝' : ($type == 'wxpay' ? '微信' : ($type == 'usdt' ? 'USDT' : '未知'));
         $result['msg']='红包创建成功！请在'.$typename.'打开 '.$jumpurl.' 确认收款。';
         $DB->commit();
         return $result;

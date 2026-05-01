@@ -16,6 +16,9 @@ if($type == 'alipay'){
 }elseif($type == 'bank'){
 	$typename = '银行卡';
 	$default_channel = $conf['transfer_bank'];
+}elseif($type == 'usdt'){
+	$typename = 'USDT';
+	$default_channel = $conf['transfer_usdt'];
 }else{
 	sysmsg('参数错误');
 }

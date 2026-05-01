@@ -136,10 +136,11 @@ class allinpay_plugin
 			if($psreceiver){
 				$asinfo = '';
 				foreach($psreceiver['info'] as $receiver) {
-					$psmoney = round(floor($order['realmoney'] * $receiver['rate']));
+					$psmoney = round(floor($order['realmoney'] * $receiver['rate']) / 100, 2);
 					$asinfo .= $receiver['account'].':01:'.$psmoney.';';
 				}
 				$asinfo = rtrim($asinfo, ';');
+				$params['asinfo'] = $asinfo;
 			}
 		}
 
@@ -174,10 +175,11 @@ class allinpay_plugin
 			if($psreceiver){
 				$asinfo = '';
 				foreach($psreceiver['info'] as $receiver) {
-					$psmoney = round(floor($order['realmoney'] * $receiver['rate']));
+					$psmoney = round(floor($order['realmoney'] * $receiver['rate']) / 100, 2);
 					$asinfo .= $receiver['account'].':01:'.$psmoney.';';
 				}
 				$asinfo = rtrim($asinfo, ';');
+				$params['asinfo'] = $asinfo;
 			}
 		}
 
@@ -212,10 +214,11 @@ class allinpay_plugin
 			if($psreceiver){
 				$asinfo = '';
 				foreach($psreceiver['info'] as $receiver) {
-					$psmoney = round(floor($order['realmoney'] * $receiver['rate']));
+					$psmoney = round(floor($order['realmoney'] * $receiver['rate']) / 100, 2);
 					$asinfo .= $receiver['account'].':01:'.$psmoney.';';
 				}
 				$asinfo = rtrim($asinfo, ';');
+				$params['asinfo'] = $asinfo;
 			}
 		}
 
