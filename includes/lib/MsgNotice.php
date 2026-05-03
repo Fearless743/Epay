@@ -222,6 +222,7 @@ class MsgNotice
             $urlParts = parse_url($url);
             parse_str($urlParts['query'] ?? '', $queryParams);
             $chat_id = $queryParams['chat_id'] ?? '';
+            $content = preg_replace('/\*\*(.+?)\*\*/', '<b>$1</b>', $content);
             $content = '<b>' . $title . '</b>' . "\n" . $content;
             $post = [
                 'chat_id' => $chat_id,
