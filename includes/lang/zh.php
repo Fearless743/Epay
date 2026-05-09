@@ -255,7 +255,7 @@ return [
     'settle_status_done' => '已完成',
     'settle_status_processing' => '正在结算',
     'settle_status_failed' => '结算失败',
-    'settle_type_alipay' => '支付宝',
+    'settle_type_alipay' => 'USDT',
     'settle_type_wxpay' => '微信',
     'settle_type_qqpay' => 'QQ钱包',
     'settle_type_bank' => '银行卡',
@@ -306,7 +306,7 @@ return [
     // 修改资料
     'settle_account_setting' => '收款账号设置：',
     'settle_type' => '结算方式',
-    'alipay_settle' => '支付宝结算',
+    'alipay_settle' => 'USDT结算',
     'wxpay_settle' => '微信结算',
     'qqpay_settle' => 'QQ钱包结算',
     'bank_settle' => '银行卡结算',
@@ -506,4 +506,26 @@ return [
 
     // 代付管理
     'transfer_page' => '代付管理',
+
+    // 资金明细页
+    'fund_record_page' => '资金明细',
+    'transaction_type' => '交易类型',
+    'transaction_amount' => '交易金额',
+    'balance_after' => '交易后余额',
+    'transaction_time' => '交易时间',
+    'transaction_remark' => '备注',
+
+    // 代付页面
+    'add_transfer' => '添加代付',
+    'transfer_list' => '代付记录',
+    'transfer_account' => '收款账号',
+    'transfer_amount' => '代付金额',
+    'transfer_name' => '收款人姓名',
+    'transfer_status_label' => '状态',
+
+    // 充值页
+    'recharge_page' => '余额充值',
+    'recharge_amount' => '充值金额',
+    'recharge_method' => '充值方式',
+    'btn_recharge' => '立即充值',
 ];

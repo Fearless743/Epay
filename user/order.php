@@ -53,28 +53,28 @@ unset($rs);
 			  <option value="4"><?php echo __('product_amount')?></option>
 			  <option value="5"><?php echo __('actual_pay')?></option>
 			  <option value="6"><?php echo __('website_domain')?></option>
-			  <option value="7">支付IP</option>
-			  <option value="8">支付账号</option>
+			<option value="7"><?php echo __('pay_ip')?></option>
+			  <option value="8"><?php echo __('pay_account')?></option>
 			</select>
 		  </div>
 			<div class="form-group" id="searchword">
-			  <input type="text" class="form-control" name="kw" placeholder="搜索内容" style="min-width: 200px;">
+			  <input type="text" class="form-control" name="kw" placeholder="<?php echo __('search_content')?>" style="min-width: 200px;">
 			</div>
 			<div class="input-group input-daterange">
-				<input type="text" id="starttime" name="starttime" class="form-control dates" placeholder="开始日期" autocomplete="off" title="留空则不限时间范围">
+				<input type="text" id="starttime" name="starttime" class="form-control dates" placeholder="<?php echo __('start_date')?>" autocomplete="off" title="留空则不限时间范围">
 				<span class="input-group-addon" onclick="$('#starttime').val('');$('#endtime').val('');" title="清除"><i class="fa fa-chevron-right"></i></span>
-				<input type="text" id="endtime" name="endtime" class="form-control dates" placeholder="结束日期" autocomplete="off" title="留空则不限时间范围">
+				<input type="text" id="endtime" name="endtime" class="form-control dates" placeholder="<?php echo __('end_date')?>" autocomplete="off" title="留空则不限时间范围">
 			</div>
 			<div class="form-group">
 			  <select name="paytype" class="form-control"><?php echo $type_select?></select>
 		    </div>
 			<div class="form-group">
-				<select name="dstatus" class="form-control"><option value="-1">全部状态</option><option value="0">状态未支付</option><option value="1">状态已支付</option><option value="2">状态已退款</option><option value="3">状态已冻结</option></select>
+				<select name="dstatus" class="form-control"><option value="-1"><?php echo __('all_status')?></option><option value="0"><?php echo __('status_unpaid')?></option><option value="1"><?php echo __('status_paid')?></option><option value="2"><?php echo __('status_refunded')?></option><option value="3"><?php echo __('status_frozen')?></option></select>
 			</div>
-			<button class="btn btn-primary" type="submit"><i class="fa fa-search"></i> 搜索</button>
-			<a href="javascript:searchClear()" class="btn btn-default"><i class="fa fa-refresh"></i> 重置</a>
-			<button type="button" onclick="statistics()" class="btn btn-default">&nbsp;统计&nbsp;</button>
-			<button type="button" onclick="exportOrder()" class="btn btn-default">&nbsp;导出&nbsp;</button>
+			<button class="btn btn-primary" type="submit"><i class="fa fa-search"></i> <?php echo __('search')?></button>
+			<a href="javascript:searchClear()" class="btn btn-default"><i class="fa fa-refresh"></i> <?php echo __('reset')?></a>
+			<button type="button" onclick="statistics()" class="btn btn-default">&nbsp;<?php echo __('statistics')?>&nbsp;</button>
+			<button type="button" onclick="exportOrder()" class="btn btn-default">&nbsp;<?php echo __('export')?>&nbsp;</button>
 		</form>
       <table id="listTable">
 	  </table>
@@ -91,30 +91,30 @@ unset($rs);
 				<button type="button" class="close" data-dismiss="modal"><span
 							aria-hidden="true">&times;</span><span
 							class="sr-only">Close</span></button>
-				<h4 class="modal-title" id="modal-title">订单统计概况</h4>
+				<h4 class="modal-title" id="modal-title"><?php echo __('order_stats_overview')?></h4>
 			</div>
 			<div class="modal-body">
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-primary" data-dismiss="modal">关闭</button>
+				<button type="button" class="btn btn-primary" data-dismiss="modal"><?php echo __('close')?></button>
 			</div>
 		</div>
 	</div>
 </div>
 <template id="statistics">
 <ul class="list-inline" style="margin-bottom: 0;padding-bottom: 10px;border-bottom: 1px solid #dddddd;">
-    <li>订单总金额：<span style="font-weight: 600;">¥ {totalMoney}</span></li>
-    <li>已支付金额：<span style="font-weight: 600;">¥ {successMoney}</span></li>
-    <li>未支付金额：<span style="font-weight: 600;">¥ {unpaidMoney}</span></li>
-    <li>已退款金额：<span style="font-weight: 600;">¥ {refundMoney}</span></li>
-    <li>总收入利润: <span style="font-weight: 600;">¥ {platformProfit}</li>
+    <li><?php echo __('total_money')?>：<span style="font-weight: 600;">¥ {totalMoney}</span></li>
+    <li><?php echo __('paid_money')?>：<span style="font-weight: 600;">¥ {successMoney}</span></li>
+    <li><?php echo __('unpaid_money')?>：<span style="font-weight: 600;">¥ {unpaidMoney}</span></li>
+    <li><?php echo __('refund_money')?>：<span style="font-weight: 600;">¥ {refundMoney}</span></li>
+    <li><?php echo __('total_profit')?>: <span style="font-weight: 600;">¥ {platformProfit}</li>
 </ul>
 <ul class="list-inline" style="padding-top:10px;margin-bottom: 0;">
-    <li>订单总数：<span style="font-weight: 600;">{totalCount}</span></li>
-    <li>已支付订单：<span style="font-weight: 600;">{successCount}</span></li>
-    <li>未支付订单：<span style="font-weight: 600;">{unpaidCount}</span></li>
-    <li>已退款订单：<span style="font-weight: 600;">{refundCount}</span></li>
-	<li>订单成功率：<span style="font-weight: 600;">{successRate}%</span></li>
+    <li><?php echo __('total_count')?>：<span style="font-weight: 600;">{totalCount}</span></li>
+    <li><?php echo __('paid_count')?>：<span style="font-weight: 600;">{successCount}</span></li>
+    <li><?php echo __('unpaid_count')?>：<span style="font-weight: 600;">{unpaidCount}</span></li>
+    <li><?php echo __('refund_count')?>：<span style="font-weight: 600;">{refundCount}</span></li>
+	<li><?php echo __('success_rate_label')?>：<span style="font-weight: 600;">{successRate}%</span></li>
 </ul>
 </template>
 
@@ -142,32 +142,32 @@ $(document).ready(function(){
 		columns: [
 			{
 				field: 'trade_no',
-				title: '系统订单号/商户订单号',
+				title: '<?php echo __('system_trade_no')?>/<?php echo __('merchant_trade_no')?>',
 				formatter: function(value, row, index) {
-					return '<a href="javascript:showOrder(\''+value+'\')" title="点击查看详情">'+value+'</a></b><br/>'+row.out_trade_no;
+					return '<a href="javascript:showOrder(\''+value+'\')" title="<?php echo __('detail')?>">'+value+'</a></b><br/>'+row.out_trade_no;
 				}
 			},
 			{
 				field: 'name',
-				title: '商品名称'
+				title: '<?php echo __('product_name')?>'
 			},
 			{
 				field: 'money',
-				title: '商品金额',
+				title: '<?php echo __('product_amount')?>',
 				formatter: function(value, row, index) {
 					return '¥<b>'+value+'</b>';
 				}
 			},
 			{
 				field: 'realmoney',
-				title: '实际支付',
+				title: '<?php echo __('actual_pay')?>',
 				formatter: function(value, row, index) {
 					return '¥<b>'+value+'</b>';
 				}
 			},
 			{
 				field: 'typename',
-				title: '支付方式',
+				title: '<?php echo __('pay_method')?>',
 				formatter: function(value, row, index) {
 					var html = value ? '<b><img src="/assets/icon/'+value+'.ico" width="16" onerror="this.style.display=\'none\'">'+row.typeshowname+'</b>' : '';
 					if(row.subchannel > 0 && row.submchid > 0){
@@ -178,44 +178,44 @@ $(document).ready(function(){
 			},
 			{
 				field: 'addtime',
-				title: '创建时间/完成时间',
+				title: '<?php echo __('create_time')?>/<?php echo __('finish_time')?>',
 				formatter: function(value, row, index) {
 					return value+'<br/>'+(row.endtime??'&nbsp;');
 				}
 			},
 			{
 				field: 'status',
-				title: '支付状态',
+				title: '<?php echo __('pay_status')?>',
 				formatter: function(value, row, index) {
 					if(value == '1'){
-						text = '<font color=green>已支付</font>';
+						text = '<font color=green><?php echo __('status_paid')?></font>';
 					}else if(value == '2'){
-						text = '<font color=red>已退款</font>';
+						text = '<font color=red><?php echo __('status_refunded')?></font>';
 						if(row.refundmoney > 0 && row.refundmoney < row.realmoney){
-							text += '<br/><font color=red>('+row.refundmoney+'元)</font>';
+							text += '<br/><font color=red>('+row.refundmoney+')</font>';
 						}
 					}else if(value == '3'){
-						text = '<font color=red>已冻结</font>';
+						text = '<font color=red><?php echo __('status_frozen')?></font>';
 					}else if(value == '4'){
-						text = '<font color=orange>预授权</font>';
+						text = '<font color=orange><?php echo __('status_preauth')?></font>';
 					}else{
-						text = '<font color=blue>未支付</font>';
+						text = '<font color=blue><?php echo __('status_unpaid')?></font>';
 					}
 					if(row.plugin=='alipayd'){
 						if(row.settle == '1'){
-							text += '<br/><font color=#8c8f93>待结算</font>';
+							text += '<br/><font color=#8c8f93><?php echo __('status_pending_settle')?></font>';
 						}else if(row.settle == '2'){
-							text += '<br/><font color=#37db3c>结算成功</font>';
+							text += '<br/><font color=#37db3c><?php echo __('status_settle_success')?></font>';
 						}else if(row.settle == '3'){
-							text += '<br/><font color=#ed6565>结算失败</font>';
+							text += '<br/><font color=#ed6565><?php echo __('status_settle_failed')?></font>';
 						}
 					}else if(row.plugin=='alipayrp'){
 						if(row.settle == '1'){
-							text += '<br/><font color=#8c8f93>待转账</font>';
+							text += '<br/><font color=#8c8f93><?php echo __('status_pending_transfer')?></font>';
 						}else if(row.settle == '2'){
-							text += '<br/><font color=#37db3c>转账成功</font>';
+							text += '<br/><font color=#37db3c><?php echo __('status_transfer_success')?></font>';
 						}else if(row.settle == '3'){
-							text += '<br/><font color=#ed6565>转账失败</font>';
+							text += '<br/><font color=#ed6565><?php echo __('status_transfer_failed')?></font>';
 						}
 					}
 					return text;
@@ -223,14 +223,14 @@ $(document).ready(function(){
 			},
 			{
 				field: '',
-				title: '操作',
+				title: '<?php echo __('operation')?>',
 				formatter: function(value, row, index) {
-					var html = '<a href="./record.php?type=3&kw='+row.trade_no+'" class="btn btn-info btn-xs">明细</a>&nbsp;<a href="javascript:callnotify(\''+row.trade_no+'\')" class="btn btn-success btn-xs">补单</a>';
+					var html = '<a href="./record.php?type=3&kw='+row.trade_no+'" class="btn btn-info btn-xs"><?php echo __('detail')?></a>&nbsp;<a href="javascript:callnotify(\''+row.trade_no+'\')" class="btn btn-success btn-xs"><?php echo __('btn_renotify')?></a>';
 					if(is_user_refund=='1' && (row.status=='1' || row.status=='3' || row.status=='2' && row.refundmoney > 0 && row.refundmoney < row.realmoney)){
-						html += '&nbsp;<a href="javascript:refund(\''+row.trade_no+'\')" class="btn btn-danger btn-xs">退款</a>';
+						html += '&nbsp;<a href="javascript:refund(\''+row.trade_no+'\')" class="btn btn-danger btn-xs"><?php echo __('btn_refund')?></a>';
 					}
 					if(is_print=='1'&&row.status=='1'){
-						html += '&nbsp;<a href="javascript:void(0);" onclick="printOrder(\''+row.trade_no+'\')" class="btn btn-warning btn-xs">打印</a>';
+						html += '&nbsp;<a href="javascript:void(0);" onclick="printOrder(\''+row.trade_no+'\')" class="btn btn-warning btn-xs"><?php echo __('btn_print')?></a>';
 					}
 					return html;
 				}
@@ -264,7 +264,7 @@ function callnotify(trade_no){
 			}
 		},
 		error:function(data){
-			layer.msg('服务器错误');
+			layer.msg('<?php echo __('server_error')?>');
 		}
 	});
 	return false;
@@ -287,7 +287,7 @@ function callreturn(trade_no){
 			}
 		},
 		error:function(data){
-			layer.msg('服务器错误');
+			layer.msg('<?php echo __('server_error')?>');
 		}
 	});
 	return false;
@@ -304,13 +304,13 @@ function refund(trade_no) {
 			if(data.code == 0){
 				layer.open({
 					area: ['360px'],
-					title: '退款确认',
-					content: '<p>此操作将直接原路退款该订单，每个订单只能操作一次退款，退款金额不能大于订单金额。</p><div class="form-group"><div class="input-group"><div class="input-group-addon">退款金额</div><input type="text" class="form-control" name="refund2" value="'+data.money+'" placeholder="请输入退款金额" autocomplete="off"/></div></div><div class="form-group"><div class="input-group"><div class="input-group-addon">登录密码</div><input type="text" class="form-control" name="paypwd" value="" placeholder="请输入用户登录密码" autocomplete="off"/></div></div>',
+					title: '<?php echo __('confirm_refund')?>',
+					content: '<p><?php echo __('refund_hint')?></p><div class="form-group"><div class="input-group"><div class="input-group-addon"><?php echo __('refund_amount')?></div><input type="text" class="form-control" name="refund2" value="'+data.money+'" placeholder="<?php echo __('enter_refund_amount')?>" autocomplete="off"/></div></div><div class="form-group"><div class="input-group"><div class="input-group-addon"><?php echo __('login_pwd')?></div><input type="text" class="form-control" name="paypwd" value="" placeholder="<?php echo __('enter_login_pwd')?>" autocomplete="off"/></div></div>',
 					yes: function(){
 						var money = $("input[name='refund2']").val();
 						var paypwd = $("input[name='paypwd']").val();
 						if(money == '' || paypwd == ''){
-							layer.alert('金额或密码不能为空');return;
+							layer.alert('<?php echo __('js_amount_pwd_empty')?>');return;
 						}
 						var ii = layer.load(2, {shade:[0.1,'#fff']});
 						$.ajax({
@@ -328,7 +328,7 @@ function refund(trade_no) {
 							},
 							error:function(data){
 								layer.close(ii);
-								layer.msg('服务器错误');
+								layer.msg('<?php echo __('server_error')?>');
 							}
 						});
 					}
@@ -339,13 +339,13 @@ function refund(trade_no) {
 		},
 		error:function(data){
 			layer.close(ii);
-			layer.msg('服务器错误');
+			layer.msg('<?php echo __('server_error')?>');
 		}
 	});
 }
 function showOrder(trade_no) {
 	var ii = layer.load(2, {shade:[0.1,'#fff']});
-	var status = ['<span class="label label-primary">未支付</span>','<span class="label label-success">已支付</span>','<span class="label label-danger">已退款</span>','<span class="label label-info">已冻结</span>','<span class="label label-warning">预授权</span>'];
+	var status = ['<span class="label label-primary"><?php echo __('status_unpaid')?></span>','<span class="label label-success"><?php echo __('status_paid')?></span>','<span class="label label-danger"><?php echo __('status_refunded')?></span>','<span class="label label-info"><?php echo __('status_frozen')?></span>','<span class="label label-warning"><?php echo __('status_preauth')?></span>'];
 	$.ajax({
 		type : 'GET',
 		url : 'ajax2.php?act=order&trade_no='+trade_no,
@@ -356,47 +356,47 @@ function showOrder(trade_no) {
 				var data = data.data;
 				var item = '<table class="table table-condensed table-hover" id="orderItem">';
 				item += '<tr><td colspan="6" style="text-align:center" class="orderTitle"><b>订单信息</b></td></tr>';
-				item += '<tr class="orderTitle"><td class="info" class="orderTitle">系统订单号</td><td colspan="5" class="orderContent">'+data.trade_no+'</td></tr>';
-				item += '<tr><td class="info" class="orderTitle">商户订单号</td><td colspan="5" class="orderContent">'+data.out_trade_no+'</td></tr>';
-				item += '<tr><td class="info" class="orderTitle">接口订单号</td><td colspan="5" class="orderContent">'+data.api_trade_no+'</td></tr>';
+				item += '<tr class="orderTitle"><td class="info" class="orderTitle"><?php echo __('system_trade_no')?></td><td colspan="5" class="orderContent">'+data.trade_no+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('merchant_trade_no')?></td><td colspan="5" class="orderContent">'+data.out_trade_no+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('api_trade_no')?></td><td colspan="5" class="orderContent">'+data.api_trade_no+'</td></tr>';
 				if(data.bill_mch_trade_no){
-					item += '<tr><td class="info" class="orderTitle">渠道交易单号</td><td colspan="5" class="orderContent">'+data.bill_mch_trade_no+'</td></tr>';
+					item += '<tr><td class="info" class="orderTitle"><?php echo __('channel_trade_no')?></td><td colspan="5" class="orderContent">'+data.bill_mch_trade_no+'</td></tr>';
 				}
 				if(data.bill_trade_no){
-					item += '<tr><td class="info" class="orderTitle">用户交易单号</td><td colspan="5" class="orderContent">'+data.bill_trade_no+'</td></tr>';
+					item += '<tr><td class="info" class="orderTitle"><?php echo __('user_trade_no')?></td><td colspan="5" class="orderContent">'+data.bill_trade_no+'</td></tr>';
 				}
-				item += '<tr><td class="info" class="orderTitle">支付方式</td><td colspan="5" class="orderContent">'+data.typename+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('payment_method')?></td><td colspan="5" class="orderContent">'+data.typename+'</td></tr>';
 				if(data.subchannel > 0){
-					item += '<tr><td class="info" class="orderTitle">自定义子通道</td><td colspan="5" class="orderContent">'+data.subchannelname+'</td></tr>';
+					item += '<tr><td class="info" class="orderTitle"><?php echo __('sub_channel')?></td><td colspan="5" class="orderContent">'+data.subchannelname+'</td></tr>';
 				}
-				item += '<tr><td class="info" class="orderTitle">商品名称</td><td colspan="5" class="orderContent">'+data.name+'</td></tr>';
-				item += '<tr><td class="info" class="orderTitle">订单金额</td><td colspan="5" class="orderContent">'+data.money+'</td></tr>';
-				item += '<tr><td class="info" class="orderTitle">实际支付金额</td><td colspan="5" class="orderContent">'+data.realmoney+'</td></tr>';
-				item += '<tr><td class="info" class="orderTitle">商户分成金额</td><td colspan="5" class="orderContent">'+data.getmoney+'</td></tr>';
-				item += '<tr><td class="info" class="orderTitle">创建时间</td><td colspan="5" class="orderContent">'+data.addtime+'</td></tr>';
-				item += '<tr><td class="info" class="orderTitle">完成时间</td><td colspan="5" class="orderContent">'+data.endtime+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('product_name')?></td><td colspan="5" class="orderContent">'+data.name+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('order_amount')?></td><td colspan="5" class="orderContent">'+data.money+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('actual_pay')?></td><td colspan="5" class="orderContent">'+data.realmoney+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('merchant_share')?></td><td colspan="5" class="orderContent">'+data.getmoney+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('create_time')?></td><td colspan="5" class="orderContent">'+data.addtime+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('finish_time')?></td><td colspan="5" class="orderContent">'+data.endtime+'</td></tr>';
 				if(data.status==2){
-					item += '<tr><td class="info" class="orderTitle">退款时间</td><td colspan="5" class="orderContent">'+data.refundtime+'</td></tr>';
+					item += '<tr><td class="info" class="orderTitle"><?php echo __('refund_time')?></td><td colspan="5" class="orderContent">'+data.refundtime+'</td></tr>';
 				}
-				item += '<tr><td class="info" class="orderTitle" title="只有在官方通道支付完成后才能显示">支付账号</td><td colspan="5" class="orderContent">'+data.buyer+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('pay_account')?></td><td colspan="5" class="orderContent">'+data.buyer+'</td></tr>';
 				if(data.mobile){
-					item += '<tr><td class="info" class="orderTitle">手机号码</td><td colspan="5" class="orderContent">'+data.mobile+'</td></tr>';
+					item += '<tr><td class="info" class="orderTitle"><?php echo __('phone_number_label')?></td><td colspan="5" class="orderContent">'+data.mobile+'</td></tr>';
 				}
-				item += '<tr><td class="info" class="orderTitle">网站域名</td><td colspan="5" class="orderContent"><a href="http://'+data.domain+'" target="_blank" rel="noreferrer">'+data.domain+'</a></td></tr>';
-				item += '<tr><td class="info" class="orderTitle">支付IP</td><td colspan="5" class="orderContent"><a href="https://m.ip138.com/iplookup.asp?ip='+data.ip+'" target="_blank" rel="noreferrer">'+data.ip+'</a></td></tr>';
-				item += '<tr><td class="info" class="orderTitle">扩展参数</td><td colspan="5" class="orderContent">'+data.param+'</td></tr>';
-				item += '<tr><td class="info" class="orderTitle">订单状态</td><td colspan="5" class="orderContent">'+status[data.status]+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('website_domain')?></td><td colspan="5" class="orderContent"><a href="http://'+data.domain+'" target="_blank" rel="noreferrer">'+data.domain+'</a></td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('pay_ip')?></td><td colspan="5" class="orderContent"><a href="https://m.ip138.com/iplookup.asp?ip='+data.ip+'" target="_blank" rel="noreferrer">'+data.ip+'</a></td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('ext_params')?></td><td colspan="5" class="orderContent">'+data.param+'</td></tr>';
+				item += '<tr><td class="info" class="orderTitle"><?php echo __('order_status')?></td><td colspan="5" class="orderContent">'+status[data.status]+'</td></tr>';
 				if(data.status>0){
-					item += '<tr><td class="info" class="orderTitle">通知状态</td><td colspan="5" class="orderContent">'+(data.notify==0?'<span class="label label-success">通知成功</span>':'<span class="label label-danger">通知失败</span>（已通知'+data.notify+'次）')+'</td></tr>';
+					item += '<tr><td class="info" class="orderTitle"><?php echo __('notify_status')?></td><td colspan="5" class="orderContent">'+(data.notify==0?'<span class="label label-success"><?php echo __('notify_success')?></span>':'<span class="label label-danger"><?php echo __('notify_failed')?></span>（<?php echo __('notified_times')?>'+data.notify+'<?php echo __('times')?>）')+'</td></tr>';
 				}
-				item += '<tr><td colspan="6" style="text-align:center" class="orderTitle"><b>订单操作</b></td></tr>';
-				item += '<tr><td colspan="6"><a href="javascript:callnotify(\''+data.trade_no+'\')" class="btn btn-xs btn-default">重新通知(异步)</a>&nbsp;<a href="javascript:callreturn(\''+data.trade_no+'\')" class="btn btn-xs btn-default">重新通知(同步)</a>'+(data.combine==1?'&nbsp;<a href="javascript:showSubOrders(\''+data.trade_no+'\')" class="btn btn-xs btn-default">查看子订单列表</a>':'')+'</td></tr>';
+				item += '<tr><td colspan="6" style="text-align:center" class="orderTitle"><b><?php echo __('order_operations')?></b></td></tr>';
+				item += '<tr><td colspan="6"><a href="javascript:callnotify(\''+data.trade_no+'\')" class="btn btn-xs btn-default"><?php echo __('renotify_async')?></a>&nbsp;<a href="javascript:callreturn(\''+data.trade_no+'\')" class="btn btn-xs btn-default"><?php echo __('renotify_sync')?></a>'+(data.combine==1?'&nbsp;<a href="javascript:showSubOrders(\''+data.trade_no+'\')" class="btn btn-xs btn-default"><?php echo __('view_sub_orders')?></a>':'')+'</td></tr>';
 				item += '</table>';
 				var area = [$(window).width() > 480 ? '480px' : '100%', ';max-height:100%'];
 				layer.open({
 				  type: 1,
 				  area: area,
-				  title: '订单详细信息',
+				  title: '<?php echo __('order_detail')?>',
 				  skin: 'layui-layer-rim',
 				  content: item
 				});
@@ -405,7 +405,7 @@ function showOrder(trade_no) {
 			}
 		},
 		error:function(data){
-			layer.msg('服务器错误');
+			layer.msg('<?php echo __('server_error')?>');
 			return false;
 		}
 	});
@@ -446,10 +446,10 @@ function showSubOrders(trade_no){
 			layer.close(ii);
 			if(data.code == 0){
 				var list = data.data;
-				var status = ['<span class="label label-primary">未支付</span>','<span class="label label-success">已支付</span>','<span class="label label-danger">已退款</span>'];
-				var settle = ['<span class="label label-info">未结算</span>','<span class="label label-success">已结算</span>'];
+				var status = ['<span class="label label-primary"><?php echo __('status_unpaid')?></span>','<span class="label label-success"><?php echo __('status_paid')?></span>','<span class="label label-danger"><?php echo __('status_refunded')?></span>'];
+				var settle = ['<span class="label label-info"><?php echo __('status_pending_settle')?></span>','<span class="label label-success"><?php echo __('status_settle_success')?></span>'];
 				var item = '<table class="table table-condensed table-hover" id="orderItem">';
-				item += '<thead><th class="orderTitle">系统订单号</th><th class="orderTitle">接口订单号</th><th class="orderTitle">订单金额</th class="orderTitle"><th class="orderTitle">订单状态</th><th class="orderTitle">结算状态</th></thead><tbody>';
+				item += '<thead><th class="orderTitle"><?php echo __('system_trade_no')?></th><th class="orderTitle"><?php echo __('api_trade_no')?></th><th class="orderTitle"><?php echo __('order_amount')?></th class="orderTitle"><th class="orderTitle"><?php echo __('order_status')?></th><th class="orderTitle"><?php echo __('settle_status')?></th></thead><tbody>';
 				for(var i=0; i<list.length; i++){
 					var statustext = status[list[i].status];
 					if(list[i].status == 2 && list[i].refundmoney > 0 && list[i].refundmoney < list[i].money){
@@ -462,7 +462,7 @@ function showSubOrders(trade_no){
 				layer.open({
 				  type: 1,
 				  area: area,
-				  title: '合单支付 - 子订单列表',
+				  title: '<?php echo __('combine_pay_sub_orders')?>',
 				  skin: 'layui-layer-rim',
 				  shadeClose: true,
 				  content: item
@@ -472,7 +472,7 @@ function showSubOrders(trade_no){
 			}
 		},
 		error:function(data){
-			layer.msg('服务器错误');
+			layer.msg('<?php echo __('server_error')?>');
 			return false;
 		}
 	});
@@ -483,13 +483,13 @@ function exportOrder(){
 		params[$(this).attr('name')] = $(this).val()
 	})
 	if(params['starttime'] == '' && params['endtime'] == ''){
-		layer.alert('请选择导出时间范围');
+		layer.alert('<?php echo __('js_select_export_range')?>');
 		return false;
 	}
 	window.location.href='./download.php?act=order&'+$.param(params);
 }
 function printOrder(trade_no){
-	layer.confirm('是否重新打印此订单小票？',{btn:['确定','取消'],title:'打印小票'}, function(){
+	layer.confirm('<?php echo __('confirm_reprint')?>',{btn:['<?php echo __('confirm')?>','<?php echo __('cancel')?>'],title:'<?php echo __('print_title')?>'}, function(){
 		var ii = layer.load(2, {shade:[0.1,'#fff']});
 		$.ajax({
 			type : 'POST',
@@ -499,14 +499,14 @@ function printOrder(trade_no){
 			success : function(data) {
 				layer.close(ii);
 				if(data.code == 0){
-					layer.alert('打印指令已发送到打印机', {icon:1}, function(){ layer.closeAll(); });
+					layer.alert('<?php echo __('print_sent')?>', {icon:1}, function(){ layer.closeAll(); });
 				}else{
 					layer.alert(data.msg, {icon:7});
 				}
 			},
 			error:function(data){
 				layer.close(ii);
-				layer.msg('服务器错误');
+				layer.msg('<?php echo __('server_error')?>');
 			}
 		});
 	});

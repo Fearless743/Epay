@@ -152,7 +152,7 @@ if(empty($userrow['pwd'])){
             </div>
             <div class="text-center m-b clearfix">
               <div class="thumb-lg avatar m-t-n-xxl">
-                <img src="<?php echo ($userrow['qq'])?'//q2.qlogo.cn/headimg_dl?bs=qq&dst_uin='.$userrow['qq'].'&src_uin='.$userrow['qq'].'&fid='.$userrow['qq'].'&spec=100&url_enc=0&referer=bu_interface&term_type=PC':'assets/img/user.png'?>" alt="..." class="b b-3x b-white">
+                <img src="assets/img/user.png" alt="..." class="b b-3x b-white">
               </div>
 			  <div class="h2 font-thin m-t-sm"><?php echo __('welcome_you')?><?php echo $userrow['username']?></div>
 			  <div class="h4 font-thin m-t-sm"><?php echo __('merchant_status')?>：<?php echo $status;?></div>

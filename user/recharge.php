@@ -1,12 +1,12 @@
 <?php
 include("../includes/common.php");
 if($islogin2==1){}else exit("<script language='javascript'>window.location.href='./login.php';</script>");
-$title='余额充值';
+$title=__('recharge');
 include './head.php';
 ?>
 <?php
 $urow = $DB->getRow("SELECT uid,gid FROM pre_user WHERE uid='{$conf['reg_pay_uid']}' limit 1");
-if(!$urow)exit('充值收款商户不存在');
+if(!$urow)exit(__('recharge_merchant_not_exist', '充值收款商户不存在'));
 $paytype = \lib\Channel::getTypes($urow['uid'], $urow['gid']);
 $csrf_token = md5(mt_rand(0,999).time());
 $_SESSION['csrf_token'] = $csrf_token;
@@ -15,7 +15,7 @@ $_SESSION['csrf_token'] = $csrf_token;
     <div class="app-content-body ">
 
 <div class="bg-light lter b-b wrapper-md hidden-print">
-  <h1 class="m-n font-thin h3">余额充值</h1>
+  <h1 class="m-n font-thin h3"><?php echo __('recharge')?></h1>
 </div>
 <div class="wrapper-md control">
 <?php if(isset($msg)){?>
@@ -30,33 +30,33 @@ $_SESSION['csrf_token'] = $csrf_token;
 	?>
 	<div class="alert alert-success alert-dismissible" role="alert">
 	  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-	  恭喜你成功充值<strong><?php echo $order['money']?></strong>元余额！
+	  <?php echo sprintf(__('recharge_success_msg', '恭喜你成功充值 %s 元余额！'), '<strong>'.$order['money'].'</strong>')?>
 	</div>
 	<?php }?>
 	<div class="alert alert-info text-md">
-		<p>充值的余额仅限用于平台消费或订单退款资金，严禁频繁大额充值后提现，否则封禁商户并冻结余额！</p>
+		<p><?php echo __('recharge_warning')?></p>
 	</div>
 	<div class="panel panel-default">
 		<div class="panel-heading font-bold">
-			<i class="fa fa-cny"></i>&nbsp;余额充值
+			<i class="fa fa-cny"></i>&nbsp;<?php echo __('recharge')?>
 		</div>
 		<div class="panel-body">
 			<form class="form-horizontal devform">
 			<input type="hidden" name="csrf_token" value="<?php echo $csrf_token?>">
 				<div class="form-group">
-					<label class="col-sm-3 control-label">当前余额</label>
+					<label class="col-sm-3 control-label"><?php echo __('current_balance')?></label>
 					<div class="col-sm-8">
-						<input class="form-control" type="text" name="rmoney" value="<?php echo $userrow['money']?> 元" readonly="">
+						<input class="form-control" type="text" name="rmoney" value="<?php echo $userrow['money']?> <?php echo __('yuan')?>" readonly="">
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-3 control-label">充值金额</label>
+					<label class="col-sm-3 control-label"><?php echo __('recharge_amount')?></label>
 					<div class="col-sm-8">
 						<input class="form-control" type="text" name="money" value="" autocomplete="off">
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-3 control-label">支付方式</label>
+					<label class="col-sm-3 control-label"><?php echo __('recharge_method')?></label>
 					<div class="col-sm-8">
 						<div class="radio">
 						<?php foreach($paytype as $row){?>
@@ -67,13 +67,13 @@ $_SESSION['csrf_token'] = $csrf_token;
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-3 control-label">共需支付</label>
+					<label class="col-sm-3 control-label"><?php echo __('total_pay')?></label>
 					<div class="col-sm-8">
 						<input class="form-control" type="text" name="need" value="" readonly="">
 					</div>
 				</div>
 				<div class="form-group">
-				  <div class="col-sm-offset-3 col-sm-8"><input type="button" id="submit" value="充值" class="btn btn-success form-control"/><br/>
+				  <div class="col-sm-offset-3 col-sm-8"><input type="button" id="submit" value="<?php echo __('btn_recharge')?>" class="btn btn-success form-control"/><br/>
 				 </div>
 				</div>
 			</form>
@@ -108,7 +108,7 @@ $(document).ready(function(){
 		var money=$("input[name='money']").val();
 		var typeid=$("input[name=type]:checked").val();
 		if(money==''){
-			layer.alert("金额不能为空");
+			layer.alert("<?php echo __('js_amount_empty')?>");
 			return false;
 		}
 		var ii = layer.load();
@@ -126,7 +126,7 @@ $(document).ready(function(){
 				}
 			},
 			error: function (data) {
-				layer.msg('服务器错误', {icon: 2});
+				layer.msg('<?php echo __('server_error')?>', {icon: 2});
 			}
 		});
 		return false;

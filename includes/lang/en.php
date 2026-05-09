@@ -255,7 +255,7 @@ return [
     'settle_status_done' => 'Completed',
     'settle_status_processing' => 'Processing',
     'settle_status_failed' => 'Failed',
-    'settle_type_alipay' => 'Alipay',
+    'settle_type_alipay' => 'USDT',
     'settle_type_wxpay' => 'WeChat',
     'settle_type_qqpay' => 'QQ Wallet',
     'settle_type_bank' => 'Bank Card',
@@ -306,7 +306,7 @@ return [
     // Edit Profile
     'settle_account_setting' => 'Settlement Account:',
     'settle_type' => 'Method',
-    'alipay_settle' => 'Alipay',
+    'alipay_settle' => 'USDT',
     'wxpay_settle' => 'WeChat',
     'qqpay_settle' => 'QQ Wallet',
     'bank_settle' => 'Bank Card',
@@ -506,4 +506,26 @@ return [
 
     // Transfer
     'transfer_page' => 'Transfers',
+
+    // Fund Detail Page
+    'fund_record_page' => 'Transactions',
+    'transaction_type' => 'Type',
+    'transaction_amount' => 'Amount',
+    'balance_after' => 'Balance',
+    'transaction_time' => 'Time',
+    'transaction_remark' => 'Remark',
+
+    // Transfer Page
+    'add_transfer' => 'Add Transfer',
+    'transfer_list' => 'Transfer Records',
+    'transfer_account' => 'Account',
+    'transfer_amount' => 'Amount',
+    'transfer_name' => 'Name',
+    'transfer_status_label' => 'Status',
+
+    // Recharge Page
+    'recharge_page' => 'Recharge',
+    'recharge_amount' => 'Amount',
+    'recharge_method' => 'Method',
+    'btn_recharge' => 'Recharge',
 ];

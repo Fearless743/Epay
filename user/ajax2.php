@@ -56,8 +56,6 @@ case 'info':
 			'wx_uid' => $userrow['wx_uid'],
 			'email' => $userrow['email'],
 			'phone' => $userrow['phone'],
-			'qq' => $userrow['qq'],
-			'url' => $userrow['url'],
 			'cert' => $userrow['cert'],
 			'certtype' => $userrow['certtype'],
 			'certmethod' => $userrow['certmethod'],
@@ -84,7 +82,7 @@ case 'info':
 			'pay_minmoney' => $userrow['pay_minmoney'],
 			'complain_total' => $complain_total,
 			'code_url' => $code_url,
-			'faceimg' => ($userrow['qq'])?'https://q2.qlogo.cn/headimg_dl?bs=qq&dst_uin='.$userrow['qq'].'&src_uin='.$userrow['qq'].'&fid='.$userrow['qq'].'&spec=100&url_enc=0&referer=bu_interface&term_type=PC':$siteurl.'assets/img/user.png',
+			'faceimg' => $siteurl.'assets/img/user.png',
 		],
 		'sys' => [
 			'sitename' => $conf['sitename'],
@@ -247,31 +245,20 @@ case 'completeinfo':
 	$account=htmlspecialchars(strip_tags(trim($_POST['account'])));
 	$username=htmlspecialchars(strip_tags(trim($_POST['username'])));
 	$email=htmlspecialchars(strip_tags(trim($_POST['email'])));
-	$qq=htmlspecialchars(strip_tags(trim($_POST['qq'])));
-	$url=htmlspecialchars(strip_tags(trim($_POST['url'])));
 
-	if(empty($account) || empty($username) || empty($qq) || empty($url)){
+	if(empty($account) || empty($username)){
 		exit('{"code":-1,"msg":"请确保每项都不为空"}');
 	}
 	if(!empty($userrow['account']) && !empty($userrow['username'])){
 		exit('{"code":-1,"msg":"你已完善相关信息"}');
 	}
-	if($type==1 && strlen($account)!=11 && strpos($account,'@')==false){
-		exit('{"code":-1,"msg":"请填写正确的支付宝账号！"}');
+	if($type==1 && (strlen($account)<20 || strlen($account)>50)){
+		exit('{"code":-1,"msg":"请填写正确的USDT地址！"}');
 	}
 	if($type==2 && strlen($account)<3){
 		exit('{"code":-1,"msg":"请填写正确的微信"}');
 	}
-	if($type==3 && (strlen($account)<5 || strlen($account)>10 || !is_numeric($account))){
-		exit('{"code":-1,"msg":"请填写正确的QQ号码"}');
-	}
-	if(strlen($qq)<5 || strlen($qq)>10 || !is_numeric($qq)){
-		exit('{"code":-1,"msg":"请填写正确的QQ"}');
-	}
-	if(strlen($url)<4 || strpos($url,'.')==false){
-		exit('{"code":-1,"msg":"请填写正确的网站域名！"}');
-	}
-	$data = ['settle_id'=>$type, 'account'=>$account, 'username'=>$username, 'qq'=>$qq, 'url'=>$url];
+	$data = ['settle_id'=>$type, 'account'=>$account, 'username'=>$username];
 	if($conf['verifytype']==1){
 		if(!preg_match('/^[A-z0-9._-]+@[A-z0-9._-]+\.[A-z0-9._-]+$/', $email)){
 			exit('{"code":-1,"msg":"邮箱格式不正确"}');
@@ -298,8 +285,8 @@ case 'edit_settle':
 	if($account==null || $username==null){
 		exit('{"code":-1,"msg":"请确保每项都不为空"}');
 	}
-	if($type==1 && strlen($account)!=11 && strpos($account,'@')==false){
-		exit('{"code":-1,"msg":"请填写正确的支付宝账号！"}');
+	if($type==1 && (strlen($account)<20 || strlen($account)>50)){
+		exit('{"code":-1,"msg":"请填写正确的USDT地址！"}');
 	}
 	if($type==2 && strlen($account)<3){
 		exit('{"code":-1,"msg":"请填写正确的微信"}');
@@ -324,8 +311,6 @@ case 'edit_settle':
 break;
 case 'edit_info':
 	$email=htmlspecialchars(strip_tags(trim($_POST['email'])));
-	$qq=htmlspecialchars(strip_tags(trim($_POST['qq'])));
-	$url=htmlspecialchars(strip_tags(trim($_POST['url'])));
 	$keylogin=intval($_POST['keylogin']);
 	$refund=intval($_POST['refund']);
 	$transfer=intval($_POST['transfer']);
@@ -333,16 +318,7 @@ case 'edit_info':
 	$pay_maxmoney=trim($_POST['pay_maxmoney']);
 	$pay_minmoney=trim($_POST['pay_minmoney']);
 
-	if($qq==null || $url==null){
-		exit('{"code":-1,"msg":"请确保每项都不为空"}');
-	}
-	if(strlen($qq)<5 || strlen($qq)>10 || !is_numeric($qq)){
-		exit('{"code":-1,"msg":"请填写正确的QQ"}');
-	}
-	if(strlen($url)<4 || strpos($url,'.')==false){
-		exit('{"code":-1,"msg":"请填写正确的网站域名！"}');
-	}
-	$data = ['qq'=>$qq, 'url'=>$url, 'keylogin'=>$keylogin, 'refund'=>$refund, 'transfer'=>$transfer, 'remain_money'=>$remain_money, 'pay_maxmoney'=>$pay_maxmoney, 'pay_minmoney'=>$pay_minmoney];
+	$data = ['keylogin'=>$keylogin, 'refund'=>$refund, 'transfer'=>$transfer, 'remain_money'=>$remain_money, 'pay_maxmoney'=>$pay_maxmoney, 'pay_minmoney'=>$pay_minmoney];
 	if($conf['verifytype']==1){
 		if($email!=$userrow['email']){
 			$row=$DB->getRow("select * from pre_user where email=:email limit 1", [':email'=>$email]);

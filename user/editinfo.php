@@ -1,7 +1,7 @@
 <?php
 include("../includes/common.php");
 if($islogin2==1){}else exit("<script language='javascript'>window.location.href='./login.php';</script>");
-$title='个人资料';
+$title=__('personal_info');
 include './head.php';
 ?>
 <?php
@@ -21,31 +21,31 @@ if(strlen($userrow['phone'])==11){
 					<div class="modal-header">
 						<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">关闭</span>
 						</button>
-						<h4 class="modal-title">验证密保信息</h4>
+						<h4 class="modal-title"><?php echo __('verify_security')?></h4>
 					</div>
 					<div class="modal-body">
 <?php if($conf['verifytype']==1){?>
-<div class="list-group-item">密保手机：<?php echo $userrow['phone']?></div>
+<div class="list-group-item"><?php echo __('security_phone')?>：<?php echo $userrow['phone']?></div>
 <div class="list-group-item">
 <div class="input-group">
-<input type="text" name="code" placeholder="输入短信验证码" class="form-control" required>
-<a class="input-group-addon" id="sendcode">获取验证码</a>
+<input type="text" name="code" placeholder="<?php echo __('enter_sms_code')?>" class="form-control" required>
+<a class="input-group-addon" id="sendcode"><?php echo __('get_code')?></a>
 </div>
 </div>
 <?php }else{?>
-<div class="list-group-item">密保邮箱：<?php echo $userrow['email']?></div>
+<div class="list-group-item"><?php echo __('security_email')?>：<?php echo $userrow['email']?></div>
 <div class="list-group-item">
 <div class="input-group">
-<input type="text" name="code" placeholder="输入验证码" class="form-control" required>
-<a class="input-group-addon" id="sendcode">获取验证码</a>
+<input type="text" name="code" placeholder="<?php echo __('enter_code')?>" class="form-control" required>
+<a class="input-group-addon" id="sendcode"><?php echo __('get_code')?></a>
 </div>
 </div>
 <?php }?>
-<button type="button" id="verifycode" class="btn btn-primary btn-block">确定</button>
+<button type="button" id="verifycode" class="btn btn-primary btn-block"><?php echo __('btn_confirm_code')?></button>
 <div id="embed-captcha"></div>
 					</div>
 					<div class="modal-footer">
-						<button type="button" class="btn btn-white" data-dismiss="modal">关闭</button>
+						<button type="button" class="btn btn-white" data-dismiss="modal"><?php echo __('close')?></button>
 					</div>
 				</div>
 			</div>
@@ -54,33 +54,33 @@ if(strlen($userrow['phone'])==11){
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<div class="modal-header">
-						<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">关闭</span>
+						<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only"><?php echo __('close')?></span>
 						</button>
-						<h4 class="modal-title">修改密保信息</h4>
+						<h4 class="modal-title"><?php echo __('modify_security')?></h4>
 					</div>
 					<div class="modal-body">
 <?php if($conf['verifytype']==1){?>
 <div class="list-group-item">
-<input type="text" name="phone_n" placeholder="输入新的手机号码" class="form-control" required>
+<input type="text" name="phone_n" placeholder="<?php echo __('new_phone')?>" class="form-control" required>
 </div>
 <div class="list-group-item">
 <div class="input-group">
-<input type="text" name="code_n" placeholder="输入短信验证码" class="form-control" required>
-<a class="input-group-addon" id="sendcode2">获取验证码</a>
+<input type="text" name="code_n" placeholder="<?php echo __('enter_sms_code')?>" class="form-control" required>
+<a class="input-group-addon" id="sendcode2"><?php echo __('get_code')?></a>
 </div>
 </div>
 <?php }else{?>
 <div class="list-group-item">
-<input type="email" name="email_n" placeholder="输入新的邮箱" class="form-control" required>
+<input type="email" name="email_n" placeholder="<?php echo __('new_email')?>" class="form-control" required>
 </div>
 <div class="list-group-item">
 <div class="input-group">
-<input type="text" name="code_n" placeholder="输入验证码" class="form-control" required>
-<a class="input-group-addon" id="sendcode2">获取验证码</a>
+<input type="text" name="code_n" placeholder="<?php echo __('enter_code')?>" class="form-control" required>
+<a class="input-group-addon" id="sendcode2"><?php echo __('get_code')?></a>
 </div>
 </div>
 <?php }?>
-<button type="button" id="editBind" class="btn btn-primary btn-block">确定</button>
+<button type="button" id="editBind" class="btn btn-primary btn-block"><?php echo __('btn_confirm_code')?></button>
 <div id="embed-captcha"></div>
 					</div>
 					<div class="modal-footer">
@@ -117,7 +117,7 @@ if(strlen($userrow['phone'])==11){
 			</div>
 		</div>
 <div class="bg-light lter b-b wrapper-md hidden-print">
-  <h1 class="m-n font-thin h3">个人资料</h1>
+  <h1 class="m-n font-thin h3"><?php echo __('personal_info')?></h1>
 </div>
 <div class="wrapper-md control">
 <?php if(isset($msg)){?>
@@ -128,37 +128,37 @@ if(strlen($userrow['phone'])==11){
 <div class="tab-container ng-isolate-scope">
 <ul class="nav nav-tabs">
 	<li style="width: 25%;" align="center">
-		<a href="userinfo.php?mod=api">API信息</a>
+		<a href="userinfo.php?mod=api"><?php echo __('api_info')?></a>
 	</li>
 	<li style="width: 25%;" align="center" class="active">
-		<a href="editinfo.php">修改资料</a>
+		<a href="editinfo.php"><?php echo __('edit_profile')?></a>
 	</li>
 	<li style="width: 25%;" align="center">
-		<a href="userinfo.php?mod=account">修改密码</a>
+		<a href="userinfo.php?mod=account"><?php echo __('change_password')?></a>
 	</li>
 	<?php if($conf['cert_open']>0){?>
 	<li style="width: 25%;" align="center">
-		<a href="certificate.php">实名认证</a>
+		<a href="certificate.php"><?php echo __('real_name')?></a>
 	</li>
 	<?php }?>
 </ul>
 	<div class="tab-content">
 		<div class="tab-pane ng-scope active">
 			<form class="form-horizontal devform">
-				<div class="form-group"><div class="col-sm-offset-2 col-sm-4"><h4>收款账号设置：</h4></div></div>
+				<div class="form-group"><div class="col-sm-offset-2 col-sm-4"><h4><?php echo __('settle_account_setting')?></h4></div></div>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">结算方式</label>
+					<label class="col-sm-2 control-label"><?php echo __('settle_type')?></label>
 					<div class="col-sm-9">
 						<select class="form-control" name="stype" default="<?php echo $userrow['settle_id']?>">
-						<?php if($conf['settle_alipay']){?><option value="1" input="支付宝账号">支付宝结算</option>
-						<?php }if($conf['settle_wxpay']){?><option value="2" input="<?php echo $conf['transfer_wxpay']?'微信OpenId':'微信号';?>">微信结算</option>
-						<?php }if($conf['settle_qqpay']){?><option value="3" input="ＱＱ号码">QQ钱包结算</option>
-						<?php }if($conf['settle_bank']){?><option value="4" input="银行卡号">银行卡结算</option>
+						<?php if($conf['settle_alipay']){?><option value="1" input="<?php echo __('settle_type_alipay')?>"><?php echo __('alipay_settle')?></option>
+						<?php }if($conf['settle_wxpay']){?><option value="2" input="<?php echo $conf['transfer_wxpay']?'微信OpenId':'微信号';?>"><?php echo __('wxpay_settle')?></option>
+						<?php }if($conf['settle_qqpay']){?><option value="3" input="ＱＱ号码"><?php echo __('qqpay_settle')?></option>
+						<?php }if($conf['settle_bank']){?><option value="4" input="<?php echo __('settle_type_bank')?>"><?php echo __('bank_settle')?></option>
 						<?php }?></select>
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-2 control-label" id="typename">收款账号</label>
+					<label class="col-sm-2 control-label" id="typename"><?php echo __('receive_account')?></label>
 					<div class="col-sm-9">
 						<input class="form-control" type="text" name="account" value="<?php echo $userrow['account']?>">
 					</div>
@@ -166,172 +166,159 @@ if(strlen($userrow['phone'])==11){
 				<?php if($conf['transfer_wxpay']){?>
 				<div class="form-group" style="display:none;" id="getopenid_form">
 					<div class="col-sm-offset-2 col-sm-4">
-						<a class="btn btn-sm btn-default" id="getopenid">点此获取微信OpenId</a>
+						<a class="btn btn-sm btn-default" id="getopenid"><?php echo __('click_get_wechat_openid')?></a>
 					</div>
 				</div>
 				<?php }?>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">真实姓名</label>
+					<label class="col-sm-2 control-label"><?php echo __('real_name_label')?></label>
 					<div class="col-sm-9">
 						<input class="form-control" type="text" name="username" value="<?php echo $userrow['username']?>">
 					</div>
 				</div>
 				<div class="form-group">
-				  <div class="col-sm-offset-2 col-sm-4"><input type="button" id="editSettle" value="确定修改" class="btn btn-primary form-control"/><br/>
+				  <div class="col-sm-offset-2 col-sm-4"><input type="button" id="editSettle" value="<?php echo __('btn_confirm_edit')?>" class="btn btn-primary form-control"/><br/>
 				 </div>
 				</div>
 
 								
 				<?php if($conf['voicenotice'] == 1){?><div class="line line-dashed b-b line-lg pull-in"></div>
-				<div class="form-group"><div class="col-sm-offset-2 col-sm-4"><h4>云音响设置：</h4></div></div>
+				<div class="form-group"><div class="col-sm-offset-2 col-sm-4"><h4><?php echo __('voice_speaker_setting')?></h4></div></div>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">设备端上报API接口</label>
+					<label class="col-sm-2 control-label"><?php echo __('device_report_api')?></label>
 					<div class="col-sm-9">
 						<input class="form-control" type="text" name="voice_gateway" value="<?php echo $siteurl?>gateway.php" readonly><font color="green">在ini写码配置文件中添加，然后通过写码工具配置到设备中</font>
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">设备序列号SN</label>
+					<label class="col-sm-2 control-label"><?php echo __('device_sn')?></label>
 					<div class="col-sm-9">
 						<input class="form-control" type="text" name="voice_devid" value="<?php echo $userrow['voice_devid']?>">
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">订单语音播报</label>
+					<label class="col-sm-2 control-label"><?php echo __('order_voice_broadcast')?></label>
 					<div class="col-sm-9">
-						<select class="form-control" name="voice_order" default="<?php echo $userrow['voice_order']?>"><option value="0">关闭</option><option value="1">开启</option></select><font color="green">通过聚合收款码收款时的语音播报开关</font>
+						<select class="form-control" name="voice_order" default="<?php echo $userrow['voice_order']?>"><option value="0"><?php echo __('off')?></option><option value="1"><?php echo __('on')?></option></select><font color="green"><?php echo __('voice_broadcast_hint')?></font>
 					</div>
 				</div>
 				<div class="form-group">
-				  <div class="col-sm-offset-2 col-sm-4"><input type="button" id="editVoice" value="确定修改" class="btn btn-primary form-control"/><br/>
+				  <div class="col-sm-offset-2 col-sm-4"><input type="button" id="editVoice" value="<?php echo __('btn_confirm_edit')?>" class="btn btn-primary form-control"/><br/>
 				 </div>
 				</div><?php }?>
 
 				<?php if($conf['orderprint'] == 1){
 					$print_config = unserialize($userrow['print_config']);
 				?><div class="line line-dashed b-b line-lg pull-in"></div>
-				<div class="form-group"><div class="col-sm-offset-2 col-sm-4"><h4>小票打印设置：</h4></div></div>
+				<div class="form-group"><div class="col-sm-offset-2 col-sm-4"><h4><?php echo __('print_setting')?></h4></div></div>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">打印机序列号</label>
+					<label class="col-sm-2 control-label"><?php echo __('printer_sn')?></label>
 					<div class="col-sm-9">
 						<input class="form-control" type="text" name="print_devid" value="<?php echo $print_config['devid']?>">
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">小票自动打印开关</label>
+					<label class="col-sm-2 control-label"><?php echo __('auto_print_switch')?></label>
 					<div class="col-sm-9">
-						<select class="form-control" name="print_order" default="<?php echo $userrow['print_order']?>"><option value="0">关闭</option><option value="1">开启-仅聚合收款码</option><option value="2">开启-所有订单</option></select>
+						<select class="form-control" name="print_order" default="<?php echo $userrow['print_order']?>"><option value="0"><?php echo __('off')?></option><option value="1"><?php echo __('print_only_qr')?></option><option value="2"><?php echo __('print_all_orders')?></option></select>
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">打印小票张数</label>
+					<label class="col-sm-2 control-label"><?php echo __('print_count')?></label>
 					<div class="col-sm-9">
-						<input class="form-control" type="number" name="print_count" value="<?php echo $print_config['count']?>" min="1" max="5" placeholder="默认1张，范围：1-5">
+						<input class="form-control" type="number" name="print_count" value="<?php echo $print_config['count']?>" min="1" max="5" placeholder="<?php echo __('print_count_hint')?>">
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">打印时自动播报语音</label>
+					<label class="col-sm-2 control-label"><?php echo __('auto_voice_on_print')?></label>
 					<div class="col-sm-9">
-						<select class="form-control" name="print_voice" default="<?php echo $print_config['voice']?>"><option value="0">否</option><option value="1">是</option></select>
+						<select class="form-control" name="print_voice" default="<?php echo $print_config['voice']?>"><option value="0"><?php echo __('no')?></option><option value="1"><?php echo __('yes')?></option></select>
 					</div>
 				</div>
 				<div class="form-group">
-				  <div class="col-sm-offset-2 col-sm-4"><input type="button" id="editPrint" value="确定修改" class="btn btn-primary form-control"/><br/>
+				  <div class="col-sm-offset-2 col-sm-4"><input type="button" id="editPrint" value="<?php echo __('btn_confirm_edit')?>" class="btn btn-primary form-control"/><br/>
 				 </div>
 				</div><?php }?>
 
 				<div class="line line-dashed b-b line-lg pull-in"></div>
-				<div class="form-group"><div class="col-sm-offset-2 col-sm-4"><h4>联系方式与功能设置：</h4></div></div>
+				<div class="form-group"><div class="col-sm-offset-2 col-sm-4"><h4><?php echo __('contact_function_setting')?></h4></div></div>
 				<?php if($conf['verifytype']==1){?>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">手机号码</label>
+					<label class="col-sm-2 control-label"><?php echo __('phone_label')?></label>
 					<div class="col-sm-9">
 						<div class="input-group">
 						<input class="form-control" type="text" name="phone" value="<?php echo $userrow['phone']?>" disabled>
-						<a class="input-group-addon" id="checkbind">修改绑定</a>
+						<a class="input-group-addon" id="checkbind"><?php echo __('modify_binding')?></a>
 						</div>
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">邮箱</label>
+					<label class="col-sm-2 control-label"><?php echo __('email_label')?></label>
 					<div class="col-sm-9">
 						<input class="form-control" type="text" name="email" value="<?php echo $userrow['email']?>">
 					</div>
 				</div>
 				<?php }else{?>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">邮箱</label>
+					<label class="col-sm-2 control-label"><?php echo __('email_label')?></label>
 					<div class="col-sm-9">
 						<div class="input-group">
 						<input class="form-control" type="text" name="email" value="<?php echo $userrow['email']?>" disabled>
-						<a class="input-group-addon" id="checkbind">修改绑定</a>
+						<a class="input-group-addon" id="checkbind"><?php echo __('modify_binding')?></a>
 						</div>
 					</div>
 				</div>
 				<?php if(!empty($conf['sms_appkey'])){?><div class="form-group">
-					<label class="col-sm-2 control-label">手机号码</label>
+					<label class="col-sm-2 control-label"><?php echo __('phone_label')?></label>
 					<div class="col-sm-9">
 						<div class="input-group">
 						<input class="form-control" type="text" name="phone" value="<?php echo $userrow['phone']?>" disabled>
-						<a class="input-group-addon" id="bindphone">修改绑定</a>
+						<a class="input-group-addon" id="bindphone"><?php echo __('modify_binding')?></a>
 						</div>
 					</div>
 				</div>
 				<?php }}?>
-				<div class="form-group">
-					<label class="col-sm-2 control-label">ＱＱ</label>
+					<label class="col-sm-2 control-label"><?php echo __('enable_key_login')?></label>
 					<div class="col-sm-9">
-						<input class="form-control" type="text" name="qq" value="<?php echo $userrow['qq']?>">
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="col-sm-2 control-label">网站域名</label>
-					<div class="col-sm-9">
-						<input class="form-control" type="text" name="url" value="<?php echo $userrow['url']?>">
-					</div>
-				</div>
-				<div class="form-group">
-					<label class="col-sm-2 control-label">开启密钥登录</label>
-					<div class="col-sm-9">
-						<select class="form-control" name="keylogin" default="<?php echo $userrow['keylogin']?>"><option value="0">关闭</option><option value="1">开启</option></select>
+						<select class="form-control" name="keylogin" default="<?php echo $userrow['keylogin']?>"><option value="0"><?php echo __('off')?></option><option value="1"><?php echo __('on')?></option></select>
 					</div>
 				</div>
 				<?php if($conf['user_refund']==1){?>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">订单退款API接口</label>
+					<label class="col-sm-2 control-label"><?php echo __('order_refund_api')?></label>
 					<div class="col-sm-9">
-						<select class="form-control" name="refund" default="<?php echo $userrow['refund']?>"><option value="0">关闭</option><option value="1">开启</option></select>
+						<select class="form-control" name="refund" default="<?php echo $userrow['refund']?>"><option value="0"><?php echo __('off')?></option><option value="1"><?php echo __('on')?></option></select>
 					</div>
 				</div><?php }?>
 				<?php if($conf['user_transfer']==1){?>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">代付API接口</label>
+					<label class="col-sm-2 control-label"><?php echo __('transfer_api')?></label>
 					<div class="col-sm-9">
-						<select class="form-control" name="transfer" default="<?php echo $userrow['transfer']?>"><option value="0">关闭</option><option value="1">开启</option></select>
+						<select class="form-control" name="transfer" default="<?php echo $userrow['transfer']?>"><option value="0"><?php echo __('off')?></option><option value="1"><?php echo __('on')?></option></select>
 					</div>
 				</div><?php }?>
 				<?php if($conf['settle_open']==1 || $conf['settle_open']==3){?>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">预留余额</label>
+					<label class="col-sm-2 control-label"><?php echo __('reserve_balance')?></label>
 					<div class="col-sm-9">
-						<div class="input-group"><input class="form-control" type="text" name="remain_money" value="<?php echo $userrow['remain_money']?>" placeholder="可设置预留部分商户余额不参与每日自动结算，数字后加%即为百分比"><span class="input-group-addon">元</span></div>
+						<div class="input-group"><input class="form-control" type="text" name="remain_money" value="<?php echo $userrow['remain_money']?>" placeholder="<?php echo __('reserve_balance_hint')?>"><span class="input-group-addon"><?php echo __('yuan')?></span></div>
 					</div>
 				</div><?php }?>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">最大支付金额限制</label>
+					<label class="col-sm-2 control-label"><?php echo __('max_pay_amount')?></label>
 					<div class="col-sm-9">
-						<div class="input-group"><input class="form-control" type="text" name="pay_maxmoney" value="<?php echo $userrow['pay_maxmoney']?>" placeholder="留空则不限制最大支付金额"><span class="input-group-addon">元</span></div>
+						<div class="input-group"><input class="form-control" type="text" name="pay_maxmoney" value="<?php echo $userrow['pay_maxmoney']?>" placeholder="<?php echo __('max_pay_hint')?>"><span class="input-group-addon"><?php echo __('yuan')?></span></div>
 					</div>
 				</div>
 				<div class="form-group">
-					<label class="col-sm-2 control-label">最小支付金额限制</label>
+					<label class="col-sm-2 control-label"><?php echo __('min_pay_amount')?></label>
 					<div class="col-sm-9">
-						<div class="input-group"><input class="form-control" type="text" name="pay_minmoney" value="<?php echo $userrow['pay_minmoney']?>" placeholder="留空则不限制最小支付金额"><span class="input-group-addon">元</span></div>
+						<div class="input-group"><input class="form-control" type="text" name="pay_minmoney" value="<?php echo $userrow['pay_minmoney']?>" placeholder="<?php echo __('min_pay_hint')?>"><span class="input-group-addon"><?php echo __('yuan')?></span></div>
 					</div>
 				</div>
 				
 				<div class="form-group">
-				  <div class="col-sm-offset-2 col-sm-4"><input type="button" id="editInfo" value="确定修改" class="btn btn-primary form-control"/><br/>
+				  <div class="col-sm-offset-2 col-sm-4"><input type="button" id="editInfo" value="<?php echo __('btn_confirm_edit')?>" class="btn btn-primary form-control"/><br/>
 				 </div>
 				</div>
 
@@ -632,8 +619,6 @@ $(document).ready(function(){
 	});
 	$("#editInfo").click(function(){
 		var email=$("input[name='email']").val();
-		var qq=$("input[name='qq']").val();
-		var url=$("input[name='url']").val();
 		var keylogin=$("select[name='keylogin']").val();
 		var refund=$("select[name='refund']").val();
 		var transfer=$("select[name='transfer']").val();
@@ -642,29 +627,15 @@ $(document).ready(function(){
 		var pay_minmoney=$("input[name='pay_minmoney']").val();
 		if(pay_maxmoney!='' && isNaN(pay_maxmoney)){layer.alert('最大支付金额必须为数字！');return false;}
 		if(pay_minmoney!='' && isNaN(pay_minmoney)){layer.alert('最小支付金额必须为数字！');return false;}
-		if(email=='' || qq=='' || url==''){layer.alert('请确保各项不能为空！');return false;}
 		if(email.length>0){
 			var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/;
 			if(!reg.test(email)){layer.alert('邮箱格式不正确！');return false;}
 		}
-		if (url.indexOf(" ")>=0){
-			url = url.replace(/ /g,"");
-		}
-		if (url.toLowerCase().indexOf("http://")==0){
-			url = url.slice(7);
-		}
-		if (url.toLowerCase().indexOf("https://")==0){
-			url = url.slice(8);
-		}
-		if (url.slice(url.length-1)=="/"){
-			url = url.slice(0,url.length-1);
-		}
-		$("input[name='url']").val(url);
 		var ii = layer.load(2, {shade:[0.1,'#fff']});
 		$.ajax({
 			type : "POST",
 			url : "ajax2.php?act=edit_info",
-			data : {email:email,qq:qq,url:url,keylogin:keylogin,refund:refund,transfer:transfer,remain_money:remain_money, pay_maxmoney:pay_maxmoney,pay_minmoney:pay_minmoney},
+			data : {email:email,keylogin:keylogin,refund:refund,transfer:transfer,remain_money:remain_money, pay_maxmoney:pay_maxmoney,pay_minmoney:pay_minmoney},
 			dataType : 'json',
 			success : function(data) {
 				layer.close(ii);
