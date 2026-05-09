@@ -9,9 +9,9 @@ if(isset($_GET['logout'])){
 	if(!checkRefererHost())exit();
 	setcookie("user_token", "", time() - 2592000);
 	@header('Content-Type: text/html; charset=UTF-8');
-	exit("<script language='javascript'>alert('您已成功注销本次登录！');window.location.href='./login.php';</script>");
+	exit("<script language='javascript'>alert('".__('logged_out')."');window.location.href='./login.php';</script>");
 }elseif($islogin2==1){
-	exit("<script language='javascript'>alert('您已登录！');window.location.href='./';</script>");
+	exit("<script language='javascript'>alert('".__('already_logged_in')."');window.location.href='./';</script>");
 }
 $csrf_token = md5(mt_rand(0,999).time());
 $_SESSION['csrf_token'] = $csrf_token;
@@ -20,7 +20,7 @@ $_SESSION['csrf_token'] = $csrf_token;
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
-<title>登录 | <?php echo $conf['sitename']?></title>
+<title><?php echo __('login')?> | <?php echo $conf['sitename']?></title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <link rel="stylesheet" href="<?php echo $cdnpublic?>twitter-bootstrap/3.4.1/css/bootstrap.min.css" type="text/css" />
 <link rel="stylesheet" href="<?php echo $cdnpublic?>animate.css/3.7.2/animate.min.css" type="text/css" />
@@ -36,7 +36,7 @@ $_SESSION['csrf_token'] = $csrf_token;
 <span class="navbar-brand block m-t"><?php echo $conf['sitename']?></span>
 <div class="m-b-lg">
 <div class="wrapper text-center">
-<strong>请输入您的商户信息</strong>
+<strong><?php echo __('login_title')?></strong>
 </div>
 <form name="form" class="form-validation" method="post" action="login.php">
 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token?>">
@@ -45,10 +45,10 @@ $_SESSION['csrf_token'] = $csrf_token;
 <?php if(!$conf['close_keylogin']){?>
 <ul class="nav nav-tabs">
     <li style="width: 50%;" align="center" class="<?php echo $_GET['m']!='key'?'active':null;?>">
-  <a href="./login.php">密码登录(New)</a>
+  <a href="./login.php"><?php echo __('password_login')?></a>
 </li>
     <li style="width: 50%;" align="center" class="<?php echo $_GET['m']=='key'?'active':null;?>">
-  <a href="./login.php?m=key">密钥登录</a>
+  <a href="./login.php?m=key"><?php echo __('key_login')?></a>
 </li>
 </ul><?php }?>
 <div class="tab-content">
@@ -57,23 +57,23 @@ $_SESSION['csrf_token'] = $csrf_token;
 <?php if($_GET['m']=='key'){?>
 <input type="hidden" name="type" value="0"/>
 <div class="list-group-item">
-<input type="text" name="user" placeholder="商户ID" value="" class="form-control no-border" onkeydown="if(event.keyCode==13){$('#submit').click()}">
+<input type="text" name="user" placeholder="<?php echo __('merchant_id')?>" value="" class="form-control no-border" onkeydown="if(event.keyCode==13){$('#submit').click()}">
 </div>
 <div class="list-group-item">
-<input type="password" name="pass" placeholder="商户密钥" value="" class="form-control no-border" onkeydown="if(event.keyCode==13){$('#submit').click()}">
+<input type="password" name="pass" placeholder="<?php echo __('merchant_key')?>" value="" class="form-control no-border" onkeydown="if(event.keyCode==13){$('#submit').click()}">
 </div>
 <?php }else{?>
 <input type="hidden" name="type" value="1"/>
 <div class="list-group-item">
-<input type="text" name="user" placeholder="邮箱/手机号" value="" class="form-control no-border" onkeydown="if(event.keyCode==13){$('#submit').click()}">
+<input type="text" name="user" placeholder="<?php echo __('email_phone')?>" value="" class="form-control no-border" onkeydown="if(event.keyCode==13){$('#submit').click()}">
 </div>
 <div class="list-group-item">
-<input type="password" name="pass" placeholder="密码" value="" class="form-control no-border" onkeydown="if(event.keyCode==13){$('#submit').click()}">
+<input type="password" name="pass" placeholder="<?php echo __('password')?>" value="" class="form-control no-border" onkeydown="if(event.keyCode==13){$('#submit').click()}">
 </div>
 <?php }?>
 	<?php if($conf['captcha_open_login']==1){?>
 	<div class="list-group-item" id="captcha" style="margin: auto;"><div id="captcha_text">
-		正在加载验证码
+		<?php echo __('loading_captcha')?>
 	</div>
 	<div id="captcha_wait">
 		<div class="loading">
@@ -86,24 +86,24 @@ $_SESSION['csrf_token'] = $csrf_token;
 	<div id="captchaform"></div>
 	<?php }?>
 </div>
-<button type="button" class="btn btn-lg btn-primary btn-block" id="submit">立即登录</button>
+<button type="button" class="btn btn-lg btn-primary btn-block" id="submit"><?php echo __('login_now')?></button>
 </div>
 </div>
 <div class="line line-dashed"></div>
 <div class="form-group">
-	<a href="findpwd.php" class="btn btn-info btn-rounded"><i class="fa fa-unlock"></i>&nbsp;找回密码</a>
-	<a href="reg.php" class="btn btn-danger btn-rounded <?php echo $conf['reg_open']==0?'hide':null;?>" style="float:right;"><i class="fa fa-user-plus"></i>&nbsp;注册商户</a>
+	<a href="findpwd.php" class="btn btn-info btn-rounded"><i class="fa fa-unlock"></i>&nbsp;<?php echo __('forgot_password')?></a>
+	<a href="reg.php" class="btn btn-danger btn-rounded <?php echo $conf['reg_open']==0?'hide':null;?>" style="float:right;"><i class="fa fa-user-plus"></i>&nbsp;<?php echo __('register_merchant')?></a>
 </div>
 <?php if(!isset($_GET['connect'])){?>
 <div class="wrapper text-center">
 <?php if($conf['login_alipay']>0 || $conf['login_alipay']==-1){?>
-<button type="button" class="btn btn-rounded btn-lg btn-icon btn-default" title="支付宝快捷登录" onclick="connect('alipay')"><img src="../assets/icon/alipay.ico" style="border-radius:50px;"></button>
+<button type="button" class="btn btn-rounded btn-lg btn-icon btn-default" title="<?php echo __('alipay_login')?>" onclick="connect('alipay')"><img src="../assets/icon/alipay.ico" style="border-radius:50px;"></button>
 <?php }?>
 <?php if($conf['login_qq']>0){?>
-<button type="button" class="btn btn-rounded btn-lg btn-icon btn-default" title="QQ快捷登录" onclick="connect('qq')"><i class="fa fa-qq fa-lg" style="color: #0BB2FF"></i></button>
+<button type="button" class="btn btn-rounded btn-lg btn-icon btn-default" title="<?php echo __('qq_login')?>" onclick="connect('qq')"><i class="fa fa-qq fa-lg" style="color: #0BB2FF"></i></button>
 <?php }?>
 <?php if($conf['login_wx']>0 || $conf['login_wx']==-1){?>
-<button type="button" class="btn btn-rounded btn-lg btn-icon btn-default" title="微信快捷登录" onclick="connect('wx')"><i class="fa fa-wechat fa-lg" style="color: green"></i></button>
+<button type="button" class="btn btn-rounded btn-lg btn-icon btn-default" title="<?php echo __('wechat_login')?>" onclick="connect('wx')"><i class="fa fa-wechat fa-lg" style="color: green"></i></button>
 </div>
 <?php }?>
 <?php }?>
@@ -141,7 +141,7 @@ var handlerEmbed = function (captchaObj) {
 	}).onSuccess(function () {
 		var result = captchaObj.getValidate();
 		if (!result) {
-			return alert('请完成验证');
+			return alert('<?php echo __('js_complete_captcha')?>');
 		}
 		$.captchaResult = result;
 		$.captchaObj = captchaObj;
@@ -153,7 +153,7 @@ $(document).ready(function(){
 		var type=$("input[name='type']").val();
 		var user=$("input[name='user']").val();
 		var pass=$("input[name='pass']").val();
-		if(user=='' || pass==''){layer.alert(type==1?'账号和密码不能为空！':'ID和密钥不能为空！');return false;}
+		if(user=='' || pass==''){layer.alert(type==1?'<?php echo __('js_account_empty')?>':'<?php echo __('js_id_key_empty')?>');return false;}
 		submitLogin(type,user,pass);
 	});
 	if(captcha_open==1){
@@ -191,7 +191,7 @@ $(document).ready(function(){
 function submitLogin(type,user,pass){
 	var csrf_token=$("input[name='csrf_token']").val();
 	if(captcha_open == 1 && !$.captchaResult){
-		layer.alert('请先完成滑动验证！'); return false;
+		layer.alert('<?php echo __('js_complete_slide')?>'); return false;
 	}
 	var enc_type = '0';
 	if(PUBLIC_KEY_PEM != ''){
@@ -217,7 +217,7 @@ function submitLogin(type,user,pass){
 			}
 		},
 		error: function (data) {
-			layer.msg('服务器错误', {icon: 2});
+			layer.msg('<?php echo __('server_error')?>', {icon: 2});
 			return false;
 		}
 	});

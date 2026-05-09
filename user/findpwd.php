@@ -11,7 +11,7 @@ $_SESSION['csrf_token'] = $csrf_token;
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
-<title>找回密码 | <?php echo $conf['sitename']?></title>
+<title><?php echo __('find_password')?> | <?php echo $conf['sitename']?></title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <link rel="stylesheet" href="<?php echo $cdnpublic?>twitter-bootstrap/3.4.1/css/bootstrap.min.css" type="text/css" />
 <link rel="stylesheet" href="<?php echo $cdnpublic?>animate.css/3.7.2/animate.min.css" type="text/css" />
@@ -26,7 +26,7 @@ $_SESSION['csrf_token'] = $csrf_token;
 <span class="navbar-brand block m-t" id="sitename"><?php echo $conf['sitename']?></span>
 <div class="m-b-lg">
 <div class="wrapper text-center">
-<strong>找回密码</strong>
+<strong><?php echo __('find_password')?></strong>
 </div>
 <form name="form" class="form-validation">
 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token?>">
@@ -35,26 +35,26 @@ $_SESSION['csrf_token'] = $csrf_token;
 <div class="list-group list-group-sm swaplogin">
 <div class="list-group-item">
 <select class="form-control" name="type">
-<option value="email">使用邮箱找回</option><option value="phone">使用手机找回</option></select>
+<option value="email"><?php echo __('use_email')?></option><option value="phone"><?php echo __('use_phone')?></option></select>
 </div>
 <div class="list-group-item">
-<input type="text" name="account" placeholder="邮箱/手机号" class="form-control no-border" required>
+<input type="text" name="account" placeholder="<?php echo __('email_phone')?>" class="form-control no-border" required>
 </div>
 <div class="list-group-item">
 <div class="input-group">
-<input type="text" name="code" placeholder="输入验证码" class="form-control no-border" required>
-<a class="input-group-addon" id="sendcode">获取验证码</a>
+<input type="text" name="code" placeholder="<?php echo __('enter_code')?>" class="form-control no-border" required>
+<a class="input-group-addon" id="sendcode"><?php echo __('get_code')?></a>
 </div>
 </div>
 <div class="list-group-item">
-<input type="password" name="pwd" placeholder="请输入新密码" class="form-control no-border" required>
+<input type="password" name="pwd" placeholder="<?php echo __('enter_new_password')?>" class="form-control no-border" required>
 </div>
 <div class="list-group-item">
-<input type="password" name="pwd2" placeholder="请重新输入密码" class="form-control no-border" required>
+<input type="password" name="pwd2" placeholder="<?php echo __('re_enter_password')?>" class="form-control no-border" required>
 </div>
 </div>
-<button type="button" id="submit" class="btn btn-lg btn-primary btn-block" ng-click="login()" ng-disabled='form.$invalid'>确认提交</button>
-<a href="login.php" ui-sref="access.signup" class="btn btn-lg btn-default btn-block">返回登录</a>
+<button type="button" id="submit" class="btn btn-lg btn-primary btn-block" ng-click="login()" ng-disabled='form.$invalid'><?php echo __('btn_confirm_submit')?></button>
+<a href="login.php" ui-sref="access.signup" class="btn btn-lg btn-default btn-block"><?php echo __('back_to_login')?></a>
 </form>
 </div>
 <div class="text-center">
@@ -88,13 +88,13 @@ function invokeSettime(obj){
     function settime(obj) {
         if (countdown == 0) {
             $(obj).attr("data-lock", "false");
-            $(obj).text("获取验证码");
+            $(obj).text("<?php echo __('get_code')?>");
             countdown = 60;
             return;
         } else {
 			$(obj).attr("data-lock", "true");
             $(obj).attr("disabled",true);
-            $(obj).text("(" + countdown + ") s 重新发送");
+            $(obj).text("(" + countdown + ") <?php echo __('reg_resend')?>");
             countdown--;
         }
         setTimeout(function() {
@@ -109,7 +109,7 @@ var handlerEmbed = function (captchaObj) {
 	}).onSuccess(function () {
 		var result = captchaObj.getValidate();
 		if (!result) {
-			return alert('请完成验证');
+			return alert('<?php echo __('js_complete_captcha')?>');
 		}
 		var ii = layer.load(2, {shade:[0.1,'#fff']});
 		$.ajax({
@@ -121,7 +121,7 @@ var handlerEmbed = function (captchaObj) {
 				layer.close(ii);
 				if(data.code == 0){
 					new invokeSettime("#sendcode");
-					layer.msg('发送成功，请注意查收！');
+					layer.msg('<?php echo __('js_send_success')?>');
 				}else{
 					layer.alert(data.msg);
 					captchaObj.reset();
@@ -129,19 +129,19 @@ var handlerEmbed = function (captchaObj) {
 			} 
 		});
 	}).onError(function(){
-		layer.msg('验证码加载失败，请刷新页面重试', {icon: 5});
+		layer.msg('<?php echo __('js_captcha_load_failed')?>', {icon: 5});
 	});
 	$('#sendcode').click(function () {
 		if ($(this).attr("data-lock") === "true") return;
 		type = $("select[name='type']").val();
 		sendto=$("input[name='account']").val();
 		if(type=='phone'){
-			if(sendto==''){layer.alert('手机号码不能为空！');return false;}
-			if(sendto.length!=11){layer.alert('手机号码不正确！');return false;}
+			if(sendto==''){layer.alert('<?php echo __('js_phone_empty')?>');return false;}
+			if(sendto.length!=11){layer.alert('<?php echo __('js_phone_invalid')?>');return false;}
 		}else{
-			if(sendto==''){layer.alert('邮箱不能为空！');return false;}
+			if(sendto==''){layer.alert('<?php echo __('js_email_empty')?>');return false;}
 			var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/;
-			if(!reg.test(sendto)){layer.alert('邮箱格式不正确！');return false;}
+			if(!reg.test(sendto)){layer.alert('<?php echo __('js_email_invalid')?>');return false;}
 		}
 		if(typeof captchaObj.showCaptcha === 'function'){
 			captchaObj.showCaptcha();
@@ -153,9 +153,9 @@ var handlerEmbed = function (captchaObj) {
 $(document).ready(function(){
 	$("select[name='type']").change(function(){
 		if($(this).val() == 'email'){
-			$("input[name='account']").attr('placeholder','邮箱');
+			$("input[name='account']").attr('placeholder','<?php echo __('email_label')?>');
 		}else{
-			$("input[name='account']").attr('placeholder','手机号码');
+			$("input[name='account']").attr('placeholder','<?php echo __('phone_label')?>');
 		}
 	});
 	$("select[name='type']").change();
@@ -166,13 +166,13 @@ $(document).ready(function(){
 		var code=$("input[name='code']").val();
 		var pwd=$("input[name='pwd']").val();
 		var pwd2=$("input[name='pwd2']").val();
-		if(account=='' || code=='' || pwd=='' || pwd2==''){layer.alert('请确保各项不能为空！');return false;}
-		if(pwd!=pwd2){layer.alert('两次输入密码不一致！');return false;}
+		if(account=='' || code=='' || pwd=='' || pwd2==''){layer.alert('<?php echo __('js_fields_empty')?>');return false;}
+		if(pwd!=pwd2){layer.alert('<?php echo __('js_password_mismatch')?>');return false;}
 		if(type=='phone'){
-			if(account.length!=11){layer.alert('手机号码不正确！');return false;}
+			if(account.length!=11){layer.alert('<?php echo __('js_phone_invalid')?>');return false;}
 		}else{
 			var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/;
-			if(!reg.test(account)){layer.alert('邮箱格式不正确！');return false;}
+			if(!reg.test(account)){layer.alert('<?php echo __('js_email_invalid')?>');return false;}
 		}
 		var enc_type = '0';
 		if(PUBLIC_KEY_PEM != ''){

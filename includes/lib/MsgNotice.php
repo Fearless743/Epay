@@ -218,6 +218,17 @@ class MsgNotice
                     'text' => $content,
                 ],
             ];
+        } elseif (strpos($url, 'api.telegram.org')) {
+            $urlParts = parse_url($url);
+            parse_str($urlParts['query'] ?? '', $queryParams);
+            $chat_id = $queryParams['chat_id'] ?? '';
+            $content = preg_replace('/\*\*(.+?)\*\*/', '<b>$1</b>', $content);
+            $content = '<b>' . $title . '</b>' . "\n" . $content;
+            $post = [
+                'chat_id' => $chat_id,
+                'text' => $content,
+                'parse_mode' => 'HTML',
+            ];
         } else {
             if($admin){
                 $CACHE->save('mailerrmsg', ['errmsg'=>'不支持的Webhook地址', 'time'=>date('Y-m-d H:i:s')], 86400);
@@ -226,7 +237,7 @@ class MsgNotice
         }
         $result = get_curl($url, json_encode($post), 0, 0, 0, 0, 0, ['Content-Type: application/json; charset=UTF-8']);
         $arr = json_decode($result, true);
-        if (isset($arr['errcode']) && $arr['errcode'] == 0 || isset($arr['code']) && $arr['code'] == 0) {
+        if (isset($arr['errcode']) && $arr['errcode'] == 0 || isset($arr['code']) && $arr['code'] == 0 || isset($arr['ok']) && $arr['ok'] === true) {
             return true;
         } else {
             if($admin){

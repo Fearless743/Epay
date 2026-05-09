@@ -47,25 +47,36 @@ if(!defined('IN_CRONLITE'))exit();
 
 </ul>
 <ul class="nav navbar-nav navbar-right z_navbar">
-<li><a href="/">首页</a></li>
-<li><a href="doc.html">开发文档</a></li>
+<li><a href="/"><?php echo __('home')?></a></li>
+<li><a href="doc.html"><?php echo __('dev_doc')?></a></li>
 <?php if($conf['test_open']){?>
-<li><a href="/user/test.php">支付测试</a></li>
+<li><a href="/user/test.php"><?php echo __('pay_test', '支付测试')?></a></li>
 <?php }?>
-<li><a href="/user/">用户中心</a></li>
-                    
-                </ul>
+<li><a href="/user/"><?php echo __('user_center')?></a></li>
+<li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-globe"></i> <?php echo get_lang_list()[$lang] ?? '中文'?> <b class="caret"></b></a>
+    <ul class="dropdown-menu">
+        <?php foreach(get_lang_list() as $langcode => $langname){?>
+        <li><a href="javascript:setLang('<?php echo $langcode?>')"><?php echo $langname?></a></li>
+        <?php }?>
+    </ul>
+</li>
+</ul>
 </div>
 </div>
 </div>
 </nav>
 </header>
-<div id="ie9">你当前的浏览器版本过低，请您升级至IE9以上版本，以达到最佳效果，谢谢！<span class="closeIE">X</span></div>
+<div id="ie9"><?php echo __('browser_too_low_tip')?> <span class="closeIE">X</span></div>
 <div id="scroll_Top">
 <i class="fa fa-arrow-up"></i>
-<a href="javascript:;"title="去顶部"class="TopTop">TOP</a></div>
+<a href="javascript:;"title="<?php echo __('top', '去顶部')?>"class="TopTop">TOP</a></div>
 <script>
-
+function setLang(lang){
+    var url = new URL(window.location.href);
+    url.searchParams.set('lang', lang);
+    window.location.href = url.toString();
+}
   $('.closeIE').click(function(event) {
     $('#ie9').fadeOut();
   });

@@ -19,11 +19,11 @@ require INDEX_ROOT.'head.php';
 <div class="col-xs-12 col-sm-6 col-md-6">
 <div class="ban2_text">
 <div class="ban2_status docker">
-<div class="ban2_middle">欢迎使用<?php echo $conf['sitename']?></div>
-<div class="ban2_content">提供免签约支付宝、QQ钱包、微信支付</div>
-                      
+<div class="ban2_middle"><?php echo __('welcome_to')?><?php echo $conf['sitename']?></div>
+<div class="ban2_content"><?php echo __('provide_pay_service')?></div>
+
                         <div class="ban2_experience">
-<a href="/user/"class="btn proceed">登录商户</a>&nbsp;&nbsp;<a href="/user/reg.php"class="btn proceed">注册商户</a><br/>
+<a href="/user/"class="btn proceed"><?php echo __('login_merchant')?></a>&nbsp;&nbsp;<a href="/user/reg.php"class="btn proceed"><?php echo __('register_merchant_btn')?></a><br/>
                       </div>
 </div>
 </div>
@@ -46,29 +46,29 @@ require INDEX_ROOT.'head.php';
 <div class="container">
 <div class="row">
 <div class="col-xs-12 cloud_server">
-<div class="h3"><?php echo $conf['sitename']?>®免签约支付产品</div>
+<div class="h3"><?php echo $conf['sitename']?>®<?php echo __('free_sign_product')?></div>
 </div>
 <div class="col-xs-6 col-sm-4 col-md-4">
 <div id="container_server">
 <div class="server_item container_server"></div>
-<div class="server-head h4">多种支付方式
-<div class="h5 text-center">支持财付通 支付宝 微信 QQ钱包</div>
+<div class="server-head h4"><?php echo __('multi_pay_methods')?>
+<div class="h5 text-center"><?php echo __('multi_pay_desc')?></div>
 </div>
 </div>
 </div>
 <div class="col-xs-6 col-sm-4 col-md-4">
 <div id="server-arrange">
 <div class="server_item arrange"></div>
-<div class="server-head h4">对接费率超低
-<div class="h5 text-center">每笔交易手续费低至2%，比其它平台更便宜</div>
+<div class="server-head h4"><?php echo __('low_rate')?>
+<div class="h5 text-center"><?php echo __('low_rate_desc')?></div>
 </div>
 </div>
 </div>
 <div class="col-xs-6 col-sm-4 col-md-4">
 <div id="codebuild">
 <div class="server_item codebuild"></div>
-<div class="server-head h4">无需自主提现
-<div class="h5 text-center">满一定金额即可自动提现到你的支付宝账号</div>
+<div class="server-head h4"><?php echo __('auto_withdraw')?>
+<div class="h5 text-center"><?php echo __('auto_withdraw_desc')?></div>
 </div>
 </div>
 </div>
@@ -83,7 +83,7 @@ require INDEX_ROOT.'head.php';
 <div class="container">
 <div class="row">
 <div class="col-xs-12 blog-head">
-<div class="h3">平台合作伙伴</div>
+<div class="h3"><?php echo __('partners')?></div>
 <div class="col-xs-3">
 <img src="<?php echo STATIC_ROOT?>images/alipay.png" width="150">
 </div>

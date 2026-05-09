@@ -1680,7 +1680,7 @@ if($errmsg2){
 	</div><br/>
 	<div class="form-group">
 	  <label class="col-sm-3 control-label">群机器人Webhook地址</label>
-	  <div class="col-sm-9"><input type="text" name="msgrobot_url" value="<?php echo $conf['msgrobot_url']; ?>" class="form-control"/><font color="green">仅支持填写企业微信、钉钉、飞书群机器人的Webhook地址</font></div>
+	  <div class="col-sm-9"><input type="text" name="msgrobot_url" value="<?php echo $conf['msgrobot_url']; ?>" class="form-control"/><font color="green">仅支持填写企业微信、钉钉、飞书、Telegram群机器人的Webhook地址</font></div>
 	</div><br/>
 	<div class="form-group">
 	  <label class="col-sm-3 control-label">管理员手机号码</label>

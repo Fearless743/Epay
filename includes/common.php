@@ -78,6 +78,14 @@ if ($conf['version'] < DB_VERSION) {
 }
 
 include_once(SYSTEM_ROOT."functions.php");
+
+// 多语言初始化
+$lang = detect_lang();
+$lang_text = load_lang($lang);
+if ($lang !== 'zh' && empty($lang_text)) {
+    $lang_text = load_lang('zh');
+}
+
 include_once(SYSTEM_ROOT."member.php");
 
 require_once SYSTEM_ROOT."vendor/autoload.php";

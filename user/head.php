@@ -65,6 +65,18 @@ $conf = array_merge($conf, $groupconfig);
         <!-- nabar right -->
         <ul class="nav navbar-nav navbar-right">
           <li class="dropdown">
+            <a href="#" data-toggle="dropdown" class="dropdown-toggle">
+              <i class="fa fa-globe"></i> <?php echo get_lang_list()[$lang] ?? '中文'?> <b class="caret"></b>
+            </a>
+            <ul class="dropdown-menu animated fadeInRight">
+              <?php foreach(get_lang_list() as $langcode => $langname){?>
+              <li class="<?php echo $lang==$langcode?'active':''?>">
+                <a href="javascript:setLang('<?php echo $langcode?>')"><?php echo $langname?></a>
+              </li>
+              <?php }?>
+            </ul>
+          </li>
+          <li class="dropdown">
             <a href="#" data-toggle="dropdown" class="dropdown-toggle clear" data-toggle="dropdown">
               <span class="thumb-sm avatar pull-right m-t-n-sm m-b-n-sm m-l-sm">
                 <img src="<?php echo ($userrow['qq'])?'//q2.qlogo.cn/headimg_dl?bs=qq&dst_uin='.$userrow['qq'].'&src_uin='.$userrow['qq'].'&fid='.$userrow['qq'].'&spec=100&url_enc=0&referer=bu_interface&term_type=PC':'assets/img/user.png'?>">
@@ -76,22 +88,22 @@ $conf = array_merge($conf, $groupconfig);
             <ul class="dropdown-menu animated fadeInRight w">
               <li>
                 <a href="index.php">
-                  <span>用户中心</span>
+                  <span><?php echo __('user_center')?></span>
                 </a>
               </li>
               <li>
                 <a href="editinfo.php">
-                  <span>修改资料</span>
+                  <span><?php echo __('edit_profile')?></span>
                 </a>
               </li>
 			  <li>
                 <a href="userinfo.php?mod=account">
-                  <span>修改密码</span>
+                  <span><?php echo __('change_password')?></span>
                 </a>
               </li>
               <li class="divider"></li>
               <li>
-                <a ui-sref="access.signin" href="login.php?logout">退出登录</a>
+                <a ui-sref="access.signin" href="login.php?logout"><?php echo __('logout')?></a>
               </li>
             </ul>
             <!-- / dropdown -->
@@ -111,51 +123,51 @@ $conf = array_merge($conf, $groupconfig);
           <nav ui-nav class="navi clearfix">
             <ul class="nav">
               <li class="hidden-folded padder m-t m-b-sm text-muted text-xs">
-                <span>导航</span>
+                <span><?php echo __('navigation')?></span>
               </li>
               <li class="<?php echo checkIfActive('index,')?>">
                 <a href="./">
                   <i class="glyphicon glyphicon-home icon text-primary-dker"></i>
 				  <b class="label bg-info pull-right">N</b>
-                  <span class="font-bold">用户中心</span>
+                  <span class="font-bold"><?php echo __('user_center')?></span>
                 </a>
               </li>
               <li class="<?php echo checkIfActive('userinfo,editinfo,certificate,deposit')?>">
-                <a href class="auto">      
+                <a href class="auto">
                   <span class="pull-right text-muted">
                     <i class="fa fa-fw fa-angle-right text"></i>
                     <i class="fa fa-fw fa-angle-down text-active"></i>
                   </span>
                   <i class="glyphicon glyphicon-leaf icon text-success-lter"></i>
-                  <span>个人资料</span>
+                  <span><?php echo __('profile')?></span>
                 </a>
                 <ul class="nav nav-sub dk">
 				  <li>
                     <a href="userinfo.php?mod=api">
-                      <span>API信息</span>
+                      <span><?php echo __('api_info')?></span>
                     </a>
                   </li>
                   <li>
                     <a href="editinfo.php">
-                      <span>修改资料</span>
+                      <span><?php echo __('edit_profile')?></span>
                     </a>
                   </li>
 				  <li>
                     <a href="userinfo.php?mod=account">
-                      <span>修改密码</span>
+                      <span><?php echo __('change_password')?></span>
                     </a>
                   </li>
 				  <?php if($conf['cert_open']>0){?>
 				  <li>
                     <a href="certificate.php">
-                      <span>实名认证</span>
+                      <span><?php echo __('real_name')?></span>
                     </a>
                   </li>
 				  <?php }?>
           <?php if($conf['user_deposit']>0){?>
 				  <li>
                     <a href="deposit.php">
-                      <span>保证金</span>
+                      <span><?php echo __('deposit')?></span>
                     </a>
                   </li>
 				  <?php }?>
@@ -163,31 +175,31 @@ $conf = array_merge($conf, $groupconfig);
               </li>
               <li class="line dk"></li>
               <li class="hidden-folded padder m-t m-b-sm text-muted text-xs">
-                <span>查询</span>
+                <span><?php echo __('query')?></span>
               </li>
 			  <li class="<?php echo checkIfActive('order')?>">
                 <a href="order.php">
                   <i class="glyphicon glyphicon-list-alt"></i>
-                  <span>订单记录</span>
+                  <span><?php echo __('order_list')?></span>
                 </a>
               </li>
 			  <li class="<?php echo checkIfActive('settle')?>">
                 <a href="settle.php">
                   <i class="glyphicon glyphicon-check"></i>
-                  <span>结算记录</span>
+                  <span><?php echo __('settle_list')?></span>
                 </a>
               </li>
 			  <li class="<?php echo checkIfActive('record')?>">
                 <a href="record.php">
                   <i class="glyphicon glyphicon-calendar"></i>
-                  <span>资金明细</span>
+                  <span><?php echo __('fund_detail')?></span>
                 </a>
               </li>
 			  <?php if($conf['settle_open']==2||$conf['settle_open']==3){?>
 			  <li class="<?php echo checkIfActive('apply')?>">
                 <a href="apply.php">
                   <i class="glyphicon glyphicon-edit"></i>
-                  <span>申请提现</span>
+                  <span><?php echo __('withdraw')?></span>
                 </a>
               </li>
 			  <?php }?>
@@ -195,7 +207,7 @@ $conf = array_merge($conf, $groupconfig);
 			  <li class="<?php echo checkIfActive('recharge')?>">
                 <a href="recharge.php">
                   <i class="glyphicon glyphicon-yen"></i>
-                  <span>余额充值</span>
+                  <span><?php echo __('recharge')?></span>
                 </a>
               </li>
 			  <?php }?>
@@ -203,7 +215,7 @@ $conf = array_merge($conf, $groupconfig);
 			  <li class="<?php echo checkIfActive('groupbuy')?>">
                 <a href="groupbuy.php">
                   <i class="glyphicon glyphicon-shopping-cart"></i>
-                  <span>购买会员</span>
+                  <span><?php echo __('buy_member')?></span>
                 </a>
               </li>
 			  <?php }?>
@@ -211,7 +223,7 @@ $conf = array_merge($conf, $groupconfig);
 			  <li class="<?php echo checkIfActive('domain')?>">
                 <a href="domain.php">
                   <i class="glyphicon glyphicon-globe"></i>
-                  <span>授权域名</span>
+                  <span><?php echo __('auth_domain')?></span>
                 </a>
               </li>
 			  <?php }?>
@@ -220,7 +232,7 @@ $conf = array_merge($conf, $groupconfig);
                 <a href="complain.php">
                   <?php $complain_total = $DB->getColumn("SELECT count(*) from pre_complain WHERE uid=$uid AND status=0"); if($complain_total>0){echo '<b class="label bg-danger pull-right">'.$complain_total.'</b>';}?>
                   <i class="fa fa-commenting fa-fw"></i>
-                  <span>交易投诉</span>
+                  <span><?php echo __('complaint')?></span>
                 </a>
               </li>
 			  <?php }?>
@@ -228,20 +240,20 @@ $conf = array_merge($conf, $groupconfig);
               <li class="<?php echo checkIfActive('mchrisk')?>">
                 <a href="mchrisk.php">
                   <i class="fa fa-asterisk fa-fw"></i>
-                  <span>商户违规记录</span>
+                  <span><?php echo __('merchant_violation')?></span>
                 </a>
               </li>
 			  <?php }?>
               <li class="line dk hidden-folded"></li>
 
-              <li class="hidden-folded padder m-t m-b-sm text-muted text-xs">          
-                <span>其他</span>
+              <li class="hidden-folded padder m-t m-b-sm text-muted text-xs">
+                <span><?php echo __('others')?></span>
               </li>
 			  <?php if($conf['user_transfer']==1){?>
               <li class="<?php echo checkIfActive('transfer,transfer_add')?>">
                 <a href="transfer.php">
                   <i class="fa fa-send-o fa-fw"></i>
-                  <span>代付管理</span>
+                  <span><?php echo __('transfer_manage')?></span>
                 </a>
               </li>
 			  <?php }?>
@@ -249,7 +261,7 @@ $conf = array_merge($conf, $groupconfig);
               <li class="<?php echo checkIfActive('onecode')?>">
                 <a href="onecode.php">
                   <i class="fa fa-qrcode fa-fw"></i>
-                  <span>聚合收款</span>
+                  <span><?php echo __('qr_pay')?></span>
                 </a>
               </li>
 			  <?php }?>
@@ -257,21 +269,21 @@ $conf = array_merge($conf, $groupconfig);
               <li class="<?php echo checkIfActive('invite')?>">
                 <a href="invite.php">
                   <i class="fa fa-share-alt fa-fw"></i>
-                  <span>邀请返现</span>
+                  <span><?php echo __('invite_cashback')?></span>
                 </a>
               </li>
 			  <?php }?>
               <li>
                 <a href="/doc.html" target="_blank">
                   <i class="fa fa-book"></i>
-                  <span>开发文档</span>
+                  <span><?php echo __('dev_doc')?></span>
                 </a>
               </li>
 			  <?php if(!empty($conf['qqqun'])){?>
               <li>
                 <a href="<?php echo $conf['qqqun']?>" target="blank">
                   <i class="fa fa-qq"></i>
-                  <span>产品QQ群</span>
+                  <span><?php echo __('product_qq_group')?></span>
                 </a>
               </li>
 			  <?php }?>
@@ -279,7 +291,7 @@ $conf = array_merge($conf, $groupconfig);
               <li>
                 <a href="<?php echo $conf['appurl']?>" target="blank">
                   <i class="fa fa-android"></i>
-                  <span>APP下载</span>
+                  <span><?php echo __('app_download')?></span>
                 </a>
               </li>
 			  <?php }?>
@@ -312,3 +324,10 @@ $conf = array_merge($conf, $groupconfig);
   </aside>
   <!-- / aside -->
   <!-- content -->
+<script>
+function setLang(lang){
+    var url = new URL(window.location.href);
+    url.searchParams.set('lang', lang);
+    window.location.href = url.toString();
+}
+</script>

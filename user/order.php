@@ -1,12 +1,12 @@
 <?php
 include("../includes/common.php");
 if($islogin2==1){}else exit("<script language='javascript'>window.location.href='./login.php';</script>");
-$title='订单记录';
+$title=__('order_list');
 include './head.php';
 ?>
 <?php
 
-$type_select = '<option value="0">支付方式</option>';
+$type_select = '<option value="0">'.__('pay_method').'</option>';
 $rs = $DB->getAll("SELECT * FROM pre_type WHERE status=1 ORDER BY id ASC");
 foreach($rs as $row){
 	$type_select .= '<option value="'.$row['id'].'">'.$row['showname'].'</option>';
@@ -25,7 +25,7 @@ unset($rs);
     <div class="app-content-body ">
 
 <div class="bg-light lter b-b wrapper-md hidden-print">
-  <h1 class="m-n font-thin h3">订单记录</h1>
+  <h1 class="m-n font-thin h3"><?php echo __('order_list')?></h1>
 </div>
 <div class="wrapper-md control">
 <?php if(isset($msg)){?>
@@ -35,7 +35,7 @@ unset($rs);
 <?php }?>
 	<div class="panel panel-default">
 		<div class="panel-heading font-bold">
-			<h3 class="panel-title">订单记录</h3>
+			<h3 class="panel-title"><?php echo __('order_list')?></h3>
 		</div>
 
 	    <form onsubmit="return searchSubmit()" method="GET" class="form-inline" id="searchToolbar">
@@ -44,15 +44,15 @@ unset($rs);
 		<input type="hidden" name="applyid" value="">
 	      <div class="form-group">
 			<select class="form-control" name="type">
-			  <option value="1">系统订单号</option>
-			  <option value="2">商户订单号</option>
-			  <option value="9">接口订单号</option>
-			  <option value="10">用户交易单号</option>
-			  <option value="11">渠道交易单号</option>
-			  <option value="3">商品名称</option>
-			  <option value="4">商品金额</option>
-			  <option value="5">实付金额</option>
-			  <option value="6">网站域名</option>
+			  <option value="1"><?php echo __('system_trade_no')?></option>
+			  <option value="2"><?php echo __('merchant_trade_no')?></option>
+			  <option value="9"><?php echo __('api_trade_no')?></option>
+			  <option value="10"><?php echo __('user_trade_no')?></option>
+			  <option value="11"><?php echo __('channel_trade_no')?></option>
+			  <option value="3"><?php echo __('product_name')?></option>
+			  <option value="4"><?php echo __('product_amount')?></option>
+			  <option value="5"><?php echo __('actual_pay')?></option>
+			  <option value="6"><?php echo __('website_domain')?></option>
 			  <option value="7">支付IP</option>
 			  <option value="8">支付账号</option>
 			</select>

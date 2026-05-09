@@ -1551,3 +1551,44 @@ function get_ip_region($ip){
 		return $region[1].$region[2].$region[3];
 	}
 }
+
+// 多语言翻译函数
+function __($key, $default = '') {
+    global $lang_text;
+    if (isset($lang_text[$key])) {
+        return $lang_text[$key];
+    }
+    return $default !== '' ? $default : $key;
+}
+
+function load_lang($lang) {
+    $file = SYSTEM_ROOT . 'lang/' . $lang . '.php';
+    if (file_exists($file)) {
+        return require $file;
+    }
+    return [];
+}
+
+function detect_lang() {
+    // 1. URL 参数
+    if (isset($_GET['lang']) && preg_match('/^[a-z]{2}$/', $_GET['lang'])) {
+        setcookie('lang', $_GET['lang'], time() + 86400 * 30, '/');
+        return $_GET['lang'];
+    }
+    // 2. Cookie
+    if (isset($_COOKIE['lang']) && preg_match('/^[a-z]{2}$/', $_COOKIE['lang'])) {
+        return $_COOKIE['lang'];
+    }
+    // 3. 浏览器 Accept-Language
+    $accept = isset($_SERVER['HTTP_ACCEPT_LANGUAGE']) ? $_SERVER['HTTP_ACCEPT_LANGUAGE'] : '';
+    if (strpos($accept, 'en') === 0) return 'en';
+    // 4. 默认
+    return 'zh';
+}
+
+function get_lang_list() {
+    return [
+        'zh' => '中文',
+        'en' => 'English',
+    ];
+}

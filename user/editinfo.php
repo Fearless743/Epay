@@ -391,7 +391,7 @@ if(strlen($userrow['phone'])==11){
 				<?php if($conf['robotnotice']){?><div class="form-group">
 					<label class="col-sm-2 control-label">群机器人Webhook地址</label>
 					<div class="col-sm-9">
-					<input class="form-control" type="text" name="notice_msgrobot_url" value="<?php echo $userrow['msgconfig']['msgrobot_url']?>" placeholder="仅支持填写企业微信、钉钉、飞书群机器人的Webhook地址">
+					<input class="form-control" type="text" name="notice_msgrobot_url" value="<?php echo $userrow['msgconfig']['msgrobot_url']?>" placeholder="仅支持填写企业微信、钉钉、飞书、Telegram群机器人的Webhook地址">
 					</div>
 				</div><?php }?>
 				<div class="form-group">
