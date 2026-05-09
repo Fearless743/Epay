@@ -1,0 +1,6 @@
+/config.php
+/install/install.lock
+/data/
+.DS_Store
+*.swp
+*.swo

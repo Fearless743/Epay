@@ -1,0 +1,113 @@
+name: Auto Release
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths-ignore:
+      - '.github/**'
+      - '*.md'
+      - '*.txt'
+      - 'CLAUDE.md'
+      - 'AGENTS.md'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get next version from VERSION constant
+        id: get_tag
+        run: |
+          # 从 common.php 读取 VERSION 常量
+          CURRENT_VER=$(grep -oP "define\('VERSION',\s*'\K[0-9]+" includes/common.php || echo "1000")
+          # 标签格式: v{VERSION}
+          NEW_VERSION="v${CURRENT_VER}"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "current_ver=$CURRENT_VER" >> $GITHUB_OUTPUT
+
+      - name: Check if tag already exists
+        id: check_tag
+        run: |
+          if git rev-parse "${{ steps.get_tag.outputs.new_version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create tag
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a ${{ steps.get_tag.outputs.new_version }} -m "Release ${{ steps.get_tag.outputs.new_version }}"
+          git push origin ${{ steps.get_tag.outputs.new_version }}
+
+      - name: Build release archive
+        if: steps.check_tag.outputs.exists == 'false'
+        run: |
+          mkdir -p release_package
+          rsync -a --exclude='.git' \
+                   --exclude='.github' \
+                   --exclude='.agents' \
+                   --exclude='.codex' \
+                   --exclude='.gitignore' \
+                   --exclude='CLAUDE.md' \
+                   --exclude='AGENTS.md' \
+                   --exclude='config.php' \
+                   --exclude='install/install.lock' \
+                   --exclude='release_package' \
+                   ./ release_package/Epay/
+          cd release_package
+          zip -r ../Epay-${{ steps.get_tag.outputs.new_version }}.zip Epay/
+          cd ..
+          tar -czf Epay-${{ steps.get_tag.outputs.new_version }}.tar.gz -C release_package Epay/
+
+      - name: Generate changelog
+        if: steps.check_tag.outputs.exists == 'false'
+        id: changelog
+        run: |
+          PREV_TAG=$(git tag -l 'v*' --sort=-v:refname | sed -n '2p')
+          if [ -z "$PREV_TAG" ]; then
+            LOG=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
+          else
+            LOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+          if [ -z "$LOG" ]; then
+            LOG="- ${{ steps.get_tag.outputs.new_version }} release"
+          fi
+          echo "log<<EOF" >> $GITHUB_OUTPUT
+          echo "$LOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        if: steps.check_tag.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_tag.outputs.new_version }}
+          name: "Release ${{ steps.get_tag.outputs.new_version }}"
+          body: |
+            ## 更新日志
+            ${{ steps.changelog.outputs.log }}
+
+            ## 安装说明
+            - 全新安装：下载 `Epay-${{ steps.get_tag.outputs.new_version }}.zip` 解压部署
+            - 已有用户：通过管理后台「系统更新」功能自动升级
+
+            ## 版本信息
+            - 程序版本：`${{ steps.get_tag.outputs.current_ver }}`
+            - 更新包：`Epay-${{ steps.get_tag.outputs.new_version }}.zip`
+          files: |
+            Epay-${{ steps.get_tag.outputs.new_version }}.zip
+            Epay-${{ steps.get_tag.outputs.new_version }}.tar.gz
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

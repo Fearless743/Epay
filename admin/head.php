@@ -99,7 +99,7 @@ if($admin_cdnpublic==1){
         <li><a href="./applyments_merchant.php">进件商户管理</a></li><?php }?>
             </ul>
           </li>
-		  <li class="<?php echo checkIfActive('set,gonggao,set_wxkf')?>">
+		  <li class="<?php echo checkIfActive('set,gonggao,set_wxkf,update')?>">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-cog"></i> 系统设置<b class="caret"></b></a>
             <ul class="dropdown-menu">
               <li><a href="./set.php?mod=site">网站信息配置</a></li>
@@ -116,6 +116,7 @@ if($admin_cdnpublic==1){
 			  <li><a href="./set.php?mod=upimg">网站Logo上传</a><li>
 			  <li><a href="./set.php?mod=cron">计划任务配置</a><li>
         <li><a href="./set.php?mod=proxy">中转代理配置</a><li>
+        <li><a href="./update.php"><i class="fa fa-cloud-download"></i> 系统更新</a></li>
         <li><a href="./set_wxkf.php">H5跳转微信客服支付</a></li>
             </ul>
           </li>
