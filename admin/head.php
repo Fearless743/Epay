@@ -116,7 +116,7 @@ if($admin_cdnpublic==1){
 			  <li><a href="./set.php?mod=upimg">网站Logo上传</a><li>
 			  <li><a href="./set.php?mod=cron">计划任务配置</a><li>
         <li><a href="./set.php?mod=proxy">中转代理配置</a><li>
-        <li><a href="./update.php"><i class="fa fa-cloud-download"></i> 系统更新</a></li>
+        <li><a href="./update.php">系统更新</a></li>
         <li><a href="./set_wxkf.php">H5跳转微信客服支付</a></li>
             </ul>
           </li>
