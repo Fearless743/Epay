@@ -1,7 +1,7 @@
 <?php
 error_reporting(0);
-define('DB_VERSION', '2054');
 require '../config.php';
+require __DIR__ . '/db_upgrade.php';
 
 @header('Content-Type: text/html; charset=UTF-8');
 
@@ -21,34 +21,35 @@ if($rs = $db->query("SELECT v FROM pay_config WHERE k='version'")){
 	$version = $rs->fetchColumn();
 }
 
-if($version==DB_VERSION){
-	exit('你的网站已经升级到最新版本了');
-}elseif($version<2044){
-	$sqls = file_get_contents('update2.sql');
-	$sqls .= file_get_contents('update3.sql');
-	$sqls=explode(';', $sqls);
-	$sqls[]="UPDATE `pre_config` SET `v` = '".DB_VERSION."' where `k` = 'version'";
-}elseif($version<DB_VERSION){
-	$sqls = file_get_contents('update3.sql');
-	$sqls=explode(';', $sqls);
-	$sqls[]="UPDATE `pre_config` SET `v` = '".DB_VERSION."' where `k` = 'version'";
-}else{
-	exit('数据库不兼容，请重新安装！');
+$latest_version = 0;
+$sql_files = getUpgradeSqlFiles(__DIR__ . '/', $version, $latest_version);
+
+if($latest_version == 0){
+	exit('未找到任何升级文件');
 }
-$sqls[]="UPDATE `pre_cache` SET `v` = '' where `k` = 'config'";
+
+if(empty($sql_files)){
+	exit('你的网站已经升级到最新版本了');
+}
+
 $success=0;$error=0;$errorMsg=null;
-foreach ($sqls as $value) {
-	$value=trim($value);
-	if(empty($value))continue;
-	$value = str_replace('pre_',$dbconfig['dbqz'].'_',$value);
-	if($db->exec($value)===false){
-		$error++;
-		$dberror=$db->errorInfo();
-		$errorMsg.=$dberror[2]."<br>";
-	}else{
-		$success++;
+foreach ($sql_files as $sql_file) {
+	$sqls = explode(';', file_get_contents($sql_file));
+	foreach ($sqls as $value) {
+		$value=trim($value);
+		if(empty($value))continue;
+		$value = str_replace('pre_',$dbconfig['dbqz'].'_',$value);
+		if($db->exec($value)===false){
+			$error++;
+			$dberror=$db->errorInfo();
+			$errorMsg.=$dberror[2]."<br>";
+		}else{
+			$success++;
+		}
 	}
 }
+$db->exec("UPDATE `pre_config` SET `v` = '$latest_version' where `k` = 'version'");
+$db->exec("UPDATE `pre_cache` SET `v` = '' where `k` = 'config'");
 echo '成功执行SQL语句'.$success.'条！<br/>';
 if($errorMsg){
 //echo '<div class="alert alert-danger text-center" role="alert">'.$errorMsg.'</div>';
