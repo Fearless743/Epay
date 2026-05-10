@@ -2,15 +2,8 @@ name: Auto Release
 
 on:
   push:
-    branches:
-      - main
-      - master
-    paths-ignore:
-      - '.github/**'
-      - '*.md'
-      - '*.txt'
-      - 'CLAUDE.md'
-      - 'AGENTS.md'
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -24,35 +17,27 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get next version from VERSION constant
+      - name: Get version info
         id: get_tag
         run: |
-          # 从 common.php 读取 VERSION 常量
-          CURRENT_VER=$(grep -oP "define\('VERSION',\s*'\K[0-9]+" includes/common.php || echo "1000")
-          # 标签格式: v{VERSION}
-          NEW_VERSION="v${CURRENT_VER}"
-          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          CURRENT_TAG="${GITHUB_REF#refs/tags/}"
+          CURRENT_VER=$(echo "$CURRENT_TAG" | sed 's/^v//')
+          echo "tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
           echo "current_ver=$CURRENT_VER" >> $GITHUB_OUTPUT
 
-      - name: Check if tag already exists
-        id: check_tag
+      - name: Get previous tag
+        id: prev_tag
         run: |
-          if git rev-parse "${{ steps.get_tag.outputs.new_version }}" >/dev/null 2>&1; then
-            echo "exists=true" >> $GITHUB_OUTPUT
+          PREV_TAG=$(git tag -l 'v*' --sort=-v:refname | sed -n '2p')
+          if [ -z "$PREV_TAG" ]; then
+            echo "prev_tag=" >> $GITHUB_OUTPUT
+            echo "has_prev=false" >> $GITHUB_OUTPUT
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+            echo "has_prev=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Create tag
-        if: steps.check_tag.outputs.exists == 'false'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a ${{ steps.get_tag.outputs.new_version }} -m "Release ${{ steps.get_tag.outputs.new_version }}"
-          git push origin ${{ steps.get_tag.outputs.new_version }}
-
-      - name: Build release archive
-        if: steps.check_tag.outputs.exists == 'false'
+      - name: Build full release archive
         run: |
           mkdir -p release_package
           rsync -a --exclude='.git' \
@@ -67,47 +52,77 @@ jobs:
                    --exclude='release_package' \
                    ./ release_package/Epay/
           cd release_package
-          zip -r ../Epay-${{ steps.get_tag.outputs.new_version }}.zip Epay/
+          zip -r ../Epay-${{ steps.get_tag.outputs.tag }}.zip Epay/
           cd ..
-          tar -czf Epay-${{ steps.get_tag.outputs.new_version }}.tar.gz -C release_package Epay/
+          tar -czf Epay-${{ steps.get_tag.outputs.tag }}.tar.gz -C release_package Epay/
+
+      - name: Build incremental update archive
+        if: steps.prev_tag.outputs.has_prev == 'true'
+        run: |
+          PREV_TAG="${{ steps.prev_tag.outputs.prev_tag }}"
+          CURR_TAG="${{ steps.get_tag.outputs.tag }}"
+          mkdir -p update_package/Epay
+
+          # 获取上一个tag到当前tag之间变更的文件列表
+          CHANGED_FILES=$(git diff --name-only "$PREV_TAG" "$CURR_TAG" | grep -v '^\.github/' | grep -v '^\.gitignore$' || true)
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "no_changes=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+
+          # 复制变更文件到更新包
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              mkdir -p "update_package/Epay/$(dirname "$file")"
+              cp "$file" "update_package/Epay/$file"
+            fi
+          done <<< "$CHANGED_FILES"
+
+          cd update_package
+          zip -r ../Epay-update-${{ steps.get_tag.outputs.tag }}.zip Epay/
+          cd ..
+          tar -czf Epay-update-${{ steps.get_tag.outputs.tag }}.tar.gz -C update_package Epay/
 
       - name: Generate changelog
-        if: steps.check_tag.outputs.exists == 'false'
         id: changelog
         run: |
-          PREV_TAG=$(git tag -l 'v*' --sort=-v:refname | sed -n '2p')
+          PREV_TAG="${{ steps.prev_tag.outputs.prev_tag }}"
           if [ -z "$PREV_TAG" ]; then
             LOG=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
           else
             LOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
           fi
           if [ -z "$LOG" ]; then
-            LOG="- ${{ steps.get_tag.outputs.new_version }} release"
+            LOG="- ${{ steps.get_tag.outputs.tag }} release"
           fi
           echo "log<<EOF" >> $GITHUB_OUTPUT
           echo "$LOG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        if: steps.check_tag.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.get_tag.outputs.new_version }}
-          name: "Release ${{ steps.get_tag.outputs.new_version }}"
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          name: "Release ${{ steps.get_tag.outputs.tag }}"
           body: |
             ## 更新日志
             ${{ steps.changelog.outputs.log }}
 
             ## 安装说明
-            - 全新安装：下载 `Epay-${{ steps.get_tag.outputs.new_version }}.zip` 解压部署
-            - 已有用户：通过管理后台「系统更新」功能自动升级
+            - 全新安装：下载 `Epay-${{ steps.get_tag.outputs.tag }}.zip` 解压部署
+            - 已有用户：下载 `Epay-update-${{ steps.get_tag.outputs.tag }}.zip` 增量更新包覆盖，或通过管理后台「系统更新」功能自动升级
 
             ## 版本信息
             - 程序版本：`${{ steps.get_tag.outputs.current_ver }}`
-            - 更新包：`Epay-${{ steps.get_tag.outputs.new_version }}.zip`
+            - 更新包：`Epay-${{ steps.get_tag.outputs.tag }}.zip`
           files: |
-            Epay-${{ steps.get_tag.outputs.new_version }}.zip
-            Epay-${{ steps.get_tag.outputs.new_version }}.tar.gz
+            Epay-${{ steps.get_tag.outputs.tag }}.zip
+            Epay-${{ steps.get_tag.outputs.tag }}.tar.gz
+            Epay-update-${{ steps.get_tag.outputs.tag }}.zip
+            Epay-update-${{ steps.get_tag.outputs.tag }}.tar.gz
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
