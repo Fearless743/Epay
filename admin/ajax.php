@@ -120,7 +120,9 @@ case 'set':
 	if(isset($_POST['login_apiurl'])){
 		if(!empty($_POST['login_apiurl']) && (substr($_POST['login_apiurl'],0,4)!='http' || substr($_POST['login_apiurl'],-1)!='/'))exit('{"code":-1,"msg":"聚合登录API接口地址格式错误"}');
 	}
+	$protected_keys = ['admin_user', 'admin_pwd', 'admin_paypwd', 'syskey', 'totp_secret', 'private_key', 'public_key'];
 	foreach($_POST as $k=>$v){
+		if(in_array($k, $protected_keys)) continue;
 		saveSetting($k, $v);
 	}
 	$ad=$CACHE->clear();

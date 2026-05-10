@@ -43,14 +43,18 @@ class Plugin {
 			$trade_no = $matchs[2];
 			
 			$order = $DB->getRow("SELECT A.*,B.name typename,B.showname typeshowname FROM pre_order A left join pre_type B on A.type=B.id WHERE trade_no=:trade_no limit 1", [':trade_no'=>$trade_no]);
-			$userrow = $DB->find('user', 'gid,ordername,channelinfo', ['uid'=>$order['uid']]);
-			$groupconfig = getGroupConfig($userrow['gid']);
-			$conf = array_merge($conf, $groupconfig);
             if (!$order) {
-				$channel = \lib\Channel::get($trade_no, $userrow['channelinfo']);
+				$trade_no_tmp = $trade_no;
+				$userrow = ['gid'=>0, 'ordername'=>'', 'channelinfo'=>''];
+				$groupconfig = getGroupConfig(0);
+				$conf = array_merge($conf, $groupconfig);
+				$channel = \lib\Channel::get($trade_no_tmp, $userrow['channelinfo']);
 				if(!$channel) throw new Exception('该订单号不存在，请返回来源地重新发起请求！');
 				$trade_no = null;
             }else{
+				$userrow = $DB->find('user', 'gid,ordername,channelinfo', ['uid'=>$order['uid']]);
+				$groupconfig = getGroupConfig($userrow['gid']);
+				$conf = array_merge($conf, $groupconfig);
 				$channel = $order['subchannel'] > 0 ? \lib\Channel::getSub($order['subchannel']) : \lib\Channel::get($order['channel'], $userrow['channelinfo']);
 				if(!$channel) throw new Exception('当前支付通道信息不存在');
 				$channel['apptype'] = explode(',',$channel['apptype']);

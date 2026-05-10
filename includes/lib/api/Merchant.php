@@ -33,7 +33,7 @@ class Merchant
 
         $sql = " uid='{$pid}'";
         if(isset($queryArr['status'])){
-            $status = intval($_GET['status']);
+            $status = intval($queryArr['status']);
             $sql .= " AND A.status='{$status}'";
         }
 

@@ -30,7 +30,9 @@ case 'userList':
 		$sql.=" AND `upid`='$upid'";
 	}
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
-		$sql.=" AND `{$_POST['column']}`='{$_POST['value']}'";
+		$column = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['column']);
+		$value = daddslashes($_POST['value']);
+		$sql.=" AND `$column`='$value'";
 	}
 	if(isset($_POST['order_days']) && !empty($_POST['order_days'])) {
 		$order_days = intval($_POST['order_days']);
@@ -76,7 +78,9 @@ case 'recordList':
 		}
 	}
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
-		$sql.=" AND `{$_POST['column']}`='{$_POST['value']}'";
+		$column = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['column']);
+		$value = daddslashes($_POST['value']);
+		$sql.=" AND `$column`='$value'";
 	}
 	$offset = intval($_POST['offset']);
 	$limit = intval($_POST['limit']);
@@ -103,7 +107,9 @@ case 'record_stats':
 		}
 	}
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
-		$sql.=" AND `{$_POST['column']}`='{$_POST['value']}'";
+		$column = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['column']);
+		$value = daddslashes($_POST['value']);
+		$sql.=" AND `$column`='$value'";
 	}
 	$result = $DB->getRow("SELECT 
         SUM(CASE WHEN action = 1 THEN money ELSE 0 END) AS incMoney,
@@ -288,7 +294,9 @@ break;
 case 'logList':
 	$sql=" 1=1";
 	if(isset($_POST['value']) && $_POST['value']!=='') {
-		$sql.=" AND `{$_POST['column']}`='{$_POST['value']}'";
+		$column = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['column']);
+		$value = daddslashes($_POST['value']);
+		$sql.=" AND `$column`='$value'";
 	}
 	$offset = intval($_POST['offset']);
 	$limit = intval($_POST['limit']);

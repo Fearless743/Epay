@@ -49,7 +49,7 @@ case 'login':
 	$pass=trim($_POST['pass']);
 	$enc_type = isset($_POST['enc']) ? $_POST['enc'] : '0';
 	if(empty($user) || empty($pass))exit('{"code":-1,"msg":"请确保各项不能为空"}');
-	//if(!$_POST['csrf_token'] || $_POST['csrf_token']!=$_SESSION['csrf_token'])exit('{"code":-1,"msg":"CSRF TOKEN ERROR"}');
+	if(!$_POST['csrf_token'] || $_POST['csrf_token']!=$_SESSION['csrf_token'])exit('{"code":-1,"msg":"CSRF TOKEN ERROR"}');
 
 	if($conf['captcha_open_login']==1){
 		if(!isset($_SESSION['gtserver']))exit('{"code":-1,"msg":"验证加载失败"}');

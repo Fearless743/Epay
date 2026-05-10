@@ -60,7 +60,7 @@ class Payment {
             case 'jump': //跳转
                 $selfurl = is_self_url($result['url']);
                 $html_text = '<script>window.location.replace(\''.$result['url'].'\');</script>';
-                if(!isset($result['submit']) && is_url($result['url']) && !$selfurl && ($conf['wxpay_qrpaylogin'] == 1 && checkwechat()) || ($conf['alipay_qrpaylogin'] == 1 && checkalipay())){
+                if(!isset($result['submit']) && is_url($result['url']) && !$selfurl && (($conf['wxpay_qrpaylogin'] == 1 && checkwechat()) || ($conf['alipay_qrpaylogin'] == 1 && checkalipay()))){
                     self::updateOrderPayUrl(TRADE_NO, $result['url']);
                     $result['url'] = $siteurl.'pay/checkpay/'.TRADE_NO.'/';
                 }
@@ -105,9 +105,9 @@ class Payment {
                         $result['url'] = $siteurl.substr($result['url'], strlen($conf['localurl_wxpay']));
                     }
                 }
-                if($conf['check_pay_regoin'] > 0 && is_url($result['url']) && in_array($result['page'], ['alipay_qrcode', 'wxpay_qrcode', 'wxpay_wap'])
-                    || is_url($result['url']) && !$selfurl && $conf['wxpay_qrpaylogin'] == 1 && in_array($result['page'], ['wxpay_qrcode', 'wxpay_wap'])
-                    || is_url($result['url']) && !$selfurl && $conf['alipay_qrpaylogin'] == 1 && $result['page'] == 'alipay_qrcode'){
+                if(($conf['check_pay_regoin'] > 0 && is_url($result['url']) && in_array($result['page'], ['alipay_qrcode', 'wxpay_qrcode', 'wxpay_wap']))
+                    || (is_url($result['url']) && !$selfurl && $conf['wxpay_qrpaylogin'] == 1 && in_array($result['page'], ['wxpay_qrcode', 'wxpay_wap']))
+                    || (is_url($result['url']) && !$selfurl && $conf['alipay_qrpaylogin'] == 1 && $result['page'] == 'alipay_qrcode')){
                     self::updateOrderPayUrl(TRADE_NO, $result['url']);
                     $result['url'] = $siteurl.'pay/checkpay/'.TRADE_NO.'/';
                 }
@@ -186,9 +186,9 @@ class Payment {
                             $result['url'] = $siteurl.substr($result['url'], strlen($conf['localurl_wxpay']));
                         }
                     }
-                    if($conf['check_pay_regoin'] > 0 && is_url($result['url']) && in_array($result['page'], ['alipay_qrcode', 'wxpay_qrcode', 'wxpay_wap'])
-                    || is_url($result['url']) && !$selfurl && $conf['wxpay_qrpaylogin'] == 1 && in_array($result['page'], ['wxpay_qrcode', 'wxpay_wap'])
-                    || is_url($result['url']) && !$selfurl && $conf['alipay_qrpaylogin'] == 1 && $result['page'] == 'alipay_qrcode'){
+                    if(($conf['check_pay_regoin'] > 0 && is_url($result['url']) && in_array($result['page'], ['alipay_qrcode', 'wxpay_qrcode', 'wxpay_wap']))
+                    || (is_url($result['url']) && !$selfurl && $conf['wxpay_qrpaylogin'] == 1 && in_array($result['page'], ['wxpay_qrcode', 'wxpay_wap']))
+                    || (is_url($result['url']) && !$selfurl && $conf['alipay_qrpaylogin'] == 1 && $result['page'] == 'alipay_qrcode')){
                         self::updateOrderPayUrl(TRADE_NO, $result['url']);
                         $result['url'] = $siteurl.'pay/checkpay/'.TRADE_NO.'/';
                     }
@@ -269,9 +269,9 @@ class Payment {
                             $result['url'] = $siteurl.substr($result['url'], strlen($conf['localurl_wxpay']));
                         }
                     }
-                    if($conf['check_pay_regoin'] > 0 && is_url($result['url']) && in_array($result['page'], ['alipay_qrcode', 'wxpay_qrcode', 'wxpay_wap'])
-                    || is_url($result['url']) && !$selfurl && $conf['wxpay_qrpaylogin'] == 1 && in_array($result['page'], ['wxpay_qrcode', 'wxpay_wap'])
-                    || is_url($result['url']) && !$selfurl && $conf['alipay_qrpaylogin'] == 1 && $result['page'] == 'alipay_qrcode'){
+                    if(($conf['check_pay_regoin'] > 0 && is_url($result['url']) && in_array($result['page'], ['alipay_qrcode', 'wxpay_qrcode', 'wxpay_wap']))
+                    || (is_url($result['url']) && !$selfurl && $conf['wxpay_qrpaylogin'] == 1 && in_array($result['page'], ['wxpay_qrcode', 'wxpay_wap']))
+                    || (is_url($result['url']) && !$selfurl && $conf['alipay_qrpaylogin'] == 1 && $result['page'] == 'alipay_qrcode')){
                         self::updateOrderPayUrl(TRADE_NO, $result['url']);
                         $result['url'] = $siteurl.'pay/checkpay/'.TRADE_NO.'/';
                     }
@@ -344,7 +344,7 @@ class Payment {
     static public function processOrder($isnotify, $order, $api_trade_no, $buyer = null, $bill_trade_no = null, $bill_mch_trade_no = null, $end_time = null){
         global $DB,$conf,$siteurl;
         if($order['status']==0 || $order['status']==4){
-            if($DB->exec("UPDATE `pre_order` SET `status`=1 WHERE `trade_no`='".$order['trade_no']."'")){
+            if($DB->exec("UPDATE `pre_order` SET `status`=1 WHERE `trade_no`='".$order['trade_no']."' AND (status=0 OR status=4)")){
 
                 $data = ['endtime'=>'NOW()', 'date'=>'CURDATE()'];
                 if(!empty($api_trade_no)){
@@ -359,7 +359,7 @@ class Payment {
                 if(!empty($bill_mch_trade_no)) $data['bill_mch_trade_no'] = $bill_mch_trade_no;
                 if(!empty($end_time)){
                     $data['endtime'] = $end_time;
-                    $date['date'] = date('Y-m-d', strtotime($end_time));
+                    $data['date'] = date('Y-m-d', strtotime($end_time));
                 }
                 if($order['settle']>0) $data['settle'] = $order['settle'];
                 $DB->update('order', $data, ['trade_no'=>$order['trade_no']]);

@@ -198,6 +198,7 @@ class Transfer
         global $DB;
         $order = $DB->find('transfer', '*', ['biz_no' => $biz_no]);
         if(!$order) return ['code'=>-1, 'msg'=>'付款记录不存在'];
+        if($order['status'] != 0) return ['code'=>-1, 'msg'=>'当前状态不支持撤销'];
 
         $channelinfo = null;
         if($order['uid'] > 0){
@@ -269,12 +270,12 @@ class Transfer
         if($status == 2 && $order['status'] == 0){ //转账失败
             $data = ['status'=>2];
             if($errmsg) $data['result'] = $errmsg;
-            $resCount = $DB->update('transfer', $data, ['biz_no' => $biz_no]);
+            $resCount = $DB->update('transfer', $data, ['biz_no' => $biz_no, 'status' => 0]);
             if($order['uid'] > 0 && $resCount > 0){
                 changeUserMoney($order['uid'], $order['costmoney'], true, '代付退回', $biz_no);
             }
         }elseif($status == 1 && $order['status'] == 0){ //转账成功
-            $DB->update('transfer', ['status'=>1, 'paytime'=>'NOW()', 'result'=>''], ['biz_no' => $biz_no]);
+            $DB->update('transfer', ['status'=>1, 'paytime'=>'NOW()', 'result'=>''], ['biz_no' => $biz_no, 'status' => 0]);
         }
     }
 

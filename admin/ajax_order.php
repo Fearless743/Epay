@@ -56,14 +56,19 @@ case 'orderList':
 		}
 	}
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
-		if($_POST['column']=='name'){
-			$sql.=" AND A.`{$_POST['column']}` like '%{$_POST['value']}%'";
+		$column = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['column']);
+		$value = daddslashes($_POST['value']);
+		if($column=='name'){
+			$value = str_replace(['%', '_'], ['\\%', '\\_'], $value);
+			$sql.=" AND A.`$column` like '%$value%'";
 		}else{
-			if(($_POST['column'] == 'money' || $_POST['column'] == 'realmoney' || $_POST['column'] == 'getmoney') && strpos($_POST['value'],'-')){
-				$money = explode('-', $_POST['value']);
-				$sql.=" AND A.`{$_POST['column']}`>='{$money[0]}' AND A.`{$_POST['column']}`<='{$money[1]}'";
+			if(($column == 'money' || $column == 'realmoney' || $column == 'getmoney') && strpos($value,'-')){
+				$money = explode('-', $value);
+				$money[0] = daddslashes($money[0]);
+				$money[1] = daddslashes($money[1]);
+				$sql.=" AND A.`$column`>='{$money[0]}' AND A.`$column`<='{$money[1]}'";
 			}else{
-				$sql.=" AND A.`{$_POST['column']}`='{$_POST['value']}'";
+				$sql.=" AND A.`$column`='$value'";
 			}
 		}
 	}
@@ -112,14 +117,19 @@ case 'statistics':
 		}
 	}
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
-		if($_POST['column']=='name'){
-			$sql.=" AND A.`{$_POST['column']}` like '%{$_POST['value']}%'";
+		$column = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['column']);
+		$value = daddslashes($_POST['value']);
+		if($column=='name'){
+			$value = str_replace(['%', '_'], ['\\%', '\\_'], $value);
+			$sql.=" AND A.`$column` like '%$value%'";
 		}else{
-			if(($_POST['column'] == 'money' || $_POST['column'] == 'realmoney' || $_POST['column'] == 'getmoney') && strpos($_POST['value'],'-')){
-				$money = explode('-', $_POST['value']);
-				$sql.=" AND A.`{$_POST['column']}`>='{$money[0]}' AND A.`{$_POST['column']}`<='{$money[1]}'";
+			if(($column == 'money' || $column == 'realmoney' || $column == 'getmoney') && strpos($value,'-')){
+				$money = explode('-', $value);
+				$money[0] = daddslashes($money[0]);
+				$money[1] = daddslashes($money[1]);
+				$sql.=" AND A.`$column`>='{$money[0]}' AND A.`$column`<='{$money[1]}'";
 			}else{
-				$sql.=" AND A.`{$_POST['column']}`='{$_POST['value']}'";
+				$sql.=" AND A.`$column`='$value'";
 			}
 		}
 	}
@@ -159,7 +169,9 @@ break;
 case 'riskList':
 	$sql=" 1=1";
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
-		$sql.=" AND `{$_POST['column']}`='{$_POST['value']}'";
+		$column = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['column']);
+		$value = daddslashes($_POST['value']);
+		$sql.=" AND `$column`='$value'";
 	}
 	if(isset($_POST['type']) && $_POST['type']>-1) {
 		$type = intval($_POST['type']);
@@ -174,7 +186,7 @@ case 'riskList':
 break;
 
 case 'setStatus': //改变订单状态
-	$trade_no=trim($_GET['trade_no']);
+	$trade_no=daddslashes(trim($_GET['trade_no']));
 	$status=is_numeric($_GET['status'])?intval($_GET['status']):exit('{"code":200}');
 	if($status==5){
 		if($DB->exec("DELETE FROM pre_order WHERE trade_no='$trade_no'"))
@@ -189,7 +201,7 @@ case 'setStatus': //改变订单状态
 	}
 break;
 case 'order': //订单详情
-	$trade_no=trim($_GET['trade_no']);
+	$trade_no=daddslashes(trim($_GET['trade_no']));
 	$row=$DB->getRow("select A.*,B.showname typename,C.name channelname from pre_order A,pre_type B,pre_channel C where trade_no='$trade_no' and A.type=B.id and A.channel=C.id limit 1");
 	if(!$row)
 		exit('{"code":-1,"msg":"当前订单不存在或未成功选择支付通道！"}');
@@ -201,7 +213,7 @@ case 'order': //订单详情
 	exit(json_encode($result));
 break;
 case 'subOrders':
-	$trade_no=trim($_GET['trade_no']);
+	$trade_no=daddslashes(trim($_GET['trade_no']));
 	$list = \lib\Payment::getSubOrders($trade_no);
 	exit(json_encode(['code'=>0, 'data'=>$list, 'settle'=>$DB->findColumn('order', 'settle', ['trade_no'=>$trade_no])]));
 break;
@@ -210,6 +222,7 @@ case 'operation': //批量操作订单
 	$checkbox=$_POST['checkbox'];
 	$i=0;
 	foreach($checkbox as $trade_no){
+		$trade_no=daddslashes($trade_no);
 		if($status==4)$DB->exec("DELETE FROM pre_order WHERE trade_no='$trade_no'");
 		elseif($status==3){
 			\lib\Order::unfreeze($trade_no);
@@ -270,7 +283,7 @@ case 'unfreeze': //解冻订单
 	exit(json_encode($result));
 break;
 case 'notify': //获取回调地址
-	$trade_no=trim($_POST['trade_no']);
+	$trade_no=daddslashes(trim($_POST['trade_no']));
 	$row=$DB->getRow("select * from pre_order where trade_no='$trade_no' limit 1");
 	if(!$row)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
@@ -287,7 +300,7 @@ case 'notify': //获取回调地址
 	exit('{"code":0,"url":"'.($_POST['isreturn']==1?$url['return']:$url['notify']).'"}');
 break;
 case 'fillorder': //手动补单
-	$trade_no=trim($_POST['trade_no']);
+	$trade_no=daddslashes(trim($_POST['trade_no']));
 	$row=$DB->getRow("SELECT A.*,B.name typename,B.showname typeshowname FROM pre_order A left join pre_type B on A.type=B.id WHERE trade_no=:trade_no limit 1", [':trade_no'=>$trade_no]);
 	if(!$row)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
@@ -300,7 +313,7 @@ case 'fillorder': //手动补单
 	exit('{"code":0,"msg":"补单成功"}');
 break;
 case 'alipaydSettle': //支付宝直付通确认结算
-	$trade_no=trim($_POST['trade_no']);
+	$trade_no=daddslashes(trim($_POST['trade_no']));
 	$row=$DB->getRow("select * from pre_order where trade_no='$trade_no' limit 1");
 	if(!$row)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
