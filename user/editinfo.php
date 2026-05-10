@@ -278,6 +278,7 @@ if(strlen($userrow['phone'])==11){
 					</div>
 				</div>
 				<?php }}?>
+				<div class="form-group">
 					<label class="col-sm-2 control-label"><?php echo __('enable_key_login')?></label>
 					<div class="col-sm-9">
 						<select class="form-control" name="keylogin" default="<?php echo $userrow['keylogin']?>"><option value="0"><?php echo __('off')?></option><option value="1"><?php echo __('on')?></option></select>
