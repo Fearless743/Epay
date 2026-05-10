@@ -136,9 +136,12 @@ switch($act) {
             }
 
             // 解压并应用
-            $applied = applyUpdate($zip_file, ROOT);
+            $copy_errors = [];
+            $applied = applyUpdate($zip_file, ROOT, $copy_errors);
             if(!$applied) {
-                $results[] = ['tag'=>$pkg['tag'],'status'=>'error','msg'=>'解压或应用更新失败'];
+                $error_msg = '解压或应用更新失败';
+                if(!empty($copy_errors)) $error_msg .= '：' . implode('；', array_slice($copy_errors, 0, 5));
+                $results[] = ['tag'=>$pkg['tag'],'status'=>'error','msg'=>$error_msg];
                 break;
             }
 
@@ -274,16 +277,24 @@ function downloadFile($url, $dest) {
 /**
  * 应用更新 - 解压 zip 并覆盖文件（保留 config.php）
  */
-function applyUpdate($zip_file, $target_dir) {
+function applyUpdate($zip_file, $target_dir, &$copy_errors = []) {
     if(!file_exists($zip_file)) return false;
     $zip = new ZipArchive();
     if($zip->open($zip_file) !== true) return false;
 
     $temp_dir = $target_dir.'data/update/temp_'.time().'/';
     if(!is_dir($temp_dir)) @mkdir($temp_dir, 0755, true);
+    if(!is_dir($temp_dir)) {
+        $zip->close();
+        return false;
+    }
 
-    $zip->extractTo($temp_dir);
+    $extracted = $zip->extractTo($temp_dir);
     $zip->close();
+    if(!$extracted) {
+        deleteDirectory($temp_dir);
+        return false;
+    }
 
     // 查找解压后的根目录（可能有一层子目录）
     $items = scandir($temp_dir);
@@ -298,17 +309,22 @@ function applyUpdate($zip_file, $target_dir) {
 
     // 复制文件（排除 config.php 和 install.lock）
     $excludes = ['config.php', 'install/install.lock', '.git', '.github', 'data/'];
-    copyDirectory($source_dir, $target_dir, $excludes);
+    copyDirectory($source_dir, $target_dir, $excludes, $copy_errors);
 
     // 清理临时目录
     deleteDirectory($temp_dir);
+
+    if(!empty($copy_errors)) {
+        error_log('Epay update copy errors: ' . implode('; ', $copy_errors));
+        return false;
+    }
     return true;
 }
 
 /**
  * 递归复制目录
  */
-function copyDirectory($source, $dest, $excludes = []) {
+function copyDirectory($source, $dest, $excludes = [], &$errors = []) {
     if(!is_dir($source)) return;
     if(!is_dir($dest)) @mkdir($dest, 0755, true);
 
@@ -331,9 +347,11 @@ function copyDirectory($source, $dest, $excludes = []) {
         if($skip) continue;
 
         if(is_dir($source_path)) {
-            copyDirectory($source_path.'/', $dest_path.'/', $excludes);
+            copyDirectory($source_path.'/', $dest_path.'/', $excludes, $errors);
         } else {
-            @copy($source_path, $dest_path);
+            if(!@copy($source_path, $dest_path)) {
+                $errors[] = '写入失败: '.$dest_path;
+            }
         }
     }
 }
