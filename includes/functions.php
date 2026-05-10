@@ -579,13 +579,13 @@ function checkBlockUser($openid, $trade_no){
 		return ['type'=>'error','msg'=>'系统异常无法完成付款'];
 	}
 	if($conf['pay_userlimit'] > 0){
-		$usercount = $DB->getColumn("select count(*) from pre_order where `buyer`=:buyer and `date`='".date('Y-m-d')."' and status>0", [':buyer'=>$openid]);
+		$usercount = $DB->getColumn("select count(*) from pre_order where `buyer`=:buyer and `date`='".date('Y-m-d')."' and status>0 and deleted=0", [':buyer'=>$openid]);
 		if($usercount >= $conf['pay_userlimit']){
 			return ['type'=>'error','msg'=>'你今天已无法再发起支付，请明天再试'];
 		}
 	}
 	if($conf['pay_daymoney'] > 0){
-		$daymoney = $DB->getColumn("select sum(realmoney) from pre_order where `buyer`=:buyer and `date`='".date('Y-m-d')."' and status>0", [':buyer'=>$openid]);
+		$daymoney = $DB->getColumn("select sum(realmoney) from pre_order where `buyer`=:buyer and `date`='".date('Y-m-d')."' and status>0 and deleted=0", [':buyer'=>$openid]);
 		if($daymoney >= $conf['pay_daymoney']){
 			return ['type'=>'error','msg'=>'你今天已累积支付金额超过'.$conf['pay_daymoney'].'元，请明天再试'];
 		}
@@ -744,7 +744,7 @@ function processOrder(&$srow,$notify=true){
 		}
 	}
 	if($channel['daymaxorder'] > 0){
-		$orders = $DB->getColumn("SELECT COUNT(*) FROM pre_order WHERE channel='{$channel['id']}' AND status>0 AND date=CURDATE()");
+		$orders = $DB->getColumn("SELECT COUNT(*) FROM pre_order WHERE channel='{$channel['id']}' AND deleted=0 AND status>0 AND date=CURDATE()");
 		if($orders >= $channel['daymaxorder']){
 			$DB->exec("UPDATE pre_channel SET daystatus=1 WHERE id='{$channel['id']}'");
 		}
@@ -1126,8 +1126,8 @@ function checkPayVerifyOpen($pid){
 		$count = intval($conf['pay_verify_check_count']);
 		$sucrate = floatval($conf['pay_verify_check_rate']);
 		if($second>0 || $count>0 || $sucrate>0){
-			$total_num=$DB->getColumn("SELECT count(*) FROM pre_order WHERE uid='$pid' AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND)");
-			$succ_num=$DB->getColumn("SELECT count(*) FROM pre_order WHERE uid='$pid' AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) AND status>0");
+			$total_num=$DB->getColumn("SELECT count(*) FROM pre_order WHERE uid='$pid' AND deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND)");
+			$succ_num=$DB->getColumn("SELECT count(*) FROM pre_order WHERE uid='$pid' AND deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) AND status>0");
 			if($total_num >= $count){
 				$succ_rate = round($succ_num * 100 / $total_num, 2);
 				if($succ_rate < $sucrate){
@@ -1137,7 +1137,7 @@ function checkPayVerifyOpen($pid){
 		}
 		$ipcheck = intval($conf['pay_verify_check_ip']);
 		if($ipcheck>0){
-			$orders = $DB->getAll("SELECT status FROM pre_order WHERE `ip`=:ip AND addtime>=DATE_SUB(NOW(), INTERVAL 3600 SECOND) ORDER BY addtime DESC LIMIT {$ipcheck}", [':ip'=>$clientip]);
+			$orders = $DB->getAll("SELECT status FROM pre_order WHERE `ip`=:ip AND deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL 3600 SECOND) ORDER BY addtime DESC LIMIT {$ipcheck}", [':ip'=>$clientip]);
 			$fail_num = 0;
 			foreach($orders as $row){
 				if($row['status'] == 0) $fail_num++;

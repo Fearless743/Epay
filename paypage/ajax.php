@@ -43,13 +43,13 @@ if($conf['pay_maxmoney']>0 && $money>$conf['pay_maxmoney'])showerrorjson('最大
 if($conf['pay_minmoney']>0 && $money<$conf['pay_minmoney'])showerrorjson('最小支付金额是'.$conf['pay_minmoney'].'元');
 
 if($conf['pay_daymax'] > 0){
-	$daytotal = $DB->getColumn("select sum(money) from pre_order where `uid`=:uid and `date`='".date('Y-m-d')."' and status>0", ['uid'=>$uid]);
+	$daytotal = $DB->getColumn("select sum(money) from pre_order where `uid`=:uid and `date`='".date('Y-m-d')."' and status>0 and deleted=0", ['uid'=>$uid]);
 	if($daytotal + $money > $conf['pay_daymax']){
 		showerrorjson('当前商户今日收款已达到限额，无法发起支付');
 	}
 }
 if($conf['pay_iplimit'] > 0 && (empty($conf['pay_iplimit_white']) || strpos($conf['pay_iplimit_white'], $clientip)===false)){
-	$ipcount = $DB->getColumn("select count(*) from pre_order where `ip`=:ip and `date`='".date('Y-m-d')."' and status>0", ['ip'=>$clientip]);
+	$ipcount = $DB->getColumn("select count(*) from pre_order where `ip`=:ip and `date`='".date('Y-m-d')."' and status>0 and deleted=0", ['ip'=>$clientip]);
 	if($ipcount >= $conf['pay_iplimit']){
 		showerrorjson('你今天已无法再发起支付，请明天再试');
 	}

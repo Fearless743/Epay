@@ -9,13 +9,13 @@ class Merchant
         global $conf, $DB, $userrow, $queryArr;
 
         $pid=intval($queryArr['pid']);
-        $orders=$DB->getColumn("SELECT count(*) from pre_order WHERE uid={$pid}");
+        $orders=$DB->getColumn("SELECT count(*) from pre_order WHERE uid={$pid} AND deleted=0");
         $lastday=date("Y-m-d",strtotime("-1 day"));
         $today=date("Y-m-d");
-        $order_today=$DB->getColumn("SELECT count(*) from pre_order where uid={$pid} and status=1 and date='$today'");
-        $order_lastday=$DB->getColumn("SELECT count(*) from pre_order where uid={$pid} and status=1 and date='$lastday'");
-        $order_today_all = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$pid} AND status=1 AND date='$today'"),2);
-	    $order_lastday_all = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$pid} AND status=1 AND date='$lastday'"),2);
+        $order_today=$DB->getColumn("SELECT count(*) from pre_order where uid={$pid} and status=1 and deleted=0 and date='$today'");
+        $order_lastday=$DB->getColumn("SELECT count(*) from pre_order where uid={$pid} and status=1 and deleted=0 and date='$lastday'");
+        $order_today_all = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$pid} AND status=1 AND deleted=0 AND date='$today'"),2);
+	    $order_lastday_all = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$pid} AND status=1 AND deleted=0 AND date='$lastday'"),2);
 
         $result = ['code'=>0, 'pid'=>$pid, 'status'=>$userrow['status'], 'pay_status'=>$userrow['pay'], 'settle_status'=>$userrow['settle'], 'money'=>$userrow['money'], 'settle_type'=>$userrow['settle_id'], 'settle_account'=>$userrow['account'], 'settle_name'=>$userrow['username'], 'order_num'=>$orders, 'order_num_today'=>$order_today, 'order_num_lastday'=>$order_lastday, 'order_money_today'=>strval($order_today_all), 'order_money_lastday'=>strval($order_lastday_all)];
         $result = array_filter($result, function($a){return !isEmpty($a);});
@@ -31,7 +31,7 @@ class Merchant
         $status=isset($queryArr['status'])?intval($queryArr['status']):null;
         if($limit>50)$limit=50;
 
-        $sql = " uid='{$pid}'";
+        $sql = " A.uid='{$pid}' AND A.deleted=0";
         if(isset($queryArr['status'])){
             $status = intval($queryArr['status']);
             $sql .= " AND A.status='{$status}'";

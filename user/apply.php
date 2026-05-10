@@ -36,7 +36,7 @@ if($conf['settle_open']==0||$conf['settle_open']==1)exit(__('withdraw_not_open')
 
 if($conf['settle_type']==1){
 	$today=date("Y-m-d").' 00:00:00';
-	$order_today=$DB->getColumn("SELECT SUM(realmoney) from pre_order where uid={$uid} and status=1 and endtime>='$today'");
+	$order_today=$DB->getColumn("SELECT SUM(realmoney) from pre_order where uid={$uid} and status=1 and endtime>='$today' and deleted=0");
 	if(!$order_today) $order_today = 0;
 	$enable_money=round($userrow['money']-$order_today,2);
 	if($enable_money<0)$enable_money=0;
@@ -66,7 +66,7 @@ if(isset($_GET['act']) && $_GET['act']=='do'){
 			exit("<script language='javascript'>alert('".__('js_withdraw_error')."');history.go(-1);</script>");
 		}
 		if($conf['settle_maxlimit']>0){
-			$a_count = $DB->getColumn('SELECT count(*) FROM pre_settle WHERE uid=:uid AND addtime>=:addtime', [':uid'=>$uid, ':addtime'=>date('Y-m-d').' 00:00:00']);
+			$a_count = $DB->getColumn('SELECT count(*) FROM pre_settle WHERE uid=:uid AND addtime>=:addtime AND deleted=0', [':uid'=>$uid, ':addtime'=>date('Y-m-d').' 00:00:00']);
 			if($a_count >= $conf['settle_maxlimit']){
 				exit("<script language='javascript'>alert('".__('js_withdraw_limit')."');history.go(-1);</script>");
 			}

@@ -641,7 +641,7 @@ class Payment {
     public static function lockPayData($trade_no, $func){
         global $DB;
         $DB->beginTransaction();
-        $data = $DB->getColumn("SELECT ext FROM pre_order WHERE trade_no=:trade_no FOR UPDATE", [':trade_no'=>$trade_no]);
+        $data = $DB->getColumn("SELECT ext FROM pre_order WHERE trade_no=:trade_no AND deleted=0 FOR UPDATE", [':trade_no'=>$trade_no]);
         if($data) {
             $DB->rollBack();
             return unserialize($data);
@@ -726,7 +726,7 @@ class Payment {
     //支付宝直付通&微信收付通延迟结算处理
     public static function settle_task(){
         global $DB;
-        $orders = $DB->getAll("SELECT A.*,B.plugin FROM pre_order A LEFT JOIN pre_channel B ON A.channel=B.id WHERE A.status=1 AND A.settle=1 AND A.addtime<DATE_SUB(NOW(), INTERVAL 24 HOUR) AND B.plugin in ('alipayd','wxpaynp') ORDER BY A.trade_no ASC LIMIT 10");
+        $orders = $DB->getAll("SELECT A.*,B.plugin FROM pre_order A LEFT JOIN pre_channel B ON A.channel=B.id WHERE A.status=1 AND A.deleted=0 AND A.settle=1 AND A.addtime<DATE_SUB(NOW(), INTERVAL 24 HOUR) AND B.plugin in ('alipayd','wxpaynp') ORDER BY A.trade_no ASC LIMIT 10");
         foreach($orders as $row){
             $trade_no = $row['trade_no'];
             $channel = $row['subchannel'] > 0 ? \lib\Channel::getSub($row['subchannel']) : \lib\Channel::get($row['channel'], $DB->findColumn('user', 'channelinfo', ['uid'=>$row['uid']]));

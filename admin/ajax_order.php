@@ -74,8 +74,8 @@ case 'orderList':
 	}
 	$offset = intval($_POST['offset']);
 	$limit = intval($_POST['limit']);
-	$total = $DB->getColumn("SELECT count(*) from pre_order A WHERE{$sql}");
-	$list = $DB->getAll("SELECT A.*,B.plugin,B.name channelname FROM pre_order A LEFT JOIN pre_channel B ON A.channel=B.id WHERE{$sql} order by trade_no desc limit $offset,$limit");
+	$total = $DB->getColumn("SELECT count(*) from pre_order A WHERE A.deleted=0 AND{$sql}");
+	$list = $DB->getAll("SELECT A.*,B.plugin,B.name channelname FROM pre_order A LEFT JOIN pre_channel B ON A.channel=B.id WHERE A.deleted=0 AND{$sql} order by trade_no desc limit $offset,$limit");
 	$list2 = [];
 	foreach($list as $row){
 		$row['typename'] = $paytypes[$row['type']];
@@ -87,7 +87,7 @@ case 'orderList':
 break;
 
 case 'statistics':
-    $sql=" 1=1";
+    $sql=" A.deleted=0";
 	if(isset($_POST['uid']) && !empty($_POST['uid'])) {
 		$uid = intval($_POST['uid']);
 		$sql.=" AND A.`uid`='$uid'";
@@ -189,7 +189,7 @@ case 'setStatus': //改变订单状态
 	$trade_no=daddslashes(trim($_GET['trade_no']));
 	$status=is_numeric($_GET['status'])?intval($_GET['status']):exit('{"code":200}');
 	if($status==5){
-		if($DB->exec("DELETE FROM pre_order WHERE trade_no='$trade_no'"))
+		if($DB->exec("UPDATE pre_order SET deleted=1 WHERE trade_no='$trade_no'"))
 			exit('{"code":200}');
 		else
 			exit('{"code":400,"msg":"删除订单失败！['.$DB->error().']"}');
@@ -202,7 +202,7 @@ case 'setStatus': //改变订单状态
 break;
 case 'order': //订单详情
 	$trade_no=daddslashes(trim($_GET['trade_no']));
-	$row=$DB->getRow("select A.*,B.showname typename,C.name channelname from pre_order A,pre_type B,pre_channel C where trade_no='$trade_no' and A.type=B.id and A.channel=C.id limit 1");
+	$row=$DB->getRow("select A.*,B.showname typename,C.name channelname from pre_order A,pre_type B,pre_channel C where A.deleted=0 AND trade_no='$trade_no' and A.type=B.id and A.channel=C.id limit 1");
 	if(!$row)
 		exit('{"code":-1,"msg":"当前订单不存在或未成功选择支付通道！"}');
 	$row['subchannelname'] = $row['subchannel'] > 0 ? $DB->findColumn('subchannel', 'name', ['id'=>$row['subchannel']]) : '';
@@ -215,7 +215,7 @@ break;
 case 'subOrders':
 	$trade_no=daddslashes(trim($_GET['trade_no']));
 	$list = \lib\Payment::getSubOrders($trade_no);
-	exit(json_encode(['code'=>0, 'data'=>$list, 'settle'=>$DB->findColumn('order', 'settle', ['trade_no'=>$trade_no])]));
+	exit(json_encode(['code'=>0, 'data'=>$list, 'settle'=>$DB->findColumn('order', 'settle', ['trade_no'=>$trade_no,'deleted'=>0])]));
 break;
 case 'operation': //批量操作订单
 	$status=is_numeric($_POST['status'])?intval($_POST['status']):exit('{"code":-1,"msg":"请选择操作"}');
@@ -223,7 +223,7 @@ case 'operation': //批量操作订单
 	$i=0;
 	foreach($checkbox as $trade_no){
 		$trade_no=daddslashes($trade_no);
-		if($status==4)$DB->exec("DELETE FROM pre_order WHERE trade_no='$trade_no'");
+		if($status==4)$DB->exec("UPDATE pre_order SET deleted=1 WHERE trade_no='$trade_no'");
 		elseif($status==3){
 			\lib\Order::unfreeze($trade_no);
 		}
@@ -284,7 +284,7 @@ case 'unfreeze': //解冻订单
 break;
 case 'notify': //获取回调地址
 	$trade_no=daddslashes(trim($_POST['trade_no']));
-	$row=$DB->getRow("select * from pre_order where trade_no='$trade_no' limit 1");
+	$row=$DB->getRow("select * from pre_order where deleted=0 AND trade_no='$trade_no' limit 1");
 	if(!$row)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
 	$url=creat_callback($row);
@@ -301,7 +301,7 @@ case 'notify': //获取回调地址
 break;
 case 'fillorder': //手动补单
 	$trade_no=daddslashes(trim($_POST['trade_no']));
-	$row=$DB->getRow("SELECT A.*,B.name typename,B.showname typeshowname FROM pre_order A left join pre_type B on A.type=B.id WHERE trade_no=:trade_no limit 1", [':trade_no'=>$trade_no]);
+	$row=$DB->getRow("SELECT A.*,B.name typename,B.showname typeshowname FROM pre_order A left join pre_type B on A.type=B.id WHERE A.deleted=0 AND trade_no=:trade_no limit 1", [':trade_no'=>$trade_no]);
 	if(!$row)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
 	if($row['status']>0)exit('{"code":-1,"msg":"当前订单不是未完成状态！"}');
@@ -314,7 +314,7 @@ case 'fillorder': //手动补单
 break;
 case 'alipaydSettle': //支付宝直付通确认结算
 	$trade_no=daddslashes(trim($_POST['trade_no']));
-	$row=$DB->getRow("select * from pre_order where trade_no='$trade_no' limit 1");
+	$row=$DB->getRow("select * from pre_order where deleted=0 AND trade_no='$trade_no' limit 1");
 	if(!$row)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
 	if($row['status']==0)exit('{"code":-1,"msg":"当前订单状态是未支付"}');
@@ -339,7 +339,7 @@ case 'alipaydSettle': //支付宝直付通确认结算
 break;
 case 'alipayPreAuthPay': //支付宝授权资金支付
 	$trade_no=trim($_POST['trade_no']);
-	$order=$DB->getRow("select * from pre_order where trade_no='$trade_no' limit 1");
+	$order=$DB->getRow("select * from pre_order where deleted=0 AND trade_no='$trade_no' limit 1");
 	if(!$order)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
 	$channel = $order['subchannel'] > 0 ? \lib\Channel::getSub($order['subchannel']) : \lib\Channel::get($order['channel'], $DB->findColumn('user', 'channelinfo', ['uid'=>$row['uid']]));
@@ -362,7 +362,7 @@ case 'alipayPreAuthPay': //支付宝授权资金支付
 break;
 case 'alipayUnfreeze': //支付宝授权资金解冻
 	$trade_no=trim($_POST['trade_no']);
-	$order=$DB->getRow("select * from pre_order where trade_no='$trade_no' limit 1");
+	$order=$DB->getRow("select * from pre_order where deleted=0 AND trade_no='$trade_no' limit 1");
 	if(!$order)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
 	$channel = $order['subchannel'] > 0 ? \lib\Channel::getSub($order['subchannel']) : \lib\Channel::get($order['channel'], $DB->findColumn('user', 'channelinfo', ['uid'=>$row['uid']]));
@@ -380,7 +380,7 @@ case 'alipayUnfreeze': //支付宝授权资金解冻
 break;
 case 'alipayRedPacketTansfer': //支付宝红包转账重试
 	$trade_no=trim($_POST['trade_no']);
-	$order=$DB->getRow("select * from pre_order where trade_no='$trade_no' limit 1");
+	$order=$DB->getRow("select * from pre_order where deleted=0 AND trade_no='$trade_no' limit 1");
 	if(!$order)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
 	$channel = $order['subchannel'] > 0 ? \lib\Channel::getSub($order['subchannel']) : \lib\Channel::get($order['channel'], $DB->findColumn('user', 'channelinfo', ['uid'=>$row['uid']]));

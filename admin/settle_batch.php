@@ -35,7 +35,7 @@ if(isset($_GET['batch'])){
 	$batch=$_GET['batch'];
 	$row=$DB->getRow("SELECT * from pre_batch where batch='$batch'");
 	if(!$row)showmsg('批次号不存在');
-	$list=$DB->getAll("SELECT * FROM pre_settle WHERE batch='{$batch}' and type={$type}");
+	$list=$DB->getAll("SELECT * FROM pre_settle WHERE deleted=0 AND batch='{$batch}' and type={$type}");
 
 	$channel_select = $DB->getAll("SELECT id,name,plugin FROM pre_channel WHERE plugin IN (SELECT name FROM pre_plugin WHERE transtypes LIKE '%".$app."%')");
 

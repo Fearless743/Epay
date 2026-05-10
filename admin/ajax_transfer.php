@@ -9,7 +9,7 @@ if(!checkRefererHost())exit('{"code":403}');
 
 switch($act){
 case 'transferList':
-	$sql=" 1=1";
+	$sql=" deleted=0";
 	if(isset($_POST['uid']) && !empty($_POST['uid'])) {
 		$uid = intval($_POST['uid']);
 		$sql.=" AND `uid`='$uid'";
@@ -66,7 +66,7 @@ case 'transferList':
 break;
 
 case 'statistics':
-	$sql=" 1=1";
+	$sql=" deleted=0";
 	if(isset($_POST['uid']) && !empty($_POST['uid'])) {
 		$uid = intval($_POST['uid']);
 		$sql.=" AND `uid`='$uid'";
@@ -114,7 +114,7 @@ case 'transfer_query':
 break;
 case 'transfer_result':
 	$biz_no=trim($_GET['biz_no']);
-    $row = $DB->find('transfer', 'biz_no,result', ['biz_no' => $biz_no]);
+    $row = $DB->find('transfer', 'biz_no,result', ['biz_no' => $biz_no, 'deleted' => 0]);
 	if(!$row) exit('{"code":-1,"msg":"付款记录不存在！"}');
 	$result = ['code'=>0,'msg'=>$row['result']?$row['result']:'未知'];
 	exit(json_encode($result));
@@ -135,7 +135,7 @@ case 'balance_query':
 break;
 case 'setTransferStatus':
 	$biz_no=$_POST['biz_no'];
-	$order = $DB->find('transfer', '*', ['biz_no' => $biz_no]);
+	$order = $DB->find('transfer', '*', ['biz_no' => $biz_no, 'deleted' => 0]);
 	if(!$order) exit('{"code":-1,"msg":"付款记录不存在！"}');
 	$status=intval($_POST['status']);
 	$reason = trim($_POST['reason']);
@@ -152,12 +152,12 @@ case 'setTransferStatus':
 break;
 case 'delTransfer':
 	$biz_no=$_POST['biz_no'];
-	if($DB->delete('transfer', ['biz_no' => $biz_no])!==false)exit('{"code":0,"msg":"succ"}');
+	if($DB->update('transfer', ['deleted'=>1], ['biz_no' => $biz_no])!==false)exit('{"code":0,"msg":"succ"}');
 	else exit('{"code":-1,"msg":"删除失败['.$DB->error().']"}');
 break;
 case 'refundTransfer':
 	$biz_no=$_POST['biz_no'];
-	$order = $DB->find('transfer', '*', ['biz_no' => $biz_no]);
+	$order = $DB->find('transfer', '*', ['biz_no' => $biz_no, 'deleted' => 0]);
     if(!$order) exit('{"code":-1,"msg":"付款记录不存在！"}');
 	if($DB->exec("UPDATE pre_transfer SET status='2' WHERE biz_no='$biz_no'")){
 		if($order['uid'] > 0){
@@ -177,10 +177,10 @@ case 'operation': //批量操作订单
 	$i=0;
 	foreach($checkbox as $biz_no){
 		if($status==3){
-			$DB->delete('transfer', ['biz_no' => $biz_no]);
+			$DB->update('transfer', ['deleted'=>1], ['biz_no' => $biz_no]);
 			continue;
 		}
-		$order = $DB->find('transfer', '*', ['biz_no' => $biz_no]);
+		$order = $DB->find('transfer', '*', ['biz_no' => $biz_no, 'deleted' => 0]);
 		if($order){
 			$data = ['status'=>$status];
 			if($status == 1 && empty($order['paytime'])) $data['paytime'] = date('Y-m-d H:i:s');
@@ -237,7 +237,7 @@ case 'stat':
 	$startday = trim($_POST['startday']);
 	$endday = trim($_POST['endday']);
 	if(!$startday || !$endday)exit(json_encode(['code'=>0, 'msg'=>'no day']));
-	$sql="`addtime`>='{$startday} 00:00:00' AND `addtime`<='{$endday} 23:59:59' AND status=1";
+	$sql="`addtime`>='{$startday} 00:00:00' AND `addtime`<='{$endday} 23:59:59' AND status=1 AND deleted=0";
 	if(isset($_POST['type']) && !empty($_POST['type'])) {
 		$type = trim($_POST['type']);
 		$sql.=" AND `type`='$type'";

@@ -127,7 +127,7 @@ class Transfer
 
         if($conf['settle_type']==1){
             $today=date("Y-m-d").' 00:00:00';
-            $order_today=$DB->getColumn("SELECT SUM(realmoney) from pre_order where uid={$pid} and tid<>2 and status=1 and endtime>='$today'");
+            $order_today=$DB->getColumn("SELECT SUM(realmoney) from pre_order where uid={$pid} and tid<>2 and status=1 and deleted=0 and endtime>='$today'");
             if(!$order_today) $order_today = 0;
             $enable_money=round($userrow['money']-$order_today,2);
             if($enable_money<0)$enable_money=0;

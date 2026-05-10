@@ -51,7 +51,7 @@ include './head.php';
 }
 </style>
 <?php
-$rs=$DB->query("SELECT * FROM pre_settle WHERE uid={$uid} AND status=1 ORDER BY id DESC LIMIT 9");
+$rs=$DB->query("SELECT * FROM pre_settle WHERE uid={$uid} AND status=1 AND deleted=0 ORDER BY id DESC LIMIT 9");
 $max_settle=0;
 $chart='';
 $i=0;

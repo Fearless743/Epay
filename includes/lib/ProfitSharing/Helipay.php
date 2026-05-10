@@ -76,7 +76,7 @@ class Helipay implements IProfitSharing
     {
         global $DB;
         $requestNo = date('YmdHis') . rand(1000, 9999);
-        $order_money = $DB->findColumn('order', 'realmoney', ['trade_no'=>$trade_no]);
+        $order_money = $DB->findColumn('order', 'realmoney', ['trade_no'=>$trade_no, 'deleted'=>0]);
         $params = [
             'requestNo' => $requestNo,
             'bizOrderNum' => $trade_no,

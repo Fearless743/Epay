@@ -5,7 +5,7 @@ class Order
 {
     public static function freeze($trade_no){
         global $DB;
-        $row = $DB->find('order', 'uid,getmoney,status,channel', ['trade_no'=>$trade_no]);
+        $row = $DB->find('order', 'uid,getmoney,status,channel', ['trade_no'=>$trade_no, 'deleted'=>0]);
         if(!$row)
             return ['code'=>-1, 'msg'=>'当前订单不存在！'];
         if($row['status']!=1)
@@ -22,7 +22,7 @@ class Order
 
     public static function unfreeze($trade_no){
         global $DB;
-        $row = $DB->find('order', 'uid,getmoney,status,channel', ['trade_no'=>$trade_no]);
+        $row = $DB->find('order', 'uid,getmoney,status,channel', ['trade_no'=>$trade_no, 'deleted'=>0]);
         if(!$row)
             return ['code'=>-1, 'msg'=>'当前订单不存在！'];
         if($row['status']!=3)
@@ -39,7 +39,7 @@ class Order
 
     public static function refund_info($trade_no, $api = 0, $uid = 0){
         global $DB;
-        $where = ['trade_no'=>$trade_no];
+        $where = ['trade_no'=>$trade_no, 'deleted'=>0];
         if($uid > 0) $where['uid'] = $uid;
         $order = $DB->find('order', '*', $where);
         if(!$order)
@@ -65,7 +65,7 @@ class Order
     public static function refund($refund_no, $trade_no, $money, $api = 0, $uid = 0, $out_refund_no = null){
         global $DB, $order, $conf;
 
-        $where = ['trade_no'=>$trade_no];
+        $where = ['trade_no'=>$trade_no, 'deleted'=>0];
         if($uid > 0) $where['uid'] = $uid;
         $order = $DB->find('order', '*', $where);
         if(!$order)
@@ -137,7 +137,7 @@ class Order
     public static function close($trade_no, $uid = 0){
         global $DB, $order, $conf;
 
-        $where = ['trade_no'=>$trade_no];
+        $where = ['trade_no'=>$trade_no, 'deleted'=>0];
         if($uid > 0) $where['uid'] = $uid;
         $order = $DB->find('order', '*', $where);
         if(!$order)

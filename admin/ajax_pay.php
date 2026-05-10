@@ -489,11 +489,11 @@ case 'getChannelMoney': //统计支付通道金额
 	$channel=intval($_GET['channel']);
 	if($type == 2 || $type == 3){
 		$today=$type==3 ? date("Y-m-d", strtotime("-1 day")) : date("Y-m-d");
-		$orders=$DB->getColumn("SELECT COUNT(*) FROM pre_order WHERE date='$today' AND channel='$channel' AND status>0");
+		$orders=$DB->getColumn("SELECT COUNT(*) FROM pre_order WHERE deleted=0 AND date='$today' AND channel='$channel' AND status>0");
 		exit('{"code":0,"msg":"succ","money":"'.$orders.'"}');
 	}else{
 		$today=$type==1 ? date("Y-m-d", strtotime("-1 day")) : date("Y-m-d");
-		$money=$DB->getColumn("SELECT SUM(realmoney) FROM pre_order WHERE date='$today' AND channel='$channel' AND status>0");
+		$money=$DB->getColumn("SELECT SUM(realmoney) FROM pre_order WHERE deleted=0 AND date='$today' AND channel='$channel' AND status>0");
 		exit('{"code":0,"msg":"succ","money":"'.round($money,2).'"}');
 	}
 break;
@@ -503,14 +503,14 @@ case 'getSubChannelMoney': //统计子通道金额
 	$today=$type==1 ? date("Y-m-d", strtotime("-1 day")) : date("Y-m-d");
 	$channel = explode('|', $channel);
 	$channel = array_map('intval', $channel);
-	$money=$DB->getColumn("SELECT SUM(realmoney) FROM pre_order WHERE date='$today' AND subchannel IN (".implode(",", $channel).") AND status>0");
+	$money=$DB->getColumn("SELECT SUM(realmoney) FROM pre_order WHERE deleted=0 AND date='$today' AND subchannel IN (".implode(",", $channel).") AND status>0");
 	exit('{"code":0,"msg":"succ","money":"'.round($money,2).'"}');
 break;
 case 'getTypeMoney': //统计支付方式金额
 	$type=intval($_GET['type']);
 	$typeid=intval($_GET['typeid']);
 	$today=$type==1 ? date("Y-m-d", strtotime("-1 day")) : date("Y-m-d");
-	$money=$DB->getColumn("SELECT SUM(realmoney) FROM pre_order WHERE date='$today' AND type='$typeid' AND status>0");
+	$money=$DB->getColumn("SELECT SUM(realmoney) FROM pre_order WHERE deleted=0 AND date='$today' AND type='$typeid' AND status>0");
 	exit('{"code":0,"msg":"succ","money":"'.round($money,2).'"}');
 break;
 case 'getChannelRate':

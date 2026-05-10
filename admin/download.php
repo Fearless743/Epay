@@ -43,7 +43,7 @@ $remark = text_encoding($conf['transfer_desc']);
 if($type == 'mybank'){
 	$data="收款方名称,收款方账号,收款方开户行名称,收款行联行号,金额,附言/用途\r\n";
 	
-	$rs=$DB->query("SELECT * from pre_settle where batch='$batch' and (type=1 or type=4) order by id asc");
+	$rs=$DB->query("SELECT * from pre_settle where deleted=0 AND batch='$batch' and (type=1 or type=4) order by id asc");
 	$i=0;
 	while($row = $rs->fetch())
 	{
@@ -55,7 +55,7 @@ if($type == 'mybank'){
 	$data="支付宝批量付款文件模板\r\n";
 	$data.="序号（必填）,收款方支付宝账号（必填）,收款方姓名（必填）,金额（必填，单位：元）,备注（选填）\r\n";
 
-	$rs=$DB->query("SELECT * from pre_settle where batch='$batch' and type=1 order by id asc");
+	$rs=$DB->query("SELECT * from pre_settle where deleted=0 AND batch='$batch' and type=1 order by id asc");
 	$i=0;
 	while($row = $rs->fetch())
 	{
@@ -70,7 +70,7 @@ if($type == 'mybank'){
 	$wxinfo = \lib\Channel::getWeixin($channel['appwxmp']);
 	if(!$wxinfo)sysmsg("支付通道绑定的微信公众号不存在");
 
-	$rs=$DB->query("SELECT * from pre_settle where batch='$batch' and type=2 order by id asc");
+	$rs=$DB->query("SELECT * from pre_settle where deleted=0 AND batch='$batch' and type=2 order by id asc");
 	$i=0;
 	$table="商家明细单号（必填）,收款用户openid（必填）,收款用户姓名（选填）,收款用户身份证（选填）,转账金额（必填，单位：元）,转账备注（必填）\r\n";
 	$allmoney = 0;
@@ -94,7 +94,7 @@ if($type == 'mybank'){
 
 }else{
 	$data="序号,转账方式,收款账号,收款人姓名,转账金额（元）,转账备注\r\n";
-	$rs=$DB->query("SELECT * from pre_settle where batch='$batch' order by type asc,id asc");
+	$rs=$DB->query("SELECT * from pre_settle where deleted=0 AND batch='$batch' order by type asc,id asc");
 	$i=0;
 	while($row = $rs->fetch())
 	{
@@ -149,7 +149,7 @@ if($method == 'type'){
 }
 
 if($type == 4){
-	$rs=$DB->query("SELECT uid,type,channel,money from pre_transfer where status=1 and paytime>='$startday' and paytime<='$endday'");
+	$rs=$DB->query("SELECT uid,type,channel,money from pre_transfer where deleted=0 AND status=1 and paytime>='$startday' and paytime<='$endday'");
 	while($row = $rs->fetch())
 	{
 		$money = (float)$row['money'];
@@ -167,7 +167,7 @@ if($type == 4){
 		}
 	}
 }else{
-	$rs=$DB->query("SELECT uid,type,channel,money,realmoney,getmoney,profitmoney from pre_order where status=1 and date>='$startday' and date<='$endday'");
+	$rs=$DB->query("SELECT uid,type,channel,money,realmoney,getmoney,profitmoney from pre_order where deleted=0 AND status=1 and date>='$startday' and date<='$endday'");
 	while($row = $rs->fetch())
 	{
 		if($type == 3){
@@ -235,7 +235,7 @@ foreach($rs as $row){
 }
 unset($rs);
 
-$sql=" 1=1";
+$sql=" A.deleted=0";
 if(!empty($uid)) {
 	$sql.=" AND A.`uid`='$uid'";
 }
@@ -374,7 +374,7 @@ $dstatus = trim($_GET['dstatus']);
 $type = trim($_GET['type']);
 $sheet = trim($_GET['sheet']);
 
-$sql=" 1=1";
+$sql=" deleted=0";
 if(!empty($uid)) {
 	$sql.=" AND `uid`='$uid'";
 }
@@ -534,7 +534,7 @@ if(isset($_GET['value']) && !empty($_GET['value'])) {
 
 $file="ID,商户号,支付方式,通道ID,关联订单号,商品名称,订单金额,问题类型,投诉原因,投诉详情,创建时间,最后更新时间,状态\r\n";
 
-$rs = $DB->query("SELECT A.*,B.money,B.name ordername,B.status orderstatus FROM pre_complain A LEFT JOIN pre_order B ON A.trade_no=B.trade_no WHERE{$sql} order by A.addtime desc limit 100000");
+$rs = $DB->query("SELECT A.*,B.money,B.name ordername,B.status orderstatus FROM pre_complain A LEFT JOIN pre_order B ON A.trade_no=B.trade_no AND B.deleted=0 WHERE{$sql} order by A.addtime desc limit 100000");
 while($row = $rs->fetch()){
 	$file.=''.$row['id'].','.$row['uid'].','.$paytype[$row['paytype']].','.$row['channel'].',="'.$row['trade_no'].'",'.$row['ordername'].','.$row['money'].','.$row['type'].','.$row['title'].','.str_replace(["\r\n", "\n"]," ",$row['content']).','.$row['addtime'].','.$row['edittime'].','.['0'=>'待处理','1'=>'处理中','2'=>'处理完成'][$row['status']]."\r\n";
 }

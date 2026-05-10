@@ -62,7 +62,7 @@ class Adapay implements IProfitSharing
     //解冻剩余资金
     public function unfreeeze($trade_no, $api_trade_no){
         global $DB;
-        $order_money = $DB->findColumn('order', 'realmoney', ['trade_no'=>$trade_no]);
+        $order_money = $DB->findColumn('order', 'realmoney', ['trade_no'=>$trade_no, 'deleted'=>0]);
         $params = [
             'payment_id' => $api_trade_no,
             'order_no' => date("YmdHis").rand(11111,99999),

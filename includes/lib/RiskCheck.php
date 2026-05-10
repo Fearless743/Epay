@@ -46,7 +46,7 @@ class RiskCheck
 				$subchannels = $DB->getAll("SELECT * FROM pre_subchannel WHERE channel='$channelid' AND status=1 ORDER BY id ASC");
 				foreach($subchannels as $subchannel){
 					$subchannelid = $subchannel['id'];
-					$orders=$DB->getAll("SELECT trade_no,status FROM pre_order WHERE addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) AND channel='$channelid' AND subchannel='$subchannelid' order by trade_no desc limit {$failcount}");
+					$orders=$DB->getAll("SELECT trade_no,status FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) AND channel='$channelid' AND subchannel='$subchannelid' order by trade_no desc limit {$failcount}");
 					if(count($orders)<$failcount)continue;
 					$succount = 0;
 					foreach($orders as $order){
@@ -68,7 +68,7 @@ class RiskCheck
 					}
 				}
 			}else{
-				$orders=$DB->getAll("SELECT trade_no,status FROM pre_order WHERE addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) AND channel='$channelid' order by trade_no desc limit {$failcount}");
+				$orders=$DB->getAll("SELECT trade_no,status FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) AND channel='$channelid' order by trade_no desc limit {$failcount}");
 				if(count($orders)<$failcount)continue;
 				$succount = 0;
 				foreach($orders as $order){
@@ -104,9 +104,9 @@ class RiskCheck
             return;
         }
 		//统计指定时间内每个商户的总订单数量
-		$user_all_stats_rows=$DB->getAll("SELECT uid,count(*) ordernum FROM pre_order WHERE addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) GROUP BY uid");
+		$user_all_stats_rows=$DB->getAll("SELECT uid,count(*) ordernum FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) GROUP BY uid");
 		//统计指定时间内每个商户的成功订单数量
-		$user_suc_stats_rows=$DB->getAll("SELECT uid,count(*) ordernum FROM pre_order WHERE addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) and status>0 GROUP BY uid");
+		$user_suc_stats_rows=$DB->getAll("SELECT uid,count(*) ordernum FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) and status>0 GROUP BY uid");
 		$user_suc_stats = [];
 		foreach($user_suc_stats_rows as $row){
 			if(!$row['uid']) continue;
@@ -149,7 +149,7 @@ class RiskCheck
 			foreach($complain_stats_rows as $row){
 				$uids[] = $row['uid'];
 			}
-			$user_order_stats_rows=$DB->getAll("SELECT uid,count(*) ordernum FROM pre_order WHERE addtime>=DATE_SUB(NOW(), INTERVAL 7 DAY) and status>0 and uid in (".implode(',',$uids).") GROUP BY uid");
+			$user_order_stats_rows=$DB->getAll("SELECT uid,count(*) ordernum FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL 7 DAY) and status>0 and uid in (".implode(',',$uids).") GROUP BY uid");
 			foreach($user_order_stats_rows as $row){
 				if(!isset($complain_stats[$row['uid']])) continue;
 				$total_num = intval($row['ordernum']);
@@ -182,9 +182,9 @@ class RiskCheck
             return;
         }
 		//统计指定时间内每个IP的总订单数量
-		$ip_all_stats_rows=$DB->getAll("SELECT ip,count(*) ordernum FROM pre_order WHERE addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) GROUP BY ip");
+		$ip_all_stats_rows=$DB->getAll("SELECT ip,count(*) ordernum FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) GROUP BY ip");
 		//统计指定时间内每个IP的成功订单数量
-		$ip_suc_stats_rows=$DB->getAll("SELECT ip,count(*) ordernum FROM pre_order WHERE addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) and status>0 GROUP BY ip");
+		$ip_suc_stats_rows=$DB->getAll("SELECT ip,count(*) ordernum FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) and status>0 GROUP BY ip");
 		$ip_suc_stats = [];
 		foreach($ip_suc_stats_rows as $row){
 			if(!$row['ip']) continue;
@@ -217,7 +217,7 @@ class RiskCheck
             return;
         }
 		//统计指定时间内每个支付账号的成功订单数量
-		$buyer_stats_rows=$DB->getAll("SELECT buyer,count(*) ordernum FROM pre_order WHERE addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) and status>0 GROUP BY buyer");
+		$buyer_stats_rows=$DB->getAll("SELECT buyer,count(*) ordernum FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) and status>0 GROUP BY buyer");
 		foreach($buyer_stats_rows as $row){
 			if(!$row['buyer']) continue;
 			if($row['ordernum'] < $count) continue;

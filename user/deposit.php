@@ -32,7 +32,7 @@ if($userrow['deposit'] > 0) $money2 = $userrow['deposit'];
 	<div class="row">
 	<div class="col-xs-12 col-sm-10 col-md-8 col-lg-6 center-block" style="float: none;">
 	<?php if(isset($_GET['ok']) && $_GET['ok']==1){
-	$order = $DB->getRow("SELECT * FROM pre_order WHERE trade_no=:trade_no limit 1", [':trade_no'=>$_GET['trade_no']]);
+	$order = $DB->getRow("SELECT * FROM pre_order WHERE trade_no=:trade_no AND deleted=0 limit 1", [':trade_no'=>$_GET['trade_no']]);
 	?>
 	<div class="alert alert-success alert-dismissible" role="alert">
 	  <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>

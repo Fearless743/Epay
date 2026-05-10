@@ -19,11 +19,11 @@ if($act=='query')
 	if($key!==$userrow['key']) exit(json_encode(['code'=>-3, 'msg'=>'商户密钥错误']));
 	if($userrow['keytype'] == 1) exit(json_encode(['code'=>-3, 'msg'=>'该商户只能使用RSA签名类型']));
 
-	$orders=$DB->getColumn("SELECT count(*) from pre_order WHERE uid={$pid}");
+	$orders=$DB->getColumn("SELECT count(*) from pre_order WHERE uid={$pid} AND deleted=0");
 	$lastday=date("Y-m-d",strtotime("-1 day"));
 	$today=date("Y-m-d");
-	$order_today=$DB->getColumn("SELECT count(*) from pre_order where uid={$pid} and status=1 and date='$today'");
-	$order_lastday=$DB->getColumn("SELECT count(*) from pre_order where uid={$pid} and status=1 and date='$lastday'");
+	$order_today=$DB->getColumn("SELECT count(*) from pre_order where uid={$pid} and status=1 and deleted=0 and date='$today'");
+	$order_lastday=$DB->getColumn("SELECT count(*) from pre_order where uid={$pid} and status=1 and deleted=0 and date='$lastday'");
 
 	$result=array("code"=>1,"pid"=>$pid,"key"=>$key,"active"=>$userrow['status'],"money"=>$userrow['money'],"type"=>$userrow['settle_id'],"account"=>$userrow['account'],"username"=>$userrow['username'],"orders"=>$orders,"orders_today"=>$order_today,"orders_lastday"=>$order_lastday);
 	exit(json_encode($result));
@@ -40,7 +40,7 @@ elseif($act=='settle')
 	if($key!==$userrow['key']) exit(json_encode(['code'=>-3, 'msg'=>'商户密钥错误']));
 	if($userrow['keytype'] == 1) exit(json_encode(['code'=>-3, 'msg'=>'该商户只能使用RSA签名类型']));
 
-	$rs=$DB->query("SELECT * FROM pre_settle WHERE uid='{$pid}' order by id desc limit {$offset},{$limit}");
+	$rs=$DB->query("SELECT * FROM pre_settle WHERE uid='{$pid}' AND deleted=0 order by id desc limit {$offset},{$limit}");
 	while($row=$rs->fetch(PDO::FETCH_ASSOC)){
 		$data[]=$row;
 	}
@@ -56,7 +56,7 @@ elseif($act=='order')
 	if(isset($_GET['sign']) && isset($_GET['trade_no'])){
 		$trade_no=daddslashes($_GET['trade_no']);
 		if(empty($_GET['sign']) || md5(SYS_KEY.$trade_no.SYS_KEY) !== $_GET['sign']) exit(json_encode(['code'=>-3, 'msg'=>'verify sign failed']));
-		$row=$DB->getRow("SELECT * FROM pre_order WHERE trade_no='{$trade_no}' limit 1");
+		$row=$DB->getRow("SELECT * FROM pre_order WHERE trade_no='{$trade_no}' AND deleted=0 limit 1");
 	}else{
 		$pid=intval($_GET['pid']);
 		$key=daddslashes($_GET['key']);
@@ -67,10 +67,10 @@ elseif($act=='order')
 
 		if(!empty($_GET['trade_no'])){
 			$trade_no=daddslashes($_GET['trade_no']);
-			$row=$DB->getRow("SELECT * FROM pre_order WHERE uid='{$pid}' and trade_no='{$trade_no}' limit 1");
+			$row=$DB->getRow("SELECT * FROM pre_order WHERE uid='{$pid}' and trade_no='{$trade_no}' AND deleted=0 limit 1");
 		}elseif(!empty($_GET['out_trade_no'])){
 			$out_trade_no=daddslashes($_GET['out_trade_no']);
-			$row=$DB->getRow("SELECT * FROM pre_order WHERE uid='{$pid}' and out_trade_no='{$out_trade_no}' limit 1");
+			$row=$DB->getRow("SELECT * FROM pre_order WHERE uid='{$pid}' and out_trade_no='{$out_trade_no}' AND deleted=0 limit 1");
 		}else{
 			exit(json_encode(['code'=>-4, 'msg'=>'订单号不能为空']));
 		}
@@ -96,7 +96,7 @@ elseif($act=='orders')
 	if($key!==$userrow['key']) exit(json_encode(['code'=>-3, 'msg'=>'商户密钥错误']));
 	if($userrow['keytype'] == 1) exit(json_encode(['code'=>-3, 'msg'=>'该商户只能使用RSA签名类型']));
 
-	$sql = " uid='{$pid}'";
+	$sql = " A.uid='{$pid}' AND A.deleted=0";
 	if(isset($_GET['status'])){
 		$status = intval($_GET['status']);
 		$sql .= " AND A.status='{$status}'";

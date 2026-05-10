@@ -14,9 +14,9 @@ $check_code = $_GET['check_code'];
 $errmsg = null;
 
 if($out_trade_no){
-	$order = $DB->getRow("SELECT * FROM pre_order WHERE trade_no=:trade_no limit 1", [':trade_no'=>$out_trade_no]);
-	if(!$order)$order = $DB->getRow("SELECT * FROM pre_order WHERE api_trade_no=:trade_no limit 1", [':trade_no'=>$out_trade_no]);
-	if(!$order)$order = $DB->getRow("SELECT * FROM pre_order WHERE bill_mch_trade_no=:trade_no limit 1", [':trade_no'=>$out_trade_no]);
+	$order = $DB->getRow("SELECT * FROM pre_order WHERE trade_no=:trade_no AND deleted=0 limit 1", [':trade_no'=>$out_trade_no]);
+	if(!$order)$order = $DB->getRow("SELECT * FROM pre_order WHERE api_trade_no=:trade_no AND deleted=0 limit 1", [':trade_no'=>$out_trade_no]);
+	if(!$order)$order = $DB->getRow("SELECT * FROM pre_order WHERE bill_mch_trade_no=:trade_no AND deleted=0 limit 1", [':trade_no'=>$out_trade_no]);
 	if($order){
 		$trade_no = $order['trade_no'];
 		$jump_url = $siteurl.'pay/return/'.$trade_no.'/';

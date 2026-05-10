@@ -5,7 +5,7 @@ create table `pre_config` (
 PRIMARY KEY  (`k`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-INSERT INTO `pre_config` VALUES ('version', '2054');
+INSERT INTO `pre_config` VALUES ('version', '2055');
 INSERT INTO `pre_config` VALUES ('admin_user', 'admin');
 INSERT INTO `pre_config` VALUES ('admin_pwd', '123456');
 INSERT INTO `pre_config` VALUES ('admin_paypwd', '123456');
@@ -209,6 +209,7 @@ CREATE TABLE `pre_order` (
   `mobile` varchar(100) DEFAULT NULL,
   `cert_info` varchar(300) DEFAULT NULL,
   `province` varchar(2) DEFAULT NULL,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
  PRIMARY KEY (`trade_no`),
  KEY `uid` (`uid`),
  KEY `out_trade_no` (`out_trade_no`,`uid`),
@@ -319,6 +320,7 @@ CREATE TABLE `pre_settle` (
   `transfer_date` datetime DEFAULT NULL,
   `transfer_ext` text DEFAULT NULL,
   `result` varchar(64) DEFAULT NULL,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
  PRIMARY KEY (`id`),
  KEY `uid` (`uid`),
  KEY `batch` (`batch`),
@@ -438,6 +440,7 @@ CREATE TABLE `pre_psorder` (
   `delay` tinyint(1) NOT NULL DEFAULT '0',
   `retry` tinyint(1) NOT NULL DEFAULT '0',
   `rdata` text DEFAULT NULL,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
  PRIMARY KEY (`id`),
  KEY `trade_no` (`trade_no`),
  KEY `addtime` (`addtime`,`delay`,`status`)
@@ -532,6 +535,7 @@ CREATE TABLE `pre_transfer` (
   `desc` varchar(80) DEFAULT NULL,
   `result` varchar(80) DEFAULT NULL,
   `ext` text DEFAULT NULL,
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
  PRIMARY KEY (`biz_no`),
  KEY `uid` (`uid`),
  KEY `out_biz_no` (`out_biz_no`,`uid`)

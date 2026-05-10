@@ -42,7 +42,7 @@ class Plugin {
 			$func = $matchs[1];
 			$trade_no = $matchs[2];
 			
-			$order = $DB->getRow("SELECT A.*,B.name typename,B.showname typeshowname FROM pre_order A left join pre_type B on A.type=B.id WHERE trade_no=:trade_no limit 1", [':trade_no'=>$trade_no]);
+			$order = $DB->getRow("SELECT A.*,B.name typename,B.showname typeshowname FROM pre_order A left join pre_type B on A.type=B.id WHERE A.trade_no=:trade_no AND A.deleted=0 limit 1", [':trade_no'=>$trade_no]);
             if (!$order) {
 				$trade_no_tmp = $trade_no;
 				$userrow = ['gid'=>0, 'ordername'=>'', 'channelinfo'=>''];

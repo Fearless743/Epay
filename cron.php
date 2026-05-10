@@ -90,7 +90,7 @@ elseif($_GET['do']=='order'){
 	$thtime=date("Y-m-d H:i:s",time()-3600*48);
 
 	$CACHE->clean();
-	$DB->exec("delete from pre_order where status=0 and addtime<'{$thtime}'");
+	$DB->exec("UPDATE pre_order SET deleted=1 where status=0 and addtime<'{$thtime}'");
 	$DB->exec("delete from pre_regcode where `time`<'".(time()-3600*24)."'");
 	$DB->exec("delete from pre_blacklist where endtime is not null and endtime<NOW()");
 	$DB->exec("delete from pay_wxkflog where addtime<'".date("Y-m-d H:i:s", strtotime('-48 hours'))."'");
@@ -114,7 +114,7 @@ elseif($_GET['do']=='order'){
 	$lastday=date("Y-m-d",strtotime("-1 day"));
 	$today=date("Y-m-d");
 
-	$rs=$DB->query("SELECT type,channel,realmoney,profitmoney from pre_order where (status=1 OR status=3) and date>='$lastday' and date<'$today'");
+	$rs=$DB->query("SELECT type,channel,realmoney,profitmoney from pre_order where deleted=0 and (status=1 OR status=3) and date>='$lastday' and date<'$today'");
 	foreach($paytype as $id=>$type){
 		$order_paytype[$id]=0;
 		$profit_paytype[$id]=0;
@@ -161,7 +161,7 @@ elseif($_GET['do']=='order'){
 	$DB->exec("update pre_channel set daystatus=0");
 
 	if($conf['invite_mode'] == 1){
-		$moneylist = $DB->getAll("SELECT uid,SUM(realmoney) money FROM pre_order WHERE (status=1 OR status=3) AND `date`='$lastday' GROUP BY uid");
+		$moneylist = $DB->getAll("SELECT uid,SUM(realmoney) money FROM pre_order WHERE deleted=0 AND (status=1 OR status=3) AND `date`='$lastday' GROUP BY uid");
 		foreach($moneylist as $row){
 			$upid = $DB->findColumn('user', 'upid', ['uid'=>$row['uid']]);
 			if($upid > 0){
@@ -192,7 +192,7 @@ elseif($_GET['do']=='order'){
 elseif($_GET['do']=='notify'){
 	$limit = 20; //每次重试的订单数量
 	for($i=0;$i<$limit;$i++){
-		$srow=$DB->getRow("SELECT * FROM pre_order WHERE (TO_DAYS(NOW()) - TO_DAYS(endtime) <= 1) AND notify>0 AND notifytime<NOW() LIMIT 1");
+		$srow=$DB->getRow("SELECT * FROM pre_order WHERE deleted=0 AND (TO_DAYS(NOW()) - TO_DAYS(endtime) <= 1) AND notify>0 AND notifytime<NOW() LIMIT 1");
 		if(!$srow)break;
 
 		//通知时间：1分钟，3分钟，20分钟，1小时，2小时
@@ -222,7 +222,7 @@ elseif($_GET['do']=='notify'){
 				if($count > 0){
 					$userrow = $DB->find('user', 'uid,email,pay', ['uid'=>$srow['uid']]);
 					if($userrow['pay'] == 1){
-						$orders = $DB->getAll("SELECT trade_no FROM pre_order WHERE uid='{$srow['uid']}' and status>0 order by trade_no desc limit {$count}");
+						$orders = $DB->getAll("SELECT trade_no FROM pre_order WHERE deleted=0 AND uid='{$srow['uid']}' and status>0 order by trade_no desc limit {$count}");
 						$failcount = 0;
 						foreach($orders as $order){
 							if($order['notify'] > 0) $failcount++;
@@ -245,7 +245,7 @@ elseif($_GET['do']=='notify'){
 elseif($_GET['do']=='notify2'){
 	$limit = 20; //每次重试的订单数量
 	for($i=0;$i<$limit;$i++){
-		$srow=$DB->getRow("SELECT * FROM pre_order WHERE (TO_DAYS(NOW()) - TO_DAYS(endtime) <= 1) AND notify=-1 LIMIT 1");
+		$srow=$DB->getRow("SELECT * FROM pre_order WHERE deleted=0 AND (TO_DAYS(NOW()) - TO_DAYS(endtime) <= 1) AND notify=-1 LIMIT 1");
 		if(!$srow)break;
 
 		$url=creat_callback($srow);
@@ -277,7 +277,7 @@ elseif($_GET['do']=='complain'){
 	if(($channel['plugin'] == 'alipaysl' || $channel['plugin'] == 'allinpay' && $channel['type']==1) && substr($channel['appmchid'],0,1)=='['){
 		$uid = [];
 		$subchannels = [];
-		$orders = $DB->getAll("SELECT DISTINCT uid,subchannel FROM pre_order WHERE channel='$channelid' AND date>='".date("Y-m-d",strtotime("-7 day"))."'");
+		$orders = $DB->getAll("SELECT DISTINCT uid,subchannel FROM pre_order WHERE deleted=0 AND channel='$channelid' AND date>='".date("Y-m-d",strtotime("-7 day"))."'");
 		foreach($orders as $row){
 			if(!in_array($row['uid'], $uid) && $row['subchannel'] == 0)$uid[] = $row['uid'];
 			if($row['subchannel'] > 0)$subchannels[] = $row['subchannel'];

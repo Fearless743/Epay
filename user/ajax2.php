@@ -112,25 +112,25 @@ case 'getcount':
 	$lastday=date("Y-m-d",strtotime("-1 day"));
 	$today=date("Y-m-d");
 
-	$orders=$DB->getColumn("SELECT count(*) FROM pre_order WHERE uid={$uid} AND status=1");
-	$orders_today=$DB->getColumn("SELECT count(*) from pre_order WHERE uid={$uid} AND status=1 AND date='$today'");
+	$orders=$DB->getColumn("SELECT count(*) FROM pre_order WHERE uid={$uid} AND status=1 AND deleted=0");
+	$orders_today=$DB->getColumn("SELECT count(*) from pre_order WHERE uid={$uid} AND status=1 AND date='$today' AND deleted=0");
 
-	$settle_money=$DB->getColumn("SELECT sum(realmoney) FROM pre_settle WHERE uid={$uid} and status=1");
+	$settle_money=$DB->getColumn("SELECT sum(realmoney) FROM pre_settle WHERE uid={$uid} and status=1 and deleted=0");
 	$settle_money=round($settle_money,2);
 
-	$order_today_all = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$today'"),2);
-	$order_lastday_all = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$lastday'"),2);
+	$order_today_all = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$today' AND deleted=0"),2);
+	$order_lastday_all = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$lastday' AND deleted=0"),2);
 
-	$transfer_today_all = round($DB->getColumn("SELECT sum(money) FROM pre_transfer WHERE uid={$uid} AND status<>2 AND addtime>='$today'"),2);
-	$transfer_lastday_all = round($DB->getColumn("SELECT sum(money) FROM pre_transfer WHERE uid={$uid} AND status<>2 AND addtime>='$lastday' AND addtime<'$today'"),2);
+	$transfer_today_all = round($DB->getColumn("SELECT sum(money) FROM pre_transfer WHERE uid={$uid} AND status<>2 AND addtime>='$today' AND deleted=0"),2);
+	$transfer_lastday_all = round($DB->getColumn("SELECT sum(money) FROM pre_transfer WHERE uid={$uid} AND status<>2 AND addtime>='$lastday' AND addtime<'$today' AND deleted=0"),2);
 
 	$channels = [];
 	$types = \lib\Channel::getTypes($uid, $userrow['gid']);
 	foreach($types as $row){
-		$order_today = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$today' AND type={$row['id']}"),2);
-		$order_lastday = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$lastday' AND type={$row['id']}"),2);
+		$order_today = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$today' AND type={$row['id']} AND deleted=0"),2);
+		$order_lastday = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$lastday' AND type={$row['id']} AND deleted=0"),2);
 
-		$orderrow = $DB->getRow("SELECT COUNT(*) allnum,COUNT(IF(status>0, 1, NULL)) sucnum FROM pre_order WHERE uid={$uid} AND addtime>='$today' AND type={$row['id']}");
+		$orderrow = $DB->getRow("SELECT COUNT(*) allnum,COUNT(IF(status>0, 1, NULL)) sucnum FROM pre_order WHERE uid={$uid} AND addtime>='$today' AND type={$row['id']} AND deleted=0");
 		$success_rate = $orderrow && $orderrow['allnum'] > 0 ? round($orderrow['sucnum']/$orderrow['allnum']*100,2) : 100;
 
 		$channels[] = ['name'=>$row['name'], 'showname'=>$row['showname'], 'rate'=>round(100-$row['rate'], 2), 'order_today'=>$order_today, 'order_lastday'=>$order_lastday, 'success_rate'=>$success_rate];
@@ -151,9 +151,9 @@ case 'orderCount':
 	for($i=0; $i<$days; $i++){
 		$theday = date("Y-m-d",strtotime($starttime)+86400*$i);
 		$labels[] = substr($theday,5);
-		$datas['total'][] = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$theday'"), 2);
+		$datas['total'][] = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$theday' AND deleted=0"), 2);
 		foreach($types as $row){
-			$datas[$row['name']][] = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$theday' AND type={$row['id']}"), 2);
+			$datas[$row['name']][] = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$theday' AND type={$row['id']} AND deleted=0"), 2);
 		}
 	}
 	$datasets = [];
@@ -733,7 +733,7 @@ case 'cert_query':
 break;
 case 'order': //订单详情
 	$trade_no=$_GET['trade_no'];
-	$row=$DB->getRow("select A.*,B.showname typename from pre_order A left join pre_type B on A.type=B.id where trade_no=:trade_no and uid=:uid limit 1", [':trade_no'=>$trade_no, ':uid'=>$uid]);
+	$row=$DB->getRow("select A.*,B.showname typename from pre_order A left join pre_type B on A.type=B.id where trade_no=:trade_no and uid=:uid and A.deleted=0 limit 1", [':trade_no'=>$trade_no, ':uid'=>$uid]);
 	if(!$row)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
 	$row['subchannelname'] = $row['subchannel'] > 0 ? $DB->findColumn('subchannel', 'name', ['id'=>$row['subchannel']]) : '';
@@ -746,11 +746,11 @@ break;
 case 'subOrders':
 	$trade_no=trim($_GET['trade_no']);
 	$list = \lib\Payment::getSubOrders($trade_no);
-	exit(json_encode(['code'=>0, 'data'=>$list, 'settle'=>$DB->findColumn('order', 'settle', ['trade_no'=>$trade_no])]));
+	exit(json_encode(['code'=>0, 'data'=>$list, 'settle'=>$DB->findColumn('order', 'settle', ['trade_no'=>$trade_no, 'deleted'=>0])]));
 break;
 case 'notify':
 	$trade_no=$_POST['trade_no'];
-	$row=$DB->find('order', '*', ['trade_no'=>$trade_no, 'uid'=>$uid]);
+	$row=$DB->find('order', '*', ['trade_no'=>$trade_no, 'uid'=>$uid, 'deleted'=>0]);
 	if(!$row)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
 	if($row['status']==0)exit('{"code":-1,"msg":"订单尚未支付，无法重新通知！"}');
@@ -761,7 +761,7 @@ case 'notify':
 break;
 case 'printOrder':
 	$trade_no=$_POST['trade_no'];
-	$row=$DB->find('order', '*', ['trade_no'=>$trade_no, 'uid'=>$uid]);
+	$row=$DB->find('order', '*', ['trade_no'=>$trade_no, 'uid'=>$uid, 'deleted'=>0]);
 	if(!$row)
 		exit('{"code":-1,"msg":"当前订单不存在！"}');
 	if($row['status']==0)exit('{"code":-1,"msg":"订单尚未支付，无法打印！"}');
@@ -778,7 +778,7 @@ case 'printOrder':
 break;
 case 'settle_result':
 	$id=intval($_GET['id']);
-	$row=$DB->getRow("select result from pre_settle where id='$id' limit 1");
+	$row=$DB->getRow("select result from pre_settle where id='$id' AND deleted=0 limit 1");
 	if(!$row)
 		exit('{"code":-1,"msg":"当前结算记录不存在！"}');
 	$result = ['code'=>0,'msg'=>$row['result']?$row['result']:'未知'];
@@ -895,7 +895,7 @@ case 'orderList':
 	}
 	unset($rs);
 
-	$sql=" A.uid=$uid";
+	$sql=" A.uid=$uid AND A.deleted=0";
 	if(isset($_POST['paytype']) && !empty($_POST['paytype'])) {
 		$type = intval($_POST['paytype']);
 		$sql.=" AND A.`type`='$type'";
@@ -963,7 +963,7 @@ case 'orderList':
 	exit(json_encode(['total'=>$total, 'rows'=>$list2]));
 break;
 case 'statistics':
-    $sql=" A.uid=$uid";
+    $sql=" A.uid=$uid AND A.deleted=0";
 	if(isset($_POST['paytype']) && !empty($_POST['paytype'])) {
 		$type = intval($_POST['paytype']);
 		$sql.=" AND A.`type`='$type'";
@@ -1067,7 +1067,7 @@ case 'recordList':
 	exit(json_encode(['total'=>$total, 'rows'=>$list]));
 break;
 case 'settleList':
-	$sql=" uid=$uid";
+	$sql=" uid=$uid AND deleted=0";
 	if(isset($_POST['dstatus']) && $_POST['dstatus']>-1) {
 		$dstatus = intval($_POST['dstatus']);
 		$sql.=" AND status='{$dstatus}'";
@@ -1091,7 +1091,7 @@ case 'settleList':
 	exit(json_encode(['total'=>$total, 'rows'=>$list2]));
 break;
 case 'transferList':
-	$sql=" uid=$uid";
+	$sql=" uid=$uid AND deleted=0";
 	if(isset($_POST['paytype']) && !empty($_POST['paytype'])) {
 		$type = intval($_POST['paytype']);
 		$sql.=" AND `type`='$type'";
@@ -1148,7 +1148,7 @@ case 'transferList':
 	exit(json_encode(['total'=>$total, 'rows'=>$list2]));
 break;
 case 'transfer_statistics':
-	$sql=" uid=$uid";
+	$sql=" uid=$uid AND deleted=0";
 	if(isset($_POST['paytype']) && !empty($_POST['paytype'])) {
 		$type = intval($_POST['paytype']);
 		$sql.=" AND `type`='$type'";
@@ -1196,7 +1196,7 @@ break;
 
 case 'transfer_result':
 	$biz_no=trim($_GET['biz_no']);
-	$row=$DB->find('transfer', 'result', ['biz_no'=>$biz_no, 'uid'=>$uid]);
+	$row=$DB->find('transfer', 'result', ['biz_no'=>$biz_no, 'uid'=>$uid, 'deleted'=>0]);
 	if(!$row)
 		exit('{"code":-1,"msg":"当前付款记录不存在！"}');
 	$result = ['code'=>0,'msg'=>$row['result']?$row['result']:'未知'];
@@ -1292,7 +1292,7 @@ case 'deposit_withdraw':
 	if($money>$userrow['deposit'])exit('{"code":-1,"msg":"保证金不足"}');
 	if($conf['user_deposit_day']>0){
 		$days = intval($conf['user_deposit_day']);
-		$orders = $DB->getColumn("SELECT count(*) FROM pre_order WHERE uid='{$uid}' AND status=1 AND addtime>DATE_SUB(NOW(),INTERVAL {$days} DAY)");
+		$orders = $DB->getColumn("SELECT count(*) FROM pre_order WHERE uid='{$uid}' AND status=1 AND addtime>DATE_SUB(NOW(),INTERVAL {$days} DAY) AND deleted=0");
 		if($orders>0)exit('{"code":-1,"msg":"你在最近'.$days.'天内有订单，无法提取保证金"}');
 		$complains = $DB->getColumn("SELECT count(*) FROM pre_complain WHERE uid='{$uid}' AND addtime>DATE_SUB(NOW(),INTERVAL {$days} DAY)");
 		if($complains>0)exit('{"code":-1,"msg":"你在最近'.$days.'天内有投诉记录，无法提取保证金"}');

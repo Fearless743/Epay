@@ -10,7 +10,7 @@ if(!checkRefererHost())exit('{"code":403}');
 switch($act){
 case 'getcount':
 	$thtime=date("Y-m-d").' 00:00:00';
-	$count1=$DB->getColumn("SELECT count(*) from pre_order");
+	$count1=$DB->getColumn("SELECT count(*) from pre_order WHERE deleted=0");
 	$count2=$DB->getColumn("SELECT count(*) from pre_user");
 	$plugincount=$DB->getColumn("SELECT count(*) from pre_plugin");
 	if($plugincount<1){
@@ -22,7 +22,7 @@ case 'getcount':
 		\lib\Plugin::updateAll();
 	}
 
-	$orderrow=$DB->getRow("SELECT COUNT(*) allnum,COUNT(IF(status>0, 1, NULL)) sucnum FROM pre_order WHERE addtime>='$thtime'");
+	$orderrow=$DB->getRow("SELECT COUNT(*) allnum,COUNT(IF(status>0, 1, NULL)) sucnum FROM pre_order WHERE deleted=0 AND addtime>='$thtime'");
 	$success_rate = 100;
 	if($orderrow){
 		if($orderrow['allnum'] > 0){
@@ -51,10 +51,10 @@ case 'getcount':
 		$result=["code"=>0,"type"=>"cache","paytype"=>$paytype,"channel"=>$channel,"count1"=>$count1,"count2"=>$count2,"usermoney"=>round($array['usermoney'],2),"settlemoney"=>round($array['settlemoney'],2),"success_rate"=>$success_rate,"order_today"=>$array['order_today'],"order"=>[]];
 	}else{
 		$usermoney=$DB->getColumn("SELECT SUM(money) FROM pre_user WHERE money!='0.00'");
-		$settlemoney=$DB->getColumn("SELECT SUM(money) FROM pre_settle");
+		$settlemoney=$DB->getColumn("SELECT SUM(money) FROM pre_settle WHERE deleted=0");
 
 		$today=date("Y-m-d");
-		$rs=$DB->query("SELECT type,channel,realmoney,profitmoney from pre_order where (status=1 OR status=3) and date>='$today'");
+		$rs=$DB->query("SELECT type,channel,realmoney,profitmoney from pre_order where deleted=0 AND (status=1 OR status=3) and date>='$today'");
 		foreach($paytype as $id=>$type){
 			$order_paytype[$id]=0;
 			$profit_paytype[$id]=0;

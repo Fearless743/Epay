@@ -20,7 +20,7 @@ $aop = new \Alipay\AlipayBillService($alipay_config);
 
 while(true){
     $now = time();
-    $list = $DB->getAll("SELECT trade_no,realmoney FROM pre_order WHERE channel='{$channel['id']}'{$sql} AND status=0 AND addtime>=DATE_SUB(NOW(), INTERVAL 8 MINUTE)");
+    $list = $DB->getAll("SELECT trade_no,realmoney FROM pre_order WHERE channel='{$channel['id']}'{$sql} AND deleted=0 AND status=0 AND addtime>=DATE_SUB(NOW(), INTERVAL 8 MINUTE)");
     if(empty($list)){
         echo '暂无未支付订单...'.PHP_EOL;
         goto WAIT;
@@ -46,7 +46,7 @@ while(true){
                 return $v['trade_no'] == $trade_no && $v['realmoney'] == $money;
             });
             if(!empty($orders)){
-                $order = $DB->getRow("SELECT A.*,B.name typename,B.showname typeshowname FROM pre_order A left join pre_type B on A.type=B.id WHERE trade_no=:trade_no limit 1", [':trade_no'=>$trade_no]);
+                $order = $DB->getRow("SELECT A.*,B.name typename,B.showname typeshowname FROM pre_order A left join pre_type B on A.type=B.id WHERE A.deleted=0 AND trade_no=:trade_no limit 1", [':trade_no'=>$trade_no]);
                 $order['plugin'] = $channel['plugin'];
                 $buyer = empty($order['buyer']) ? $item['other_account'] : null;
                 processNotify($order, $item['alipay_order_no'], $buyer);

@@ -35,7 +35,7 @@ case 'orderList':
 	}
 	unset($rs);
 
-	$sql=" 1=1";
+	$sql=" A.deleted=0";
 	if(isset($_POST['rid']) && !empty($_POST['rid'])) {
 		$rid = intval($_POST['rid']);
 		$sql.=" AND A.`rid`='$rid'";
@@ -197,7 +197,7 @@ break;
 
 case 'submit':
 	$id=intval($_POST['id']);
-	$row = $DB->getRow("SELECT A.*,B.channel,B.account,B.name,B.rate,B.info,B.uid psuid,C.uid,C.subchannel,C.realmoney ordermoney FROM pre_psorder A LEFT JOIN pre_psreceiver B ON A.rid=B.id LEFT JOIN pre_order C ON C.trade_no=A.trade_no WHERE A.id=:id", [':id'=>$id]);
+	$row = $DB->getRow("SELECT A.*,B.channel,B.account,B.name,B.rate,B.info,B.uid psuid,C.uid,C.subchannel,C.realmoney ordermoney FROM pre_psorder A LEFT JOIN pre_psreceiver B ON A.rid=B.id LEFT JOIN pre_order C ON C.trade_no=A.trade_no AND C.deleted=0 WHERE A.deleted=0 AND A.id=:id", [':id'=>$id]);
 	if(!$row)exit('{"code":-1,"msg":"订单不存在"}');
 	if($row['status']!=0&&$row['status']!=3)exit('{"code":-1,"msg":"只有待分账的订单才能提交分账"}');
 	$channel = $row['subchannel'] > 0 ? \lib\Channel::getSub($row['subchannel']) : \lib\Channel::get($row['channel'], $row['uid']?$DB->findColumn('user', 'channelinfo', ['uid'=>$row['uid']]):null);
@@ -227,7 +227,7 @@ break;
 
 case 'query':
 	$id=intval($_POST['id']);
-	$row = $DB->getRow("SELECT A.*,B.channel,B.uid psuid,C.uid,C.subchannel FROM pre_psorder A LEFT JOIN pre_psreceiver B ON A.rid=B.id LEFT JOIN pre_order C ON C.trade_no=A.trade_no WHERE A.id=:id", [':id'=>$id]);
+	$row = $DB->getRow("SELECT A.*,B.channel,B.uid psuid,C.uid,C.subchannel FROM pre_psorder A LEFT JOIN pre_psreceiver B ON A.rid=B.id LEFT JOIN pre_order C ON C.trade_no=A.trade_no AND C.deleted=0 WHERE A.deleted=0 AND A.id=:id", [':id'=>$id]);
 	if(!$row)exit('{"code":-1,"msg":"订单不存在"}');
 	if($row['status']!=1)exit('{"code":-1,"msg":"只有已提交的订单才能查询结果"}');
 	$channel = $row['subchannel'] > 0 ? \lib\Channel::getSub($row['subchannel']) : \lib\Channel::get($row['channel'], $row['uid']?$DB->findColumn('user', 'channelinfo', ['uid'=>$row['uid']]):null);
@@ -250,7 +250,7 @@ break;
 
 case 'unfreeeze':
 	$id=intval($_POST['id']);
-	$row = $DB->getRow("SELECT A.*,B.channel,C.uid,C.subchannel FROM pre_psorder A LEFT JOIN pre_psreceiver B ON A.rid=B.id LEFT JOIN pre_order C ON C.trade_no=A.trade_no WHERE A.id=:id", [':id'=>$id]);
+	$row = $DB->getRow("SELECT A.*,B.channel,C.uid,C.subchannel FROM pre_psorder A LEFT JOIN pre_psreceiver B ON A.rid=B.id LEFT JOIN pre_order C ON C.trade_no=A.trade_no AND C.deleted=0 WHERE A.deleted=0 AND A.id=:id", [':id'=>$id]);
 	if(!$row)exit('{"code":-1,"msg":"订单不存在"}');
 	if($row['status']==2)exit('{"code":-1,"msg":"只有待分账的订单才能取消分账"}');
 	$channel = $row['subchannel'] > 0 ? \lib\Channel::getSub($row['subchannel']) : \lib\Channel::get($row['channel'], $row['uid']?$DB->findColumn('user', 'channelinfo', ['uid'=>$row['uid']]):null);
@@ -266,7 +266,7 @@ break;
 
 case 'return':
 	$id=intval($_POST['id']);
-	$row = $DB->getRow("SELECT A.*,B.channel,C.uid,C.subchannel FROM pre_psorder A LEFT JOIN pre_psreceiver B ON A.rid=B.id LEFT JOIN pre_order C ON C.trade_no=A.trade_no WHERE A.id=:id", [':id'=>$id]);
+	$row = $DB->getRow("SELECT A.*,B.channel,C.uid,C.subchannel FROM pre_psorder A LEFT JOIN pre_psreceiver B ON A.rid=B.id LEFT JOIN pre_order C ON C.trade_no=A.trade_no AND C.deleted=0 WHERE A.deleted=0 AND A.id=:id", [':id'=>$id]);
 	if(!$row)exit('{"code":-1,"msg":"订单不存在"}');
 	if($row['status']!=2)exit('{"code":-1,"msg":"只有分账成功的订单才能回退"}');
 	$channel = $row['subchannel'] > 0 ? \lib\Channel::getSub($row['subchannel']) : \lib\Channel::get($row['channel'], $row['uid']?$DB->findColumn('user', 'channelinfo', ['uid'=>$row['uid']]):null);
@@ -283,7 +283,7 @@ break;
 
 case 'amount':
 	$id=intval($_POST['id']);
-	$row = $DB->getRow("SELECT A.*,B.channel,B.uid psuid,C.uid,C.subchannel FROM pre_psorder A LEFT JOIN pre_psreceiver B ON A.rid=B.id LEFT JOIN pre_order C ON C.trade_no=A.trade_no WHERE A.id=:id", [':id'=>$id]);
+	$row = $DB->getRow("SELECT A.*,B.channel,B.uid psuid,C.uid,C.subchannel FROM pre_psorder A LEFT JOIN pre_psreceiver B ON A.rid=B.id LEFT JOIN pre_order C ON C.trade_no=A.trade_no AND C.deleted=0 WHERE A.deleted=0 AND A.id=:id", [':id'=>$id]);
 	if(!$row)exit('{"code":-1,"msg":"订单不存在"}');
 	$channel = $row['subchannel'] > 0 ? \lib\Channel::getSub($row['subchannel']) : \lib\Channel::get($row['channel'], $row['uid']?$DB->findColumn('user', 'channelinfo', ['uid'=>$row['uid']]):null);
 	if(!$channel) exit('{"code":-1,"msg":"通道信息不存在"}');
@@ -297,7 +297,7 @@ case 'editmoney':
 	$id=intval($_POST['id']);
 	$money=trim($_POST['money']);
 	if(!is_numeric($money) || !preg_match('/^[0-9.]+$/', $money))exit('{"code":-1,"msg":"金额输入错误"}');
-	$row = $DB->getRow("SELECT * FROM pre_psorder WHERE id=:id", [':id'=>$id]);
+	$row = $DB->getRow("SELECT * FROM pre_psorder WHERE deleted=0 AND id=:id", [':id'=>$id]);
 	if(!$row)exit('{"code":-1,"msg":"订单不存在"}');
 	if($row['status']!=0)exit('{"code":-1,"msg":"只有待分账的订单才能修改金额"}');
 	$DB->update('psorder', ['money'=>$money], ['id'=>$id]);
@@ -309,7 +309,7 @@ case 'operation': //批量操作订单
 	$checkbox=$_POST['checkbox'];
 	$i=0;
 	foreach($checkbox as $id){
-		if($status==5)$DB->exec("DELETE FROM pre_psorder WHERE id='$id'");
+		if($status==5)$DB->exec("UPDATE pre_psorder SET deleted=1 WHERE id='$id'");
 		else $DB->exec("update pre_psorder set status='$status' where id='$id' limit 1");
 		$i++;
 	}
@@ -317,7 +317,7 @@ case 'operation': //批量操作订单
 break;
 
 case 'statistics':
-    $sql = " 1=1";
+    $sql = " deleted=0";
     if(isset($_POST['rid']) && !empty($_POST['rid'])) {
         $rid = intval($_POST['rid']);
         $sql .= " AND rid='$rid'";

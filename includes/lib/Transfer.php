@@ -42,7 +42,7 @@ class Transfer
             if($conf['transfer_minmoney']>0 && $money<$conf['transfer_minmoney']) return ['code'=>-1, 'msg'=>'单笔最小代付金额限制为'.$conf['transfer_minmoney'].'元'];
             if($conf['transfer_maxmoney']>0 && $money>$conf['transfer_maxmoney']) return ['code'=>-1, 'msg'=>'单笔最大代付金额限制为'.$conf['transfer_maxmoney'].'元'];
             if($conf['transfer_maxlimit']>0){
-                $a_count = $DB->getColumn('SELECT count(*) FROM pre_transfer WHERE uid=:uid AND type=:type AND account=:account AND paytime>=:paytime', [':uid'=>$uid, ':type'=>$type, ':account'=>$payee_account, ':paytime'=>date('Y-m-d').' 00:00:00']);
+                $a_count = $DB->getColumn('SELECT count(*) FROM pre_transfer WHERE uid=:uid AND type=:type AND account=:account AND paytime>=:paytime AND deleted=0', [':uid'=>$uid, ':type'=>$type, ':account'=>$payee_account, ':paytime'=>date('Y-m-d').' 00:00:00']);
                 if($a_count >= $conf['transfer_maxlimit']){
                     return ['code'=>-1, 'msg'=>'您今天向该账号的转账次数已达到上限'];
                 }
@@ -85,7 +85,7 @@ class Transfer
             }
         }
 
-        $trans = $DB->find('transfer', '*', ['out_biz_no' => $out_biz_no, 'uid' => $uid]);
+        $trans = $DB->find('transfer', '*', ['out_biz_no' => $out_biz_no, 'uid' => $uid, 'deleted' => 0]);
         if($trans) return ['code'=>-1, 'msg'=>'该交易号已存在，请更换交易号'];
 
         $DB->beginTransaction();
@@ -98,7 +98,7 @@ class Transfer
             }
             if($conf['settle_type']==1){
                 $today=date("Y-m-d").' 00:00:00';
-                $order_today=$DB->getColumn("SELECT SUM(realmoney) from pre_order where uid={$uid} and tid<>2 and status=1 and endtime>='$today'");
+                $order_today=$DB->getColumn("SELECT SUM(realmoney) from pre_order where uid={$uid} and tid<>2 and status=1 and deleted=0 and endtime>='$today'");
                 if(!$order_today) $order_today = 0;
                 $enable_money=round($userrow['money']-$order_today,2);
                 if($enable_money<0)$enable_money=0;
@@ -112,7 +112,7 @@ class Transfer
                 return ['code'=>-1, 'msg'=>'需支付金额大于可转账余额'];
             }
         }
-        
+
         if($channelid == -1){
             $result = ['code'=>0, 'status'=>3, 'orderid'=>null, 'biz_no'=>$biz_no, 'out_biz_no'=>$out_biz_no];
         }else{
@@ -149,7 +149,7 @@ class Transfer
     //转账状态刷新
     public static function status($biz_no){
         global $DB;
-        $order = $DB->find('transfer', '*', ['biz_no' => $biz_no]);
+        $order = $DB->find('transfer', '*', ['biz_no' => $biz_no, 'deleted' => 0]);
         if(!$order) return ['code'=>-1, 'msg'=>'付款记录不存在'];
         
         $channelinfo = null;
@@ -196,7 +196,7 @@ class Transfer
     //撤销转账
     public static function cancel($biz_no){
         global $DB;
-        $order = $DB->find('transfer', '*', ['biz_no' => $biz_no]);
+        $order = $DB->find('transfer', '*', ['biz_no' => $biz_no, 'deleted' => 0]);
         if(!$order) return ['code'=>-1, 'msg'=>'付款记录不存在'];
         if($order['status'] != 0) return ['code'=>-1, 'msg'=>'当前状态不支持撤销'];
 
@@ -235,7 +235,7 @@ class Transfer
     //转账凭证查询
     public static function proof($biz_no){
         global $DB;
-        $order = $DB->find('transfer', '*', ['biz_no' => $biz_no]);
+        $order = $DB->find('transfer', '*', ['biz_no' => $biz_no, 'deleted' => 0]);
         if(!$order) return ['code'=>-1, 'msg'=>'付款记录不存在'];
         
         $channelinfo = null;
@@ -256,9 +256,9 @@ class Transfer
     //转账回调处理
     public static function processNotify($biz_no, $status, $errmsg = null){
         global $DB;
-        $order = $DB->find('transfer', '*', ['biz_no' => $biz_no]);
+        $order = $DB->find('transfer', '*', ['biz_no' => $biz_no, 'deleted' => 0]);
         if(!$order) {
-            $order = $DB->find('settle', '*', ['transfer_no' => $biz_no]);
+            $order = $DB->find('settle', '*', ['transfer_no' => $biz_no, 'deleted' => 0]);
             if(!$order) return;
             if($status == 2 && $order['transfer_status'] == 1){
                 $DB->update('settle', ['transfer_status'=>2, 'transfer_result'=>$errmsg, 'status'=>3, 'result'=>$errmsg], ['id' => $order['id']]);
@@ -302,7 +302,7 @@ class Transfer
         $channel = \lib\Channel::get($channelid, $userrow['channelinfo']);
         if(!$channel) return ['code'=>-1, 'msg'=>'当前支付通道信息不存在'];
 
-        $trans = $DB->find('transfer', '*', ['out_biz_no' => $out_biz_no, 'uid' => $uid]);
+        $trans = $DB->find('transfer', '*', ['out_biz_no' => $out_biz_no, 'uid' => $uid, 'deleted' => 0]);
         if($trans) return ['code'=>-1, 'msg'=>'该交易号已存在，请更换交易号'];
 
         $DB->beginTransaction();
@@ -315,7 +315,7 @@ class Transfer
             }
             if($conf['settle_type']==1){
                 $today=date("Y-m-d").' 00:00:00';
-                $order_today=$DB->getColumn("SELECT SUM(realmoney) from pre_order where uid={$uid} and tid<>2 and status=1 and endtime>='$today'");
+                $order_today=$DB->getColumn("SELECT SUM(realmoney) from pre_order where uid={$uid} and tid<>2 and status=1 and deleted=0 and endtime>='$today'");
                 if(!$order_today) $order_today = 0;
                 $enable_money=round($userrow['money']-$order_today,2);
                 if($enable_money<0)$enable_money=0;
@@ -329,7 +329,7 @@ class Transfer
                 return ['code'=>-1, 'msg'=>'需支付金额大于可转账余额'];
             }
         }
-        
+
         $jumpurl = self::red_url($biz_no);
         $result = ['code'=>0, 'status'=>4, 'biz_no'=>$biz_no, 'out_biz_no'=>$out_biz_no, 'jumpurl'=>$jumpurl];
 
@@ -350,7 +350,7 @@ class Transfer
 
         $func = function() use ($biz_no, $openid){
             global $DB, $userrow;
-            $trans = $DB->getRow("SELECT * FROM pre_transfer WHERE biz_no=:biz_no FOR UPDATE", [':biz_no'=>$biz_no]);
+            $trans = $DB->getRow("SELECT * FROM pre_transfer WHERE biz_no=:biz_no AND deleted=0 FOR UPDATE", [':biz_no'=>$biz_no]);
             if(!$trans) return ['code'=>-1, 'msg'=>'红包不存在'];
             if($trans['status'] != 4) return ['code'=>-1, 'msg'=>$trans['status']==1?'红包已领取':'红包状态异常，无法领取'];
             $channel = \lib\Channel::get($trans['channel'], $userrow['channelinfo']);

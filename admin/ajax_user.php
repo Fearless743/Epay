@@ -36,7 +36,7 @@ case 'userList':
 	}
 	if(isset($_POST['order_days']) && !empty($_POST['order_days'])) {
 		$order_days = intval($_POST['order_days']);
-		$sql.=" AND uid NOT IN (SELECT DISTINCT uid FROM pre_order WHERE date>=NOW()-INTERVAL {$order_days} DAY)";
+		$sql.=" AND uid NOT IN (SELECT DISTINCT uid FROM pre_order WHERE deleted=0 AND date>=NOW()-INTERVAL {$order_days} DAY)";
 	}
 	$order = "uid desc";
 	if(isset($_POST['order']) && !empty($_POST['order'])) {
@@ -156,7 +156,7 @@ case 'userPayStat':
 	if($type == 4){
 		$startday .= ' 00:00:00';
 		$endday .= ' 23:59:59';
-		$rs=$DB->query("SELECT uid,type,channel,money from pre_transfer where status=1 and paytime>='$startday' and paytime<='$endday'");
+		$rs=$DB->query("SELECT uid,type,channel,money from pre_transfer where deleted=0 AND status=1 and paytime>='$startday' and paytime<='$endday'");
 		while($row = $rs->fetch())
 		{
 			$money = (float)$row['money'];
@@ -174,7 +174,7 @@ case 'userPayStat':
 			}
 		}
 	}else{
-		$rs=$DB->query("SELECT uid,type,channel,money,realmoney,getmoney,profitmoney from pre_order where status=1 and date>='$startday' and date<='$endday'");
+		$rs=$DB->query("SELECT uid,type,channel,money,realmoney,getmoney,profitmoney from pre_order where deleted=0 AND status=1 and date>='$startday' and date<='$endday'");
 		while($row = $rs->fetch())
 		{
 			if($type == 3){
@@ -243,7 +243,7 @@ case 'userTransferStat':
 		unset($rs);
 	}
 
-	$rs=$DB->query("SELECT uid,type,channel,money from pre_transfer where status=1 and paytime>='$startday' and paytime<='$endday'");
+	$rs=$DB->query("SELECT uid,type,channel,money from pre_transfer where deleted=0 AND status=1 and paytime>='$startday' and paytime<='$endday'");
 	while($row = $rs->fetch())
 	{
 		$money = (float)$row['money'];
@@ -276,7 +276,7 @@ case 'buyerStat':
 	else if($method == '1') $column = 'ip';
 	else $column = 'buyer';
 	if(!$startday || !$endday)exit(json_encode(['code'=>0, 'msg'=>'no day']));
-	$sql = "`date` BETWEEN '{$startday}' AND '{$endday}' AND {$column} is not null AND status>0";
+	$sql = "`date` BETWEEN '{$startday}' AND '{$endday}' AND {$column} is not null AND status>0 AND deleted=0";
 	if(isset($_POST['type']) && !empty($_POST['type'])) {
 		$type = intval($_POST['type']);
 		$sql.=" AND `type`='$type'";

@@ -41,7 +41,7 @@ foreach($rs as $row){
 }
 unset($rs);
 
-$sql=" A.`uid`='$uid'";
+$sql=" A.`uid`='$uid' AND A.deleted=0";
 if(isset($_GET['paytype']) && !empty($_GET['paytype'])) {
 	$type = intval($_GET['paytype']);
 	$sql.=" AND A.`type`='$type'";
@@ -187,7 +187,7 @@ foreach($rs as $row){
 }
 unset($rs);
 
-$sql=" rid in (select id from pre_psreceiver where uid='$uid' and subchannel>0)";
+$sql=" A.deleted=0 AND rid in (select id from pre_psreceiver where uid='$uid' and subchannel>0)";
 if(isset($_GET['rid']) && !empty($_GET['rid'])) {
 	$rid = intval($_GET['rid']);
 	$sql.=" AND A.`rid`='$rid'";

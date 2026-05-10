@@ -171,7 +171,7 @@ class chuangyupay_plugin
         $limit = 20;
 
         $orders = $DB->getAll(
-            "SELECT * FROM pre_order WHERE channel=:channel AND status=0 AND addtime>DATE_SUB(NOW(), INTERVAL 45 MINUTE) ORDER BY addtime ASC LIMIT {$limit}",
+            "SELECT * FROM pre_order WHERE channel=:channel AND deleted=0 AND status=0 AND addtime>DATE_SUB(NOW(), INTERVAL 45 MINUTE) ORDER BY addtime ASC LIMIT {$limit}",
             [":channel" => $channel["id"]],
         );
 

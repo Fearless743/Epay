@@ -96,7 +96,7 @@ class Yseqt implements IProfitSharing
     public function unfreeeze($trade_no, $api_trade_no){
         global $DB;
         $requestNo = date('YmdHis').rand(1000,9999);
-        $order_money = $DB->findColumn('order', 'realmoney', ['trade_no'=>$trade_no]);
+        $order_money = $DB->findColumn('order', 'realmoney', ['trade_no'=>$trade_no, 'deleted'=>0]);
         $params = [
             'requestNo' => $requestNo,
             'payeeMerchantNo' => $this->channel['appmchid'],
