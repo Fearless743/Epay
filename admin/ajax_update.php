@@ -156,7 +156,33 @@ switch($act) {
 
         // 尝试执行数据库更新
         if(file_exists(ROOT.'install/update.php') && $current_ver > $local_version) {
-            @include ROOT.'install/update.php';
+            // install/update.php 会 exit()，在 JSON 上下文中会破坏响应，改为直接执行数据库更新
+            if(defined('DB_VERSION')) {
+                $stored_version = $DB->getColumn("SELECT v FROM pre_config WHERE k='version'");
+                if($stored_version < DB_VERSION) {
+                    $sql_files = [];
+                    if($stored_version < 2044) {
+                        $sql_files[] = ROOT.'install/update2.sql';
+                        $sql_files[] = ROOT.'install/update3.sql';
+                    } else {
+                        $sql_files[] = ROOT.'install/update3.sql';
+                    }
+                    $db_success = 0; $db_error = 0;
+                    foreach($sql_files as $sql_file) {
+                        if(!file_exists($sql_file)) continue;
+                        $sqls = explode(';', file_get_contents($sql_file));
+                        foreach($sqls as $sql) {
+                            $sql = trim($sql);
+                            if(empty($sql)) continue;
+                            $sql = str_replace('pre_', $dbconfig['dbqz'].'_', $sql);
+                            if($DB->exec($sql) !== false) $db_success++;
+                            else $db_error++;
+                        }
+                    }
+                    $DB->exec("UPDATE pre_config SET v='".DB_VERSION."' WHERE k='version'");
+                    $DB->exec("UPDATE pre_cache SET v='' WHERE k='config'");
+                }
+            }
         }
 
         // 清理缓存
