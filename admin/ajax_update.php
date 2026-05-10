@@ -177,6 +177,47 @@ switch($act) {
 }
 
 /**
+ * 通过代理获取 GitHub API 数据
+ */
+function proxyGitHub($url) {
+    global $conf;
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 Epay-Updater');
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Accept: application/vnd.github.v3+json']);
+    curl_setopt($ch, CURLOPT_ENCODING, 'gzip');
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+
+    // 使用系统代理设置
+    if(!empty($conf['proxy']) && $conf['proxy'] == 1 && !empty($conf['proxy_server'])) {
+        $proxy_type = $conf['proxy_type'] ?? 'http';
+        $port = $conf['proxy_port'] ?? '';
+        $server = $conf['proxy_server'] ?? '';
+        curl_setopt($ch, CURLOPT_PROXY, $server . ':' . $port);
+        if($proxy_type == 'sock5' || $proxy_type == 'sock5h') {
+            curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+        }
+        if(!empty($conf['proxy_user'])) {
+            curl_setopt($ch, CURLOPT_PROXYUSERPWD, $conf['proxy_user'] . ':' . $conf['proxy_pwd']);
+        }
+    }
+
+    $ret = curl_exec($ch);
+    $err = curl_error($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if($err || !$ret || $code != 200) return false;
+    return $ret;
+}
+
+/**
  * 获取 GitHub Release 列表（支持分页）
  */
 function getGitHubReleases($api_url) {
@@ -184,7 +225,7 @@ function getGitHubReleases($api_url) {
     $page = 1;
     while(true) {
         $url = $api_url.'?per_page=100&page='.$page;
-        $response = get_curl($url, 0, 0, 0, 0, 'Mozilla/5.0 Epay-Updater', 0, ['Accept: application/vnd.github.v3+json'], 1);
+        $response = proxyGitHub($url);
         if(!$response) return false;
         $data = json_decode($response, true);
         if(!is_array($data) || empty($data)) break;
@@ -199,8 +240,7 @@ function getGitHubReleases($api_url) {
  * 下载文件
  */
 function downloadFile($url, $dest) {
-    // GitHub asset downloads require following redirects (302)
-    $content = get_curl($url, 0, 0, 0, 0, 'Mozilla/5.0 Epay-Updater', 0, 0, 1);
+    $content = proxyGitHub($url);
     if(!$content || strlen($content) < 100) return false;
     return file_put_contents($dest, $content) !== false;
 }
@@ -279,8 +319,8 @@ function updateVersionConstant($new_version) {
     $file = ROOT.'includes/common.php';
     $content = file_get_contents($file);
     $content = preg_replace(
-        "/define\('VERSION',\s*'[0-9]+'\)/",
-        "define('VERSION', '{$new_version}')",
+        '/define\(["\']VERSION["\']\s*,\s*["\'][0-9]+["\']\)/',
+        'define("VERSION", "'.$new_version.'")',
         $content
     );
     file_put_contents($file, $content);

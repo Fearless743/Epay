@@ -129,6 +129,31 @@ After `common.php` loads, these are available everywhere:
 - CSRF tokens are used in login forms
 - The `pre_blacklist` table stores blocked IPs/accounts
 
+## Release & Update System
+
+### GitHub Actions Release Workflow
+
+`.github/workflows/release.yml` — triggered on push of `v*` tags:
+
+1. **全量安装包**: `Epay-{tag}.zip` / `.tar.gz`（排除 `.git`、`.github`、`config.php`、`install.lock` 等）
+2. **增量更新包**: `Epay-update-{tag}.zip` / `.tar.gz`（仅包含上一个 tag 到当前 tag 之间变更的文件）
+
+发布流程：
+```bash
+# 1. 修改 includes/common.php 中的 VERSION 常量（必须与 tag 数字一致）
+# 2. 提交并推送
+git add -A && git commit -m "bump version"
+git tag v{VERSION}
+git push origin main --tags
+```
+
+### 后台一键更新 (`admin/ajax_update.php`)
+
+- **检查更新**: 调用 GitHub Releases API 获取所有 release，与本地 `VERSION` 常量比较
+- **一键更新**: 逐版本下载增量更新包，解压覆盖（保留 `config.php`），自动更新 `VERSION` 常量和数据库
+- **代理支持**: 使用系统「中转代理」设置（`conf['proxy']`）访问 GitHub API，解决国内服务器无法直连 GitHub 的问题
+- **`proxyGitHub()`**: 独立的 curl 函数，支持 FOLLOWLOCATION（跟随 GitHub asset 302 重定向）和系统代理配置
+
 ## Plugin Development Reference
 
 To create a new payment plugin:
