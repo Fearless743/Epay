@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ 重要：每次提交代码前必须阅读此文件
+
+在执行 git commit、git push、发布版本等操作前，必须先阅读本文档中的「Release & Update System」章节，严格按照其中的流程执行。
+
 ## Project Overview
 
 彩虹易支付 (Epay) — an open-source PHP payment gateway system supporting Alipay, WeChat Pay, QQ Wallet, UnionPay, USDT, and more. Developed by 郑州追梦网络科技有限公司. Requires PHP >= 7.4 and MySQL.
@@ -130,6 +134,20 @@ After `common.php` loads, these are available everywhere:
 - The `pre_blacklist` table stores blocked IPs/accounts
 
 ## Release & Update System
+
+### 发布新版本（必须严格按顺序执行）
+
+当用户说「发布」「推送更新」「发版」「bump version」时，必须执行以下完整流程，不可跳步：
+
+```bash
+# 1. 修改 includes/common.php 中的 VERSION 常量（+1）
+# 2. git add includes/common.php
+# 3. git commit -m "bump version"
+# 4. git tag v{VERSION}
+# 5. git push origin main --tags
+```
+
+⚠️ 单独执行 `git push` 不算发布。必须更新 VERSION、提交、打 tag、推送四步都完成才算发布成功。
 
 ### GitHub Actions Release Workflow
 
