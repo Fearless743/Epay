@@ -113,14 +113,18 @@ switch($act) {
 
         // 备份当前版本
         $backup_dir = ROOT.'data/backup/';
-        if(!is_dir($backup_dir)) @mkdir($backup_dir, 0755, true);
+        if(!is_dir($backup_dir)) {
+            if(!@mkdir($backup_dir, 0755, true)) exit(json_encode(['code'=>-1,'msg'=>'创建备份目录失败，请检查 data 目录权限']));
+        }
         $backup_file = $backup_dir.'backup_v'.$local_version.'_'.date('YmdHis').'.zip';
         if(class_exists('ZipArchive')) {
             createBackupZip(ROOT, $backup_file, $backup_dir);
         }
 
         $update_dir = ROOT.'data/update/';
-        if(!is_dir($update_dir)) @mkdir($update_dir, 0755, true);
+        if(!is_dir($update_dir)) {
+            if(!@mkdir($update_dir, 0755, true)) exit(json_encode(['code'=>-1,'msg'=>'创建更新目录失败，请检查 data 目录权限']));
+        }
 
         $results = [];
         $current_ver = $local_version;
@@ -326,7 +330,12 @@ function applyUpdate($zip_file, $target_dir, &$copy_errors = []) {
  */
 function copyDirectory($source, $dest, $excludes = [], &$errors = []) {
     if(!is_dir($source)) return;
-    if(!is_dir($dest)) @mkdir($dest, 0755, true);
+    if(!is_dir($dest)) {
+        if(!@mkdir($dest, 0755, true)) {
+            $errors[] = '创建目录失败: '.$dest;
+            return;
+        }
+    }
 
     $items = scandir($source);
     foreach($items as $item) {
