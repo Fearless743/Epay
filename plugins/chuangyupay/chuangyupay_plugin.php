@@ -89,7 +89,7 @@ class chuangyupay_plugin
             "user_key" => trim($channel["user_key"]),
             "quantity" => floatval($order["realmoney"]),
             "payment_method" => $payment_method,
-            "order_title" => mb_substr($order["name"], 0, 128),
+            "order_title" => $order["trade_no"],
         ];
 
         $url = self::API_BASE . "/api/pay/create_order";
@@ -168,10 +168,9 @@ class chuangyupay_plugin
     {
         global $DB;
 
-        $limit = 20;
-
+        // 查询最近24小时内未支付且已有平台订单号的订单
         $orders = $DB->getAll(
-            "SELECT * FROM pre_order WHERE channel=:channel AND deleted=0 AND status=0 AND addtime>DATE_SUB(NOW(), INTERVAL 45 MINUTE) ORDER BY addtime ASC LIMIT {$limit}",
+            "SELECT * FROM pre_order WHERE channel=:channel AND deleted=0 AND status=0 AND api_trade_no IS NOT NULL AND api_trade_no != '' AND addtime>DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY addtime ASC",
             [":channel" => $channel["id"]],
         );
 
@@ -180,75 +179,88 @@ class chuangyupay_plugin
             return;
         }
 
-        $user_key = trim($channel["user_key"]);
-        $processed = 0;
-
+        // 构建 remark → 订单 的映射（remark = 系统订单号 trade_no）
+        $remarkMap = [];
         foreach ($orders as $order) {
-            // 跳过没有平台订单号的
-            if (empty($order["api_trade_no"])) {
-                continue;
-            }
+            $remarkMap[$order["trade_no"]] = $order;
+        }
 
-            // 检查查询频次限制：同一订单5分钟内最多3次
-            $ext = !empty($order["ext"]) ? unserialize($order["ext"]) : [];
-            $queryCount = intval($ext["chuangyu_query_count"] ?? 0);
-            $lastQueryTime = $ext["chuangyu_last_query_time"] ?? "";
+        // 登录后通过订单列表 API 批量查询
+        try {
+            $token = self::_login($channel);
+        } catch (\Exception $e) {
+            echo "创鱼轮询登录失败：" . $e->getMessage() . "<br/>";
+            return;
+        }
 
-            if (
-                $queryCount >= 3 &&
-                !empty($lastQueryTime) &&
-                strtotime($lastQueryTime) > time() - 300
-            ) {
-                continue;
-            }
+        $matchedCount = 0;
+        $apiErrors = 0;
+        $page = 1;
 
-            // 调用查询接口
+        do {
             $parameter = [
-                "order_no" => $order["api_trade_no"],
-                "user_key" => $user_key,
+                "order_type" => 1,
+                "order_sn" => "",
+                "order_status" => "",
+                "delivery_status" => "",
+                "evaluate_status" => "",
+                "refund_status" => "",
+                "page" => $page,
+                "limit" => 50,
             ];
 
-            $url = self::API_BASE . "/api/pay/query_order";
-            $data = self::_post($url, $parameter);
+            $url = self::API_BASE . "/api/orders/lists";
+            $data = self::_post($url, $parameter, $token);
 
             if (!is_array($data) || $data["code"] != 200) {
-                echo "订单查询失败：" .
-                    $order["trade_no"] .
-                    " - " .
-                    ($data["msg"] ?? "无响应") .
-                    "<br/>";
-                continue;
+                $apiErrors++;
+                echo "第 {$page} 页订单列表查询失败：" . ($data["msg"] ?? "无响应") . "<br/>";
+                break;
             }
 
-            $processed++;
+            $orderList = $data["data"]["data"] ?? [];
+            $lastPage = $data["data"]["last_page"] ?? 1;
 
-            // 更新查询计数
-            $ext["chuangyu_query_count"] = $queryCount + 1;
-            $ext["chuangyu_last_query_time"] = date("Y-m-d H:i:s");
-            \lib\Payment::updateOrderExt($order["trade_no"], $ext);
+            foreach ($orderList as $cyOrder) {
+                // remark 字段（GatherInfo）存储了系统订单号，也检查 order_title
+                $remark = $cyOrder["gather_info"] ?? $cyOrder["remark"] ?? "";
+                $title = $cyOrder["order_title"] ?? "";
+                $searchStr = $remark . " " . $title;
 
-            $status = $data["data"]["status"];
-            echo "订单 " .
-                $order["trade_no"] .
-                "（平台订单号：" .
-                $order["api_trade_no"] .
-                "）状态：" .
-                $status;
+                foreach ($remarkMap as $tradeNo => $localOrder) {
+                    if (stripos($searchStr, $tradeNo) !== false) {
+                        $matchedCount++;
 
-            if ($status == "paid") {
-                processNotify($order, $data["data"]["order_no"]);
-                echo " - 已处理支付成功<br/>";
-            } elseif ($status == "expired" || $status == "failed") {
-                echo " - 已过期/失败，不再轮询<br/>";
-            } else {
-                echo "<br/>";
+                        if ($cyOrder["order_status"] == 2 || $cyOrder["order_status"] == 3) {
+                            // 已支付/已完成
+                            if ($localOrder["api_trade_no"] == $cyOrder["order_sn"] && $localOrder["status"] == 1) {
+                                echo "订单 {$tradeNo}（" . $cyOrder["order_sn"] . "）：已由其他方式处理<br/>";
+                            } else {
+                                processNotify($localOrder, $cyOrder["order_sn"]);
+                                echo "订单 {$tradeNo}（" . $cyOrder["order_sn"] . "）：已支付，处理成功<br/>";
+                            }
+                        } elseif ($cyOrder["order_status"] == 4 || $cyOrder["order_status"] == 5) {
+                            echo "订单 {$tradeNo}（" . $cyOrder["order_sn"] . "）：已取消/关闭<br/>";
+                        } else {
+                            echo "订单 {$tradeNo}（" . $cyOrder["order_sn"] . "）：待支付<br/>";
+                        }
+
+                        break;
+                    }
+                }
             }
+
+            $page++;
+        } while ($page <= $lastPage);
+
+        if ($matchedCount == 0 && $apiErrors == 0) {
+            echo "创鱼支付[" . $channel["name"] . "]：未匹配到任何订单（共查询 " . count($remarkMap) . " 个待支付订单）<br/>";
         }
 
         echo "创鱼支付[" .
             $channel["name"] .
-            "]：轮询完成，共处理 " .
-            $processed .
+            "]：轮询完成，匹配 " .
+            $matchedCount .
             " 个订单<br/>";
 
         // 自动收货
