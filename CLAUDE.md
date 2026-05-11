@@ -141,13 +141,15 @@ After `common.php` loads, these are available everywhere:
 
 ```bash
 # 1. 修改 includes/common.php 中的 VERSION 常量（+1）
-# 2. git add includes/common.php
-# 3. git commit -m "bump version"
+# 2. git add 相关文件
+# 3. git commit -m "具体改动描述"（写清楚改了什么，不要只写 bump version）
 # 4. git tag v{VERSION}
 # 5. git push origin main --tags
 ```
 
 ⚠️ 单独执行 `git push` 不算发布。必须更新 VERSION、提交、打 tag、推送四步都完成才算发布成功。
+
+⚠️ commit message 必须写明本次变更的实质内容，不能只写 "bump version"。格式示例：`feat(chuangyupay): 重构轮询为批量列表匹配模式，使用系统订单号匹配`
 
 ### GitHub Actions Release Workflow
 
@@ -159,8 +161,8 @@ After `common.php` loads, these are available everywhere:
 发布流程：
 ```bash
 # 1. 修改 includes/common.php 中的 VERSION 常量（必须与 tag 数字一致）
-# 2. 提交并推送
-git add -A && git commit -m "bump version"
+# 2. 提交并推送（commit message 写明具体改动内容）
+git add -A && git commit -m "具体改动描述"
 git tag v{VERSION}
 git push origin main --tags
 ```
