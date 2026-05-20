@@ -162,7 +162,7 @@ class chuangyupay_plugin
         return ["type" => "page", "page" => "return"];
     }
 
-    // 定时任务轮询查询订单状态
+    // 定时任务轮询：查询平台已支付未收货订单，匹配系统订单号后收货+标记已支付
     // 通过 cron.php?do=plugin&channel={id}&key={key} 调用
     public static function _cron($channel)
     {
@@ -184,13 +184,13 @@ class chuangyupay_plugin
             return;
         }
 
-        // 构建 remark → 订单 的映射（remark = 系统订单号 trade_no）
+        // 构建系统订单号 → 订单 的映射
         $remarkMap = [];
         foreach ($orders as $order) {
             $remarkMap[$order["trade_no"]] = $order;
         }
 
-        // 登录后通过订单列表 API 批量查询（仅查待支付订单，减少翻页量）
+        // 登录
         $t0 = microtime(true);
         try {
             $token = self::_login($channel);
@@ -202,26 +202,29 @@ class chuangyupay_plugin
         }
         $tLogin = microtime(true) - $t0;
 
+        // 查询平台已支付+已发货未收货的订单（数量少，翻页快）
         $matchedCount = 0;
+        $receivedCount = 0;
         $apiErrors = 0;
         $page = 1;
         $tApiTotal = 0;
         $tMatchTotal = 0;
         $pageCount = 0;
+        $url = self::API_BASE . "/api/orders/lists";
+        $hasCredentials = !empty($channel["username"]) && !empty($channel["password"]);
 
         do {
             $parameter = [
                 "order_type" => 1,
                 "order_sn" => "",
-                "order_status" => 1,
-                "delivery_status" => "",
+                "order_status" => 2,
+                "delivery_status" => 2,
                 "evaluate_status" => "",
                 "refund_status" => "",
                 "page" => $page,
                 "limit" => 50,
             ];
 
-            $url = self::API_BASE . "/api/orders/lists";
             $t0 = microtime(true);
             $data = self::_post($url, $parameter, $token);
             $tPage = microtime(true) - $t0;
@@ -239,7 +242,11 @@ class chuangyupay_plugin
 
             $t0 = microtime(true);
             foreach ($orderList as $cyOrder) {
-                // remark 字段（GatherInfo）存储了系统订单号，也检查 order_title
+                // take_time 不为空说明已收货，跳过
+                if (!empty($cyOrder["take_time"])) {
+                    continue;
+                }
+
                 $remark = $cyOrder["gather_info"] ?? $cyOrder["remark"] ?? "";
                 $title = $cyOrder["order_title"] ?? "";
                 $searchStr = $remark . " " . $title;
@@ -247,19 +254,26 @@ class chuangyupay_plugin
                 foreach ($remarkMap as $tradeNo => $localOrder) {
                     if (stripos($searchStr, $tradeNo) !== false) {
                         $matchedCount++;
+                        $orderSn = $cyOrder["order_sn"];
+                        $orderId = intval($cyOrder["id"]);
 
-                        if ($cyOrder["order_status"] == 2 || $cyOrder["order_status"] == 3) {
-                            // 已支付/已完成
-                            if ($localOrder["api_trade_no"] == $cyOrder["order_sn"] && $localOrder["status"] == 1) {
-                                echo "订单 {$tradeNo}（" . $cyOrder["order_sn"] . "）：已由其他方式处理<br/>";
-                            } else {
-                                processNotify($localOrder, $cyOrder["order_sn"]);
-                                echo "订单 {$tradeNo}（" . $cyOrder["order_sn"] . "）：已支付，处理成功<br/>";
+                        // 确认收货
+                        if ($hasCredentials) {
+                            try {
+                                self::_confirmTake($channel, $orderId);
+                                $receivedCount++;
+                                echo "订单 {$tradeNo}（{$orderSn}）：确认收货成功<br/>";
+                            } catch (\Exception $e) {
+                                echo "订单 {$tradeNo}（{$orderSn}）：收货失败 - " . $e->getMessage() . "<br/>";
                             }
-                        } elseif ($cyOrder["order_status"] == 4 || $cyOrder["order_status"] == 5) {
-                            echo "订单 {$tradeNo}（" . $cyOrder["order_sn"] . "）：已取消/关闭<br/>";
+                        }
+
+                        // 标记本地订单为已支付
+                        if ($localOrder["status"] == 0) {
+                            processNotify($localOrder, $orderSn);
+                            echo "订单 {$tradeNo}（{$orderSn}）：已支付，处理成功<br/>";
                         } else {
-                            echo "订单 {$tradeNo}（" . $cyOrder["order_sn"] . "）：待支付<br/>";
+                            echo "订单 {$tradeNo}（{$orderSn}）：已由其他方式处理<br/>";
                         }
 
                         break;
@@ -282,7 +296,9 @@ class chuangyupay_plugin
             $channel["name"] .
             "]：轮询完成，匹配 " .
             $matchedCount .
-            " 个订单<br/>";
+            " 个订单，收货 " .
+            $receivedCount .
+            " 个<br/>";
 
         $tTotal = microtime(true) - $cronStart;
         echo "<br/><b>耗时统计</b>：数据库查询 " . number_format($tDB * 1000, 1) . "ms"
@@ -290,15 +306,6 @@ class chuangyupay_plugin
             . "，API请求({$pageCount}页) " . number_format($tApiTotal * 1000, 1) . "ms"
             . "，订单匹配 " . number_format($tMatchTotal * 1000, 1) . "ms"
             . "，<b>总计 " . number_format($tTotal * 1000, 1) . "ms</b><br/>";
-
-        // 自动收货
-        if (!empty($channel["username"]) && !empty($channel["password"])) {
-            echo "<br/>";
-            $t0 = microtime(true);
-            self::_autoReceive($channel);
-            $tReceive = microtime(true) - $t0;
-            echo "自动收货耗时：" . number_format($tReceive * 1000, 1) . "ms<br/>";
-        }
     }
 
     private static function _getPaymentMethod(string $typename): string
