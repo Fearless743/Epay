@@ -335,7 +335,7 @@ class chuangyupay_plugin
 
     private static function _login($channel): string
     {
-        global $CACHE;
+        global $CACHE, $DB;
 
         $username = trim($channel["username"]);
         $password = trim($channel["password"]);
@@ -387,7 +387,10 @@ class chuangyupay_plugin
         // 缓存 token（有效期与 JWT 一致）
         $ttl = $expiresAt - time();
         $saveResult = $CACHE->save($cacheKey, ["token" => $token, "expires_at" => $expiresAt], $ttl);
-        echo "[登录] 缓存写入: key={$cacheKey}, TTL={$ttl}s, 结果=" . ($saveResult ? "成功" : "失败") . "<br/>";
+        echo "[登录] 缓存写入: key={$cacheKey}, TTL={$ttl}s, save返回值=" . var_export($saveResult, true) . "<br/>";
+        // 写入后立即验证
+        $verify = $DB->getColumn("SELECT v FROM pre_cache WHERE k=:key LIMIT 1", [':key' => $cacheKey]);
+        echo "[登录] 写入后验证: " . var_export($verify, true) . "<br/>";
 
         return $token;
     }
