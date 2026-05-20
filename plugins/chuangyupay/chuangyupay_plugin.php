@@ -335,7 +335,7 @@ class chuangyupay_plugin
 
     private static function _login($channel): string
     {
-        global $CACHE, $DB;
+        global $CACHE;
 
         $username = trim($channel["username"]);
         $password = trim($channel["password"]);
@@ -344,19 +344,14 @@ class chuangyupay_plugin
             throw new \Exception("未配置创鱼登录用户名或密码");
         }
 
-        // 检查缓存的 token（存到 pre_cache 表）
-        $cacheKey = "chuangyupay_token_" . md5($username);
+        // 检查缓存的 token（存到 cache 表，k 列长度有限，key 截短避免截断）
+        $cacheKey = "chuangyupay_" . substr(md5($username), 0, 16);
         $cached = $CACHE->read($cacheKey);
-        echo "[登录] 缓存查询: key={$cacheKey}, 原始值=" . var_export($cached, true) . "<br/>";
         if (!empty($cached)) {
             $cached = @unserialize($cached);
             if (!empty($cached["token"]) && !empty($cached["expires_at"]) && $cached["expires_at"] > time() + 60) {
-                echo "[登录] 缓存命中，token 有效期至 " . date("H:i:s", $cached["expires_at"]) . "<br/>";
                 return $cached["token"];
             }
-            echo "[登录] 缓存存在但已失效（过期时间: " . (!empty($cached["expires_at"]) ? date("H:i:s", $cached["expires_at"]) : "无") . "），重新登录<br/>";
-        } else {
-            echo "[登录] 无缓存，重新登录<br/>";
         }
 
         // 登录获取新 token
@@ -386,17 +381,7 @@ class chuangyupay_plugin
 
         // 缓存 token（有效期与 JWT 一致）
         $ttl = $expiresAt - time();
-        $saveResult = $CACHE->save($cacheKey, ["token" => $token, "expires_at" => $expiresAt], $ttl);
-        echo "[登录] 缓存写入: key={$cacheKey}, TTL={$ttl}s, save返回值=" . var_export($saveResult, true) . "<br/>";
-        // 写入后立即验证
-        $verify = $CACHE->read($cacheKey);
-        echo "[登录] 写入后验证: " . (!empty($verify) ? "成功（长度=" . strlen($verify) . "）" : "失败") . "<br/>";
-        // 直接查 pay_cache 表
-        $cnt = $DB->getColumn("SELECT COUNT(*) FROM pay_cache");
-        echo "[登录] pay_cache 总行数: " . var_export($cnt, true) . "<br/>";
-        // dump 第一行看列结构和数据
-        $sample = $DB->getRow("SELECT * FROM pay_cache LIMIT 1");
-        echo "[登录] pay_cache 示例行: " . var_export($sample, true) . "<br/>";
+        $CACHE->save($cacheKey, ["token" => $token, "expires_at" => $expiresAt], $ttl);
 
         return $token;
     }
