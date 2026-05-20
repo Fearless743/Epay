@@ -190,7 +190,7 @@ class chuangyupay_plugin
             $remarkMap[$order["trade_no"]] = $order;
         }
 
-        // 登录后通过订单列表 API 批量查询
+        // 登录后通过订单列表 API 批量查询（仅查待支付订单，减少翻页量）
         $t0 = microtime(true);
         try {
             $token = self::_login($channel);
@@ -213,7 +213,7 @@ class chuangyupay_plugin
             $parameter = [
                 "order_type" => 1,
                 "order_sn" => "",
-                "order_status" => "",
+                "order_status" => 1,
                 "delivery_status" => "",
                 "evaluate_status" => "",
                 "refund_status" => "",
