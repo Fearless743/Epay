@@ -168,14 +168,19 @@ class chuangyupay_plugin
     {
         global $DB;
 
+        $cronStart = microtime(true);
+
         // 查询最近24小时内未支付且已有平台订单号的订单
+        $t0 = microtime(true);
         $orders = $DB->getAll(
             "SELECT * FROM pre_order WHERE channel=:channel AND deleted=0 AND status=0 AND api_trade_no IS NOT NULL AND api_trade_no != '' AND addtime>DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY addtime ASC",
             [":channel" => $channel["id"]],
         );
+        $tDB = microtime(true) - $t0;
 
         if (empty($orders)) {
             echo "创鱼支付[" . $channel["name"] . "]：没有待查询的订单<br/>";
+            echo "耗时统计：数据库查询 " . number_format($tDB * 1000, 1) . "ms<br/>";
             return;
         }
 
@@ -186,16 +191,23 @@ class chuangyupay_plugin
         }
 
         // 登录后通过订单列表 API 批量查询
+        $t0 = microtime(true);
         try {
             $token = self::_login($channel);
         } catch (\Exception $e) {
+            $tLogin = microtime(true) - $t0;
             echo "创鱼轮询登录失败：" . $e->getMessage() . "<br/>";
+            echo "耗时统计：数据库查询 " . number_format($tDB * 1000, 1) . "ms，登录 " . number_format($tLogin * 1000, 1) . "ms<br/>";
             return;
         }
+        $tLogin = microtime(true) - $t0;
 
         $matchedCount = 0;
         $apiErrors = 0;
         $page = 1;
+        $tApiTotal = 0;
+        $tMatchTotal = 0;
+        $pageCount = 0;
 
         do {
             $parameter = [
@@ -210,17 +222,22 @@ class chuangyupay_plugin
             ];
 
             $url = self::API_BASE . "/api/orders/lists";
+            $t0 = microtime(true);
             $data = self::_post($url, $parameter, $token);
+            $tPage = microtime(true) - $t0;
+            $tApiTotal += $tPage;
+            $pageCount++;
 
             if (!is_array($data) || $data["code"] != 200) {
                 $apiErrors++;
-                echo "第 {$page} 页订单列表查询失败：" . ($data["msg"] ?? "无响应") . "<br/>";
+                echo "第 {$page} 页订单列表查询失败（耗时 " . number_format($tPage * 1000, 1) . "ms）：" . ($data["msg"] ?? "无响应") . "<br/>";
                 break;
             }
 
             $orderList = $data["data"]["data"] ?? [];
             $lastPage = $data["data"]["last_page"] ?? 1;
 
+            $t0 = microtime(true);
             foreach ($orderList as $cyOrder) {
                 // remark 字段（GatherInfo）存储了系统订单号，也检查 order_title
                 $remark = $cyOrder["gather_info"] ?? $cyOrder["remark"] ?? "";
@@ -249,6 +266,10 @@ class chuangyupay_plugin
                     }
                 }
             }
+            $tMatchPage = microtime(true) - $t0;
+            $tMatchTotal += $tMatchPage;
+
+            echo "第 {$page} 页：API 耗时 " . number_format($tPage * 1000, 1) . "ms，匹配耗时 " . number_format($tMatchPage * 1000, 1) . "ms，返回 " . count($orderList) . " 条<br/>";
 
             $page++;
         } while ($page <= $lastPage);
@@ -263,10 +284,20 @@ class chuangyupay_plugin
             $matchedCount .
             " 个订单<br/>";
 
+        $tTotal = microtime(true) - $cronStart;
+        echo "<br/><b>耗时统计</b>：数据库查询 " . number_format($tDB * 1000, 1) . "ms"
+            . "，登录 " . number_format($tLogin * 1000, 1) . "ms"
+            . "，API请求({$pageCount}页) " . number_format($tApiTotal * 1000, 1) . "ms"
+            . "，订单匹配 " . number_format($tMatchTotal * 1000, 1) . "ms"
+            . "，<b>总计 " . number_format($tTotal * 1000, 1) . "ms</b><br/>";
+
         // 自动收货
         if (!empty($channel["username"]) && !empty($channel["password"])) {
             echo "<br/>";
+            $t0 = microtime(true);
             self::_autoReceive($channel);
+            $tReceive = microtime(true) - $t0;
+            echo "自动收货耗时：" . number_format($tReceive * 1000, 1) . "ms<br/>";
         }
     }
 
@@ -448,6 +479,7 @@ class chuangyupay_plugin
             $headers[] = "Authorization: " . $token;
         }
 
+        $t0 = microtime(true);
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, true);
@@ -459,7 +491,18 @@ class chuangyupay_plugin
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_HEADER, false);
         $resp = curl_exec($ch);
+        $curlErr = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $totalTime = curl_getinfo($ch, CURLINFO_TOTAL_TIME);
         curl_close($ch);
+        $elapsed = (microtime(true) - $t0) * 1000;
+
+        $apiPath = parse_url($url, PHP_URL_PATH);
+        if ($elapsed > 1000) {
+            echo "[慢请求] {$apiPath} HTTP {$httpCode} 耗时 " . number_format($elapsed, 1) . "ms (curl_total: " . number_format($totalTime * 1000, 1) . "ms)";
+            if ($curlErr) echo " 错误: {$curlErr}";
+            echo "<br/>";
+        }
 
         return json_decode($resp, true);
     }
