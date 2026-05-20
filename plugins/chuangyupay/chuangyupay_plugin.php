@@ -350,8 +350,12 @@ class chuangyupay_plugin
         if (!empty($cached)) {
             $cached = @unserialize($cached);
             if (!empty($cached["token"]) && !empty($cached["expires_at"]) && $cached["expires_at"] > time() + 60) {
+                echo "[登录] 缓存命中，token 有效期至 " . date("H:i:s", $cached["expires_at"]) . "<br/>";
                 return $cached["token"];
             }
+            echo "[登录] 缓存存在但已失效（过期时间: " . (!empty($cached["expires_at"]) ? date("H:i:s", $cached["expires_at"]) : "无") . "），重新登录<br/>";
+        } else {
+            echo "[登录] 无缓存，重新登录<br/>";
         }
 
         // 登录获取新 token
