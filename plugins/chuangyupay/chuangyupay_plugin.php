@@ -394,8 +394,9 @@ class chuangyupay_plugin
         // 直接查 pay_cache 表
         $cnt = $DB->getColumn("SELECT COUNT(*) FROM pay_cache");
         echo "[登录] pay_cache 总行数: " . var_export($cnt, true) . "<br/>";
-        $row = $DB->getRow("SELECT * FROM pay_cache WHERE k=:key LIMIT 1", [':key' => $cacheKey]);
-        echo "[登录] pay_cache 匹配行: " . var_export($row, true) . "<br/>";
+        // dump 第一行看列结构和数据
+        $sample = $DB->getRow("SELECT * FROM pay_cache LIMIT 1");
+        echo "[登录] pay_cache 示例行: " . var_export($sample, true) . "<br/>";
 
         return $token;
     }
