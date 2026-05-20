@@ -388,9 +388,9 @@ class chuangyupay_plugin
         $ttl = $expiresAt - time();
         $saveResult = $CACHE->save($cacheKey, ["token" => $token, "expires_at" => $expiresAt], $ttl);
         echo "[登录] 缓存写入: key={$cacheKey}, TTL={$ttl}s, save返回值=" . var_export($saveResult, true) . "<br/>";
-        // 写入后立即验证
-        $verify = $DB->getColumn("SELECT v FROM pre_cache WHERE k=:key LIMIT 1", [':key' => $cacheKey]);
-        echo "[登录] 写入后验证: " . var_export($verify, true) . "<br/>";
+        // 写入后立即验证（用 Cache::read 而非直接查表，确保前缀一致）
+        $verify = $CACHE->read($cacheKey);
+        echo "[登录] 写入后验证: " . (!empty($verify) ? "成功（长度=" . strlen($verify) . "）" : "失败") . "<br/>";
 
         return $token;
     }
