@@ -260,7 +260,7 @@ class chuangyupay_plugin
                         // 确认收货
                         if ($hasCredentials) {
                             try {
-                                self::_confirmTake($channel, $orderId);
+                                self::_confirmTake($orderId, $token);
                                 $receivedCount++;
                                 echo "订单 {$tradeNo}（{$orderSn}）：确认收货成功<br/>";
                             } catch (\Exception $e) {
@@ -318,59 +318,11 @@ class chuangyupay_plugin
     }
 
     /**
-     * 获取创鱼平台待收货的订单列表
-     * 返回所有 delivery_status=2 且未确认收货的订单
-     */
-    private static function _getPendingReceiveOrders($channel): array
-    {
-        $token = self::_login($channel);
-
-        $page = 1;
-        $allOrders = [];
-
-        do {
-            $parameter = [
-                "order_type" => 1,
-                "order_sn" => "",
-                "order_status" => 2,
-                "delivery_status" => 2,
-                "evaluate_status" => "",
-                "refund_status" => "",
-                "page" => $page,
-                "limit" => 10,
-            ];
-
-            $url = self::API_BASE . "/api/orders/lists";
-            $data = self::_post($url, $parameter, $token);
-
-            if (!is_array($data) || $data["code"] != 200) {
-                throw new \Exception("获取订单列表失败：" . ($data["msg"] ?? "无响应"));
-            }
-
-            $orders = $data["data"]["data"] ?? [];
-            $lastPage = $data["data"]["last_page"] ?? 1;
-
-            foreach ($orders as $order) {
-                // take_time 为 null 表示未确认收货
-                if (empty($order["take_time"])) {
-                    $allOrders[] = $order;
-                }
-            }
-
-            $page++;
-        } while ($page <= $lastPage);
-
-        return $allOrders;
-    }
-
-    /**
      * 确认收货（调用创鱼 API）
      * 成功返回 true，失败抛出异常
      */
-    private static function _confirmTake($channel, int $orderId): bool
+    private static function _confirmTake(int $orderId, string $token): bool
     {
-        $token = self::_login($channel);
-
         $url = self::API_BASE . "/api/orders/confirmTake";
         $data = self::_post($url, ["order_id" => $orderId], $token);
 
@@ -379,45 +331,6 @@ class chuangyupay_plugin
         }
 
         return true;
-    }
-
-    /**
-     * 自动收货
-     * 由 _cron() 在轮询支付状态后自动调用（需配置 username 和 password）
-     */
-    public static function _autoReceive($channel)
-    {
-        try {
-            $orders = self::_getPendingReceiveOrders($channel);
-
-            if (empty($orders)) {
-                echo "创鱼支付[" . $channel["name"] . "]：没有待收货的订单<br/>";
-                return;
-            }
-
-            echo "创鱼支付[" . $channel["name"] . "]：找到 " . count($orders) . " 笔待收货订单<br/>";
-
-            $success = 0;
-            $fail = 0;
-
-            foreach ($orders as $order) {
-                $orderSn = $order["order_sn"];
-                $orderId = intval($order["id"]);
-
-                try {
-                    self::_confirmTake($channel, $orderId);
-                    echo "订单 " . $orderSn . "（ID:" . $orderId . "）：确认收货成功<br/>";
-                    $success++;
-                } catch (\Exception $e) {
-                    echo "订单 " . $orderSn . "（ID:" . $orderId . "）：" . $e->getMessage() . "<br/>";
-                    $fail++;
-                }
-            }
-
-            echo "创鱼支付[" . $channel["name"] . "]：自动收货完成，成功 " . $success . " 笔，失败 " . $fail . " 笔<br/>";
-        } catch (\Exception $e) {
-            echo "创鱼自动收货异常：" . $e->getMessage() . "<br/>";
-        }
     }
 
     private static function _login($channel): string
