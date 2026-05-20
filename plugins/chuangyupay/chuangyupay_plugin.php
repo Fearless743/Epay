@@ -388,9 +388,14 @@ class chuangyupay_plugin
         $ttl = $expiresAt - time();
         $saveResult = $CACHE->save($cacheKey, ["token" => $token, "expires_at" => $expiresAt], $ttl);
         echo "[登录] 缓存写入: key={$cacheKey}, TTL={$ttl}s, save返回值=" . var_export($saveResult, true) . "<br/>";
-        // 写入后立即验证（用 Cache::read 而非直接查表，确保前缀一致）
+        // 写入后立即验证
         $verify = $CACHE->read($cacheKey);
         echo "[登录] 写入后验证: " . (!empty($verify) ? "成功（长度=" . strlen($verify) . "）" : "失败") . "<br/>";
+        // 直接查 pay_cache 表
+        $cnt = $DB->getColumn("SELECT COUNT(*) FROM pay_cache");
+        echo "[登录] pay_cache 总行数: " . var_export($cnt, true) . "<br/>";
+        $row = $DB->getRow("SELECT * FROM pay_cache WHERE k=:key LIMIT 1", [':key' => $cacheKey]);
+        echo "[登录] pay_cache 匹配行: " . var_export($row, true) . "<br/>";
 
         return $token;
     }
