@@ -347,6 +347,7 @@ class chuangyupay_plugin
         // 检查缓存的 token（存到 pre_cache 表）
         $cacheKey = "chuangyupay_token_" . md5($username);
         $cached = $CACHE->read($cacheKey);
+        echo "[登录] 缓存查询: key={$cacheKey}, 原始值=" . var_export($cached, true) . "<br/>";
         if (!empty($cached)) {
             $cached = @unserialize($cached);
             if (!empty($cached["token"]) && !empty($cached["expires_at"]) && $cached["expires_at"] > time() + 60) {
@@ -385,7 +386,8 @@ class chuangyupay_plugin
 
         // 缓存 token（有效期与 JWT 一致）
         $ttl = $expiresAt - time();
-        $CACHE->save($cacheKey, ["token" => $token, "expires_at" => $expiresAt], $ttl);
+        $saveResult = $CACHE->save($cacheKey, ["token" => $token, "expires_at" => $expiresAt], $ttl);
+        echo "[登录] 缓存写入: key={$cacheKey}, TTL={$ttl}s, 结果=" . ($saveResult ? "成功" : "失败") . "<br/>";
 
         return $token;
     }
