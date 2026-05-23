@@ -491,13 +491,6 @@ class chuangyupay_plugin
         curl_close($ch);
         $elapsed = (microtime(true) - $t0) * 1000;
 
-        $apiPath = parse_url($url, PHP_URL_PATH);
-        if ($elapsed > 1000) {
-            echo "[慢请求] {$apiPath} HTTP {$httpCode} 耗时 " . number_format($elapsed, 1) . "ms (curl_total: " . number_format($totalTime * 1000, 1) . "ms)";
-            if ($curlErr) echo " 错误: {$curlErr}";
-            echo "<br/>";
-        }
-
         return json_decode($resp, true);
     }
 }
