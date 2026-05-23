@@ -324,6 +324,14 @@ class chuangyupay_plugin
                         $orderSn = $cyOrder["order_sn"];
                         $orderId = intval($cyOrder["id"]);
 
+                        // 校验平台订单金额与本地订单金额是否一致
+                        $cyPrice = floatval($cyOrder["price"] ?? 0);
+                        $localPrice = floatval($localOrder["realmoney"]);
+                        if ($cyPrice > 0 && abs($cyPrice - $localPrice) > 0.01) {
+                            echo "订单 {$tradeNo}（{$orderSn}）：金额不匹配，平台 {$cyPrice} ≠ 本地 {$localPrice}，已跳过<br/>";
+                            break;
+                        }
+
                         // 确认收货
                         if ($hasCredentials) {
                             try {
