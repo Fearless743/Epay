@@ -27,14 +27,24 @@ class chuangyupay_plugin
                 "note" => "创鱼平台的规格ID",
             ],
             "username" => [
-                "name" => "用户名",
+                "name" => "买家用户名",
                 "type" => "input",
-                "note" => "在创鱼平台用户设置中申请的用户名",
+                "note" => "创鱼平台买家账号的用户名",
             ],
             "password" => [
-                "name" => "密码",
+                "name" => "买家密码",
                 "type" => "input",
-                "note" => "在创鱼平台用户设置中申请的密码",
+                "note" => "创鱼平台买家账号的密码",
+            ],
+            "seller_username" => [
+                "name" => "卖家用户名",
+                "type" => "input",
+                "note" => "创鱼平台卖家账号的用户名（退款时需要）",
+            ],
+            "seller_password" => [
+                "name" => "卖家密码",
+                "type" => "input",
+                "note" => "创鱼平台卖家账号的密码（退款时需要）",
             ],
         ],
         "select" => null,
@@ -87,7 +97,7 @@ class chuangyupay_plugin
             "product_id" => trim($channel["product_id"]),
             "specification_id" => trim($channel["specification_id"]),
             "user_key" => trim($channel["user_key"]),
-            "quantity" => floatval($order["realmoney"]),
+            "quantity" => floatval($order["realmoney"]) * 100,
             "payment_method" => $payment_method,
             "order_title" => $order["trade_no"],
         ];
@@ -160,6 +170,63 @@ class chuangyupay_plugin
     public static function return(): array
     {
         return ["type" => "page", "page" => "return"];
+    }
+
+    /**
+     * 退款处理
+     * 流程：买家发起退款 → 卖家同意退款
+     */
+    public static function refund($order): array
+    {
+        global $channel;
+
+        $orderId = intval($order["api_trade_no"]);
+        if (empty($orderId)) {
+            return ["code" => -1, "msg" => "订单未关联创鱼平台订单号"];
+        }
+
+        $refundFee = floatval($order["refundmoney"]);
+        if ($refundFee <= 0) {
+            return ["code" => -1, "msg" => "退款金额必须大于0"];
+        }
+
+        try {
+            // 1. 买家登录并发起退款
+            $buyerToken = self::_login($channel, "buyer");
+
+            $refundUrl = self::API_BASE . "/api/orders/refundOrder";
+            $refundData = self::_post($refundUrl, [
+                "order_id" => $orderId,
+                "refund_case" => "个人原因（不喜欢/不想要）",
+            ], $buyerToken);
+
+            if (!is_array($refundData) || $refundData["code"] != 200) {
+                return ["code" => -1, "msg" => "发起退款失败：" . ($refundData["msg"] ?? "无响应")];
+            }
+
+            // 2. 卖家登录并同意退款
+            $sellerToken = self::_login($channel, "seller");
+
+            $checkUrl = self::API_BASE . "/api/orders/sellerCheckRefund";
+            $checkData = self::_post($checkUrl, [
+                "order_id" => $orderId,
+                "refund_status" => 2,
+                "refund_fail_case" => "",
+                "price" => number_format($refundFee, 2, ".", ""),
+            ], $sellerToken);
+
+            if (!is_array($checkData) || $checkData["code"] != 200) {
+                return ["code" => -1, "msg" => "卖家同意退款失败：" . ($checkData["msg"] ?? "无响应")];
+            }
+
+            return [
+                "code" => 0,
+                "trade_no" => $order["trade_no"],
+                "refund_fee" => $refundFee,
+            ];
+        } catch (\Exception $e) {
+            return ["code" => -1, "msg" => $e->getMessage()];
+        }
     }
 
     // 定时任务轮询：查询平台已支付未收货订单，匹配系统订单号后收货+标记已支付
@@ -333,19 +400,26 @@ class chuangyupay_plugin
         return true;
     }
 
-    private static function _login($channel): string
+    private static function _login($channel, string $role = "buyer"): string
     {
         global $CACHE;
 
-        $username = trim($channel["username"]);
-        $password = trim($channel["password"]);
-
-        if (empty($username) || empty($password)) {
-            throw new \Exception("未配置创鱼登录用户名或密码");
+        if ($role === "seller") {
+            $username = trim($channel["seller_username"]);
+            $password = trim($channel["seller_password"]);
+            if (empty($username) || empty($password)) {
+                throw new \Exception("未配置创鱼卖家用户名或密码");
+            }
+        } else {
+            $username = trim($channel["username"]);
+            $password = trim($channel["password"]);
+            if (empty($username) || empty($password)) {
+                throw new \Exception("未配置创鱼买家用户名或密码");
+            }
         }
 
         // 检查缓存的 token（存到 cache 表，k 列长度有限，key 截短避免截断）
-        $cacheKey = "chuangyupay_" . substr(md5($username), 0, 16);
+        $cacheKey = "chuangyupay_" . $role . "_" . substr(md5($username), 0, 16);
         $cached = $CACHE->read($cacheKey);
         if (!empty($cached)) {
             $cached = @unserialize($cached);
