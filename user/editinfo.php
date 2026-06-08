@@ -610,13 +610,12 @@ $(document).ready(function(){
 		var stype=$("select[name='stype']").val();
 		var account=$("input[name='account']").val();
 		var username=$("input[name='username']").val();
-		var usdt_chain=$("input[name='usdt_chain']").val();
 		if(account=='' || username==''){layer.alert('请确保各项不能为空！');return false;}
 		var ii = layer.load(2, {shade:[0.1,'#fff']});
 		$.ajax({
 			type : "POST",
 			url : "ajax2.php?act=edit_settle",
-			data : {stype:stype,account:account,username:username,usdt_chain:usdt_chain},
+			data : {stype:stype,account:account,username:username},
 			dataType : 'json',
 			success : function(data) {
 				layer.close(ii);

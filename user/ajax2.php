@@ -285,7 +285,6 @@ case 'edit_settle':
 	$type=intval($_POST['stype']);
 	$account=htmlspecialchars(strip_tags(trim($_POST['account'])));
 	$username=htmlspecialchars(strip_tags(trim($_POST['username'])));
-	$usdt_chain=htmlspecialchars(strip_tags(trim($_POST['usdt_chain'])));
 
 	if($account==null || $username==null){
 		exit('{"code":-1,"msg":"请确保每项都不为空"}');
@@ -310,7 +309,7 @@ case 'edit_settle':
 		}
 		exit('{"code":2,"msg":"need verify"}');
 	}
-	$data = ['settle_id'=>$type, 'account'=>$account, 'username'=>$username, 'usdt_chain'=>$usdt_chain];
+	$data = ['settle_id'=>$type, 'account'=>$account, 'username'=>$username];
 	if($DB->update('user', $data, ['uid'=>$uid])!==false){
 		exit('{"code":1,"msg":"succ"}');
 	}else{

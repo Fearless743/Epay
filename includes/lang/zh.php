@@ -312,7 +312,6 @@ return [
     'qqpay_settle' => 'QQ钱包结算',
     'bank_settle' => '银行卡结算',
     'usdt_settle' => 'USDT结算',
-    'usdt_chain_label' => 'USDT交易链/交易所',
     'receive_account' => '收款账号',
     'real_name_label' => '真实姓名',
     'click_get_wechat_openid' => '点此获取微信OpenId',
