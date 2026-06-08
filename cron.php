@@ -156,6 +156,35 @@ elseif($_GET['do']=='order'){
 
 	$CACHE->save('order_'.$day, serialize($order_lastday), 604830);
 
+	// 每月1号生成上月利润汇总缓存
+	if(date("d") == "01"){
+		$last_month_start = date("Y-m-01", strtotime("-1 month"));
+		$this_month_start = date("Y-m-01");
+		$month_key = date("Ym", strtotime("-1 month"));
+
+		$rs=$DB->query("SELECT type,profitmoney from pre_order where deleted=0 and (status=1 OR status=3) and date>='$last_month_start' and date<'$this_month_start'");
+		foreach($paytype as $id=>$type){
+			$month_profit_paytype[$id]=0;
+		}
+		while($row = $rs->fetch()){
+			if(!empty($row['profitmoney'])){
+				$month_profit_paytype[$row['type']]+=$row['profitmoney'];
+			}
+		}
+		foreach($month_profit_paytype as $k=>$v){
+			$month_profit_paytype[$k] = round($v,2);
+		}
+		$month_allprofit=0;
+		foreach($month_profit_paytype as $money){
+			$month_allprofit+=$money;
+		}
+		$month_data = [
+			'profit_all' => round($month_allprofit, 2),
+			'profit_paytype' => $month_profit_paytype
+		];
+		$CACHE->save('order_month_'.$month_key, serialize($month_data), 31536000);
+	}
+
 	saveSetting('order_time', $date);
 
 	$DB->exec("update pre_channel set daystatus=0");

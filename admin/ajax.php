@@ -107,6 +107,42 @@ case 'getcount':
 			break;
 		}
 	}
+
+	// 本月利润统计（不缓存，每次实时查询）
+	$month_start = date("Y-m-01");
+	$today = date("Y-m-d");
+	$rs2=$DB->query("SELECT type,profitmoney from pre_order where deleted=0 AND (status=1 OR status=3) and date>='$month_start' and date<='$today'");
+	foreach($paytype as $id=>$type){
+		$month_profit_paytype[$id]=0;
+	}
+	while($row = $rs2->fetch()){
+		if(!empty($row['profitmoney'])){
+			$month_profit_paytype[$row['type']]+=$row['profitmoney'];
+		}
+	}
+	foreach($month_profit_paytype as $k=>$v){
+		$month_profit_paytype[$k] = round($v,2);
+	}
+	$month_allprofit=0;
+	foreach($month_profit_paytype as $money){
+		$month_allprofit+=$money;
+	}
+	$result['profit_month'] = [
+		'profit_all' => round($month_allprofit, 2),
+		'profit_paytype' => $month_profit_paytype
+	];
+
+	// 历史月度利润缓存
+	$result['profit_month_history'] = [];
+	for($i=1;$i<7;$i++){
+		$month_key = date("Ym", strtotime("-{$i} month"));
+		if($month_tongji = $CACHE->read('order_month_'.$month_key)){
+			$result['profit_month_history'][$month_key] = unserialize($month_tongji);
+		}else{
+			break;
+		}
+	}
+
 	exit(json_encode($result));
 break;
 

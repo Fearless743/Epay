@@ -63,9 +63,9 @@ if($conf['admin_pwd']==='123456'){
 		</div>
       </div>
 	  <div class="panel panel-warning">
-	    <div class="panel-heading" style="background-color: #c09853;"><h3 class="panel-title">支付方式手续费利润（已扣除通道成本，1小时更新一次）<span class="pull-right"><a href="javascript:getData(true)" class="btn btn-default btn-xs"><i class="fa fa-refresh"></i></a></span></h3></div>
+	    <div class="panel-heading" style="background-color: #c09853;"><h3 class="panel-title">支付方式手续费利润（已扣除通道成本，按月统计）<span class="pull-right"><a href="javascript:getData(true)" class="btn btn-default btn-xs"><i class="fa fa-refresh"></i></a></span></h3></div>
           <table class="table table-bordered table-striped">
-		    <thead><tr id="profit_paytype_head"><th>日期</th></thead>
+		    <thead><tr id="profit_paytype_head"><th>月份</th></thead>
             <tbody id="profit_paytype_list">
 			</tbody>
           </table>
@@ -138,7 +138,7 @@ function getData(getnew){
 				$("#channel_list").append('<tr><td>'+k+'</td>'+order+'<td>'+v.all+'</td></tr>');
 			});
 
-			$("#profit_paytype_head").html('<th>日期</th>');
+			$("#profit_paytype_head").html('<th>月份</th>');
 			$("#profit_paytype_list").empty();
 			var paytype=new Array();
 			$.each(data.paytype, function(k, v){
@@ -148,11 +148,11 @@ function getData(getnew){
 			$("#profit_paytype_head").append('<th>总计</th>');
 			var order = '';
 			$.each(paytype, function(k, v){
-				if(typeof data.order_today.profit_paytype[v] != "undefined")order+='<td>'+data.order_today.profit_paytype[v]+'</td>';
+				if(data.profit_month && typeof data.profit_month.profit_paytype[v] != "undefined")order+='<td>'+data.profit_month.profit_paytype[v]+'</td>';
 				else order+='<td>0</td>';
 			});
-			$("#profit_paytype_list").append('<tr><td>今日</td>'+order+'<td>'+data.order_today.profit_all+'</td></tr>');
-			$.each(data.order, function(k, v){
+			$("#profit_paytype_list").append('<tr><td>本月</td>'+order+'<td>'+(data.profit_month ? data.profit_month.profit_all : 0)+'</td></tr>');
+			$.each(data.profit_month_history, function(k, v){
 				var order = '';
 				$.each(paytype, function(key, value){
 					if(typeof v.profit_paytype[value] != "undefined")order+='<td>'+v.profit_paytype[value]+'</td>';
