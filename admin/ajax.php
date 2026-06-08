@@ -108,10 +108,10 @@ case 'getcount':
 		}
 	}
 
-	// 本月利润统计（不缓存，每次实时查询）
+	// 本月利润统计（按自然月实时查询）
 	$month_start = date("Y-m-01");
-	$today = date("Y-m-d");
-	$rs2=$DB->query("SELECT type,profitmoney from pre_order where deleted=0 AND (status=1 OR status=3) and date>='$month_start' and date<='$today'");
+	$next_month_start = date("Y-m-01", strtotime("+1 month"));
+	$rs2=$DB->query("SELECT type,profitmoney from pre_order where deleted=0 AND (status=1 OR status=3) and date>='$month_start' and date<'$next_month_start'");
 	foreach($paytype as $id=>$type){
 		$month_profit_paytype[$id]=0;
 	}
@@ -132,15 +132,22 @@ case 'getcount':
 		'profit_paytype' => $month_profit_paytype
 	];
 
-	// 历史月度利润缓存
+	// 历史全部月份利润统计（按自然月分组实时查询）
 	$result['profit_month_history'] = [];
-	for($i=1;$i<7;$i++){
-		$month_key = date("Ym", strtotime("-{$i} month"));
-		if($month_tongji = $CACHE->read('order_month_'.$month_key)){
-			$result['profit_month_history'][$month_key] = unserialize($month_tongji);
-		}else{
-			break;
+	$rs2=$DB->query("SELECT DATE_FORMAT(date,'%Y-%m') month,type,SUM(profitmoney) profitmoney from pre_order where deleted=0 AND (status=1 OR status=3) and date<'$month_start' and profitmoney IS NOT NULL and profitmoney<>0 GROUP BY month,type ORDER BY month DESC");
+	while($row = $rs2->fetch()){
+		$month = $row['month'];
+		if(!isset($result['profit_month_history'][$month])){
+			foreach($paytype as $id=>$type){
+				$result['profit_month_history'][$month]['profit_paytype'][$id]=0;
+			}
+			$result['profit_month_history'][$month]['profit_all']=0;
 		}
+		$result['profit_month_history'][$month]['profit_paytype'][$row['type']] = round($row['profitmoney'], 2);
+		$result['profit_month_history'][$month]['profit_all'] += $row['profitmoney'];
+	}
+	foreach($result['profit_month_history'] as $month=>$row){
+		$result['profit_month_history'][$month]['profit_all'] = round($row['profit_all'], 2);
 	}
 
 	exit(json_encode($result));
