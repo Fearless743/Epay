@@ -247,7 +247,7 @@ case 'completeinfo':
 	$usdt_chain=htmlspecialchars(strip_tags(trim($_POST['usdt_chain'])));
 	$email=htmlspecialchars(strip_tags(trim($_POST['email'])));
 
-	if(empty($account) || empty($username)){
+	if(empty($account) || ($type!=5 && empty($username))){
 		exit('{"code":-1,"msg":"请确保每项都不为空"}');
 	}
 	if(!empty($userrow['account']) && !empty($userrow['username'])){
@@ -286,7 +286,7 @@ case 'edit_settle':
 	$account=htmlspecialchars(strip_tags(trim($_POST['account'])));
 	$username=htmlspecialchars(strip_tags(trim($_POST['username'])));
 
-	if($account==null || $username==null){
+	if($account==null || ($type!=5 && $username==null)){
 		exit('{"code":-1,"msg":"请确保每项都不为空"}');
 	}
 	if($type==1 && strlen($account)!=11 && strpos($account,'@')==false){

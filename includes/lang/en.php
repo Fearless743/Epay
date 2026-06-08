@@ -312,6 +312,7 @@ return [
     'qqpay_settle' => 'QQ Wallet',
     'bank_settle' => 'Bank Card',
     'usdt_settle' => 'USDT',
+    'usdt_chain_label' => 'USDT Chain/Exchange',
     'receive_account' => 'Account',
     'real_name_label' => 'Real Name',
     'click_get_wechat_openid' => 'Click to get WeChat OpenId',

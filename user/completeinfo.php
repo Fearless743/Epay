@@ -108,7 +108,9 @@ $(document).ready(function(){
 		var email=$("input[name='email']").val();
 		var qq=$("input[name='qq']").val();
 		var url=$("input[name='url']").val();
-		if(account=='' || username=='' || email=='' || qq=='' || url==''){layer.alert('请确保各项不能为空！');return false;}
+		if(stype==5){
+			if(account==''){layer.alert('请填写USDT地址！');return false;}
+		}else if(account=='' || username=='' || email=='' || qq=='' || url==''){layer.alert('请确保各项不能为空！');return false;}
 		if($("input[name='email']").length>0){
 			var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/;
 			if(!reg.test(email)){layer.alert('邮箱格式不正确！');return false;}
