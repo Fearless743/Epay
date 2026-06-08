@@ -204,6 +204,8 @@ case 'transfer':
 		$app = 'qqpay';
 	}elseif($type == 4){
 		$app = 'bank';
+	}elseif($type == 5){
+		$app = 'usdt';
 	}
 	$channel = \lib\Channel::get($channelid);
 	if(!$channel)exit('{"code":-1,"msg":"当前支付通道信息不存在"}');

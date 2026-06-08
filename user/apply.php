@@ -84,6 +84,7 @@ if(isset($_GET['act']) && $_GET['act']=='do'){
 			$realmoney=round($money, 2);
 		}
 		$data = ['uid'=>$uid, 'type'=>$userrow['settle_id'], 'account'=>$userrow['account'], 'username'=>$userrow['username'], 'money'=>$money, 'realmoney'=>$realmoney, 'addtime'=>'NOW()', 'status'=>0];
+		if($userrow['settle_id']==5 && !empty($userrow['usdt_chain'])) $data['usdt_chain'] = $userrow['usdt_chain'];
 		if($DB->insert('settle', $data)){
 			$settleid=$DB->lastInsertId();
 			changeUserMoney($uid, $money, false, '手动提现');
@@ -113,11 +114,11 @@ if(isset($_GET['act']) && $_GET['act']=='do'){
 				}else{
 					$message='转账失败 '.$result['msg'];
 					$DB->update('settle', ['status'=>3, 'result'=>$result["msg"], 'transfer_status'=>2, 'transfer_result'=>$message], ['id'=>$settleid]);
-					\lib\MsgNotice::send('apply', 0, ['uid'=>$uid, 'money'=>$money, 'realmoney'=>$realmoney, 'type'=>display_type($userrow['settle_id']), 'account'=>$userrow['account'], 'username'=>$userrow['username']]);
+					\lib\MsgNotice::send('apply', 0, ['uid'=>$uid, 'money'=>$money, 'realmoney'=>$realmoney, 'type'=>display_type($userrow['settle_id']), 'account'=>$userrow['account'], 'username'=>$userrow['username'], 'usdt_chain'=>$userrow['usdt_chain']]);
 					exit("<script language='javascript'>alert('".__('js_withdraw_transfer_fail')."');window.location.href='./settle.php';</script>");
 				}
 			}else{
-				\lib\MsgNotice::send('apply', 0, ['uid'=>$uid, 'money'=>$money, 'realmoney'=>$realmoney, 'type'=>display_type($userrow['settle_id']), 'account'=>$userrow['account'], 'username'=>$userrow['username']]);
+				\lib\MsgNotice::send('apply', 0, ['uid'=>$uid, 'money'=>$money, 'realmoney'=>$realmoney, 'type'=>display_type($userrow['settle_id']), 'account'=>$userrow['account'], 'username'=>$userrow['username'], 'usdt_chain'=>$userrow['usdt_chain']]);
 			}
 		}
 		exit("<script language='javascript'>alert('".__('js_withdraw_success')."');window.location.href='./settle.php';</script>");

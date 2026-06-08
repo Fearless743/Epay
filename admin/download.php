@@ -14,6 +14,8 @@ function display_type($type){
 		return 'QQ钱包';
 	elseif($type==4)
 		return '银行卡';
+	elseif($type==5)
+		return 'USDT';
 	else
 		return 1;
 }
@@ -453,7 +455,7 @@ if($sheet == 'mybank'){
 	$data.=$table;
 
 }else{
-	$type_name = ['alipay'=>'支付宝', 'wxpay'=>'微信', 'qqpay'=>'QQ钱包', 'bank'=>'银行卡'];
+	$type_name = ['alipay'=>'支付宝', 'wxpay'=>'微信', 'qqpay'=>'QQ钱包', 'bank'=>'银行卡', 'usdt'=>'USDT'];
 	if(!empty($type)){
 		$data="序号,收款账号,收款人姓名,转账金额（元）,转账备注\r\n";
 		$i=0;

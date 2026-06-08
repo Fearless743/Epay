@@ -254,7 +254,7 @@ class MsgNotice
             $content = '尊敬的'.$conf['sitename'].'管理员，网站有新注册的商户待审核，请及时前往用户列表审核处理。<br/><b>商户ID：</b>'.$param['uid'].'<br/><b>注册账号：</b>'.$param['account'].'<br/><b>注册时间：</b>'.date('Y-m-d H:i:s');
         }elseif($scene == 'apply'){
             $title = '新的提现待处理提醒';
-            $content = '尊敬的'.$conf['sitename'].'管理员，商户'.$param['uid'].'发起了手动提现申请，请及时处理。<br/><b>商户ID：</b>'.$param['uid'].'<br/><b>提现方式：</b>'.$param['type'].'<br/><b>提现金额：</b>'.$param['realmoney'].'<br/><b>结算账号：</b>'.$param['account'].'<br/><b>收款人：</b>'.$param['username'].'<br/><b>提交时间：</b>'.date('Y-m-d H:i:s');
+            $content = '尊敬的'.$conf['sitename'].'管理员，商户'.$param['uid'].'发起了手动提现申请，请及时处理。<br/><b>商户ID：</b>'.$param['uid'].'<br/><b>提现方式：</b>'.$param['type'].'<br/><b>提现金额：</b>'.$param['realmoney'].'<br/><b>结算账号：</b>'.$param['account'].'<br/><b>收款人：</b>'.$param['username'].(!empty($param['usdt_chain'])?'<br/><b>交易链/交易所：</b>'.$param['usdt_chain']:'').'<br/><b>提交时间：</b>'.date('Y-m-d H:i:s');
         }elseif($scene == 'domain'){
             $title = '新的授权支付域名待审核提醒';
             $content = '尊敬的'.$conf['sitename'].'管理员，商户'.$param['uid'].'提交了新的授权支付域名，请及时审核处理。<br/><b>商户ID：</b>'.$param['uid'].'<br/><b>授权域名：</b>'.$param['domain'].'<br/><b>提交时间：</b>'.date('Y-m-d H:i:s');
