@@ -15,6 +15,8 @@ function display_type($type){
 		return __('settle_type_qqpay');
 	elseif($type==4)
 		return __('settle_type_bank');
+	elseif($type==5)
+		return __('settle_type_usdt');
 	else
 		return 1;
 }
@@ -28,6 +30,8 @@ function convert_type($type){
 		return 'qqpay';
 	elseif($type==4)
 		return 'bank';
+	elseif($type==5)
+		return 'usdt';
 	else
 		return null;
 }
@@ -79,7 +83,7 @@ if(isset($_GET['act']) && $_GET['act']=='do'){
 		}else{
 			$realmoney=round($money, 2);
 		}
-		$data = ['uid'=>$uid, 'type'=>$userrow['settle_id'], 'account'=>$userrow['account'], 'username'=>$userrow['username'], 'money'=>$money, 'realmoney'=>$realmoney, 'addtime'=>'NOW()', 'status'=>0];
+		$data = ['uid'=>$uid, 'type'=>$userrow['settle_id'], 'account'=>$userrow['account'], 'usdt_chain'=>$userrow['usdt_chain'], 'username'=>$userrow['username'], 'money'=>$money, 'realmoney'=>$realmoney, 'addtime'=>'NOW()', 'status'=>0];
 		if($DB->insert('settle', $data)){
 			$settleid=$DB->lastInsertId();
 			changeUserMoney($uid, $money, false, '手动提现');
@@ -153,6 +157,14 @@ if(isset($_GET['act']) && $_GET['act']=='do'){
 					</div>
 				</div>
 				<div class="form-group">
+				<?php if($userrow['settle_id']==5 && !empty($userrow['usdt_chain'])){?>
+				<div class="form-group">
+					<label class="col-sm-2 control-label"><?php echo __('usdt_chain_label')?></label>
+					<div class="col-sm-9">
+						<input class="form-control" type="text" value="<?php echo $userrow['usdt_chain']?>" disabled>
+					</div>
+				</div>
+				<?php }?>
 					<label class="col-sm-2 control-label"><?php echo __('your_name')?></label>
 					<div class="col-sm-9">
 						<input class="form-control" type="text" value="<?php echo $userrow['username']?>" disabled>

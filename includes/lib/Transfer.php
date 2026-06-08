@@ -59,6 +59,8 @@ class Transfer
                 $channelid = $conf['transfer_qqpay'];
             }elseif($type=='bank'){
                 $channelid = $conf['transfer_bank'];
+            }elseif($type=='usdt'){
+                $channelid = $conf['transfer_usdt'];
             }else{
                 return ['code'=>-1, 'msg'=>'type参数错误'];
             }

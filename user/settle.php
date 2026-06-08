@@ -70,6 +70,8 @@ $(document).ready(function(){
 					}else if(value == '4'){
 						typename='<?php echo __('settle_type_bank')?>';
 					}else if(value == '5'){
+						typename='<?php echo __('settle_type_usdt')?>';
+					}else if(value == '6'){
 						typename='<?php echo __('settle_type_org')?>';
 					}
 					if(row.auto!=1) typename+='<small>[<?php echo __('manual')?>]</small>'
@@ -81,6 +83,9 @@ $(document).ready(function(){
 				title: '<?php echo __('settle_account')?>'
 			},
 			{
+				if(row.type == '5' && row.usdt_chain){
+					return '<span>'+value+'</span><br/><small>'+row.usdt_chain+'</small>';
+				}
 				field: 'money',
 				title: '<?php echo __('settle_amount_label')?>',
 				formatter: function(value, row, index) {

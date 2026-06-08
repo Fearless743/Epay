@@ -34,6 +34,7 @@ include './head.php';
 						<?php }if($conf['settle_wxpay']){?><option value="2" input="<?php echo $conf['transfer_wxpay']?'微信OpenId':'微信号';?>">微信结算</option>
 						<?php }if($conf['settle_qqpay']){?><option value="3" input="ＱＱ号码">QQ钱包结算</option>
 						<?php }if($conf['settle_bank']){?><option value="4" input="银行卡号">银行卡结算</option>
+						<?php }if($conf['settle_usdt']){?><option value="5" input="USDT地址">USDT结算</option>
 						<?php }?></select>
 					</div>
 				</div>
@@ -50,6 +51,12 @@ include './head.php';
 					</div>
 				</div>
 				<?php }?>
+				<div class="form-group" id="usdt_chain_form" style="display:none;">
+					<label class="col-sm-2 control-label">USDT交易链/交易所</label>
+					<div class="col-sm-9">
+						<input class="form-control" type="text" name="usdt_chain" value="<?php echo $userrow['usdt_chain']?>" placeholder="如 TRC20 / ERC20 / 币安">
+					</div>
+				</div>
 				<div class="form-group">
 					<label class="col-sm-2 control-label">真实姓名</label>
 					<div class="col-sm-9">
@@ -99,12 +106,18 @@ $(document).ready(function(){
 		}else{
 			$("#getopenid_form").hide();
 		}
+		if($(this).val() == 5){
+			$("#usdt_chain_form").show();
+		}else{
+			$("#usdt_chain_form").hide();
+		}
 	});
 	$("select[name='stype']").change();
 	$("#save").click(function(){
 		var stype=$("select[name='stype']").val();
 		var account=$("input[name='account']").val();
 		var username=$("input[name='username']").val();
+		var usdt_chain=$("input[name='usdt_chain']").val();
 		var email=$("input[name='email']").val();
 		var qq=$("input[name='qq']").val();
 		var url=$("input[name='url']").val();
@@ -130,7 +143,7 @@ $(document).ready(function(){
 		$.ajax({
 			type : "POST",
 			url : "ajax2.php?act=completeinfo",
-			data : {stype:stype,account:account,username:username,email:email,qq:qq,url:url},
+			data : {stype:stype,account:account,username:username,usdt_chain:usdt_chain,email:email,qq:qq,url:url},
 			dataType : 'json',
 			success : function(data) {
 				layer.close(ii);

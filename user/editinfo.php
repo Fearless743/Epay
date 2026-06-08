@@ -150,10 +150,11 @@ if(strlen($userrow['phone'])==11){
 					<label class="col-sm-2 control-label"><?php echo __('settle_type')?></label>
 					<div class="col-sm-9">
 						<select class="form-control" name="stype" default="<?php echo $userrow['settle_id']?>">
-						<?php if($conf['settle_alipay']){?><option value="1" input="<?php echo __('settle_type_alipay')?>"><?php echo __('alipay_settle')?></option>
+						<?php if($conf['settle_alipay']){?><option value="1" input="支付宝账号"><?php echo __('alipay_settle')?></option>
 						<?php }if($conf['settle_wxpay']){?><option value="2" input="<?php echo $conf['transfer_wxpay']?'微信OpenId':'微信号';?>"><?php echo __('wxpay_settle')?></option>
 						<?php }if($conf['settle_qqpay']){?><option value="3" input="ＱＱ号码"><?php echo __('qqpay_settle')?></option>
-						<?php }if($conf['settle_bank']){?><option value="4" input="<?php echo __('settle_type_bank')?>"><?php echo __('bank_settle')?></option>
+						<?php }if($conf['settle_bank']){?><option value="4" input="银行卡号"><?php echo __('bank_settle')?></option>
+						<?php }if($conf['settle_usdt']){?><option value="5" input="USDT地址"><?php echo __('usdt_settle')?></option>
 						<?php }?></select>
 					</div>
 				</div>
@@ -170,6 +171,12 @@ if(strlen($userrow['phone'])==11){
 					</div>
 				</div>
 				<?php }?>
+				<div class="form-group" id="usdt_chain_form" style="display:none;">
+					<label class="col-sm-2 control-label"><?php echo __('usdt_chain_label')?></label>
+					<div class="col-sm-9">
+						<input class="form-control" type="text" name="usdt_chain" value="<?php echo $userrow['usdt_chain']?>" placeholder="如 TRC20 / ERC20 / 币安">
+					</div>
+				</div>
 				<div class="form-group">
 					<label class="col-sm-2 control-label"><?php echo __('real_name_label')?></label>
 					<div class="col-sm-9">
@@ -592,18 +599,24 @@ $(document).ready(function(){
 		}else{
 			$("#getopenid_form").hide();
 		}
+		if($(this).val() == 5){
+			$("#usdt_chain_form").show();
+		}else{
+			$("#usdt_chain_form").hide();
+		}
 	});
 	$("select[name='stype']").change();
 	$("#editSettle").click(function(){
 		var stype=$("select[name='stype']").val();
 		var account=$("input[name='account']").val();
 		var username=$("input[name='username']").val();
+		var usdt_chain=$("input[name='usdt_chain']").val();
 		if(account=='' || username==''){layer.alert('请确保各项不能为空！');return false;}
 		var ii = layer.load(2, {shade:[0.1,'#fff']});
 		$.ajax({
 			type : "POST",
 			url : "ajax2.php?act=edit_settle",
-			data : {stype:stype,account:account,username:username},
+			data : {stype:stype,account:account,username:username,usdt_chain:usdt_chain},
 			dataType : 'json',
 			success : function(data) {
 				layer.close(ii);

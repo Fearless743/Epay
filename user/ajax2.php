@@ -244,6 +244,7 @@ case 'completeinfo':
 	$type=intval($_POST['stype']);
 	$account=htmlspecialchars(strip_tags(trim($_POST['account'])));
 	$username=htmlspecialchars(strip_tags(trim($_POST['username'])));
+	$usdt_chain=htmlspecialchars(strip_tags(trim($_POST['usdt_chain'])));
 	$email=htmlspecialchars(strip_tags(trim($_POST['email'])));
 
 	if(empty($account) || empty($username)){
@@ -252,11 +253,14 @@ case 'completeinfo':
 	if(!empty($userrow['account']) && !empty($userrow['username'])){
 		exit('{"code":-1,"msg":"你已完善相关信息"}');
 	}
-	if($type==1 && (strlen($account)<20 || strlen($account)>50)){
-		exit('{"code":-1,"msg":"请填写正确的USDT地址！"}');
+	if($type==1 && strlen($account)!=11 && strpos($account,'@')==false){
+		exit('{"code":-1,"msg":"请填写正确的支付宝账号！"}');
 	}
 	if($type==2 && strlen($account)<3){
 		exit('{"code":-1,"msg":"请填写正确的微信"}');
+	}
+	if($type==5 && (strlen($account)<20 || strlen($account)>50)){
+		exit('{"code":-1,"msg":"请填写正确的USDT地址！"}');
 	}
 	$data = ['settle_id'=>$type, 'account'=>$account, 'username'=>$username];
 	if($conf['verifytype']==1){
@@ -281,18 +285,22 @@ case 'edit_settle':
 	$type=intval($_POST['stype']);
 	$account=htmlspecialchars(strip_tags(trim($_POST['account'])));
 	$username=htmlspecialchars(strip_tags(trim($_POST['username'])));
+	$usdt_chain=htmlspecialchars(strip_tags(trim($_POST['usdt_chain'])));
 
 	if($account==null || $username==null){
 		exit('{"code":-1,"msg":"请确保每项都不为空"}');
 	}
-	if($type==1 && (strlen($account)<20 || strlen($account)>50)){
-		exit('{"code":-1,"msg":"请填写正确的USDT地址！"}');
+	if($type==1 && strlen($account)!=11 && strpos($account,'@')==false){
+		exit('{"code":-1,"msg":"请填写正确的支付宝账号！"}');
 	}
 	if($type==2 && strlen($account)<3){
 		exit('{"code":-1,"msg":"请填写正确的微信"}');
 	}
 	if($type==3 && (strlen($account)<5 || strlen($account)>10 || !is_numeric($account))){
 		exit('{"code":-1,"msg":"请填写正确的QQ号码"}');
+	}
+	if($type==5 && (strlen($account)<20 || strlen($account)>50)){
+		exit('{"code":-1,"msg":"请填写正确的USDT地址！"}');
 	}
 	if($userrow['type']!=2 && !empty($userrow['account']) && !empty($userrow['username']) && ($userrow['account']!=$account || $userrow['username']!=$username) && $_SESSION['verify_ok']!==$uid){
 		if($conf['verifytype']==1 && (empty($userrow['phone']) || strlen($userrow['phone'])!=11)){
@@ -302,7 +310,7 @@ case 'edit_settle':
 		}
 		exit('{"code":2,"msg":"need verify"}');
 	}
-	$data = ['settle_id'=>$type, 'account'=>$account, 'username'=>$username];
+	$data = ['settle_id'=>$type, 'account'=>$account, 'username'=>$username, 'usdt_chain'=>$usdt_chain];
 	if($DB->update('user', $data, ['uid'=>$uid])!==false){
 		exit('{"code":1,"msg":"succ"}');
 	}else{

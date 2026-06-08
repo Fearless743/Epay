@@ -20,6 +20,10 @@ if($type == 1){
 	$typename = '银行卡';
 	$default_channel = $conf['transfer_bank'];
 	$app = 'bank';
+}elseif($type == 5){
+	$typename = 'USDT';
+	$default_channel = $conf['transfer_usdt'];
+	$app = 'usdt';
 }else{
 	sysmsg('参数错误');
 }
