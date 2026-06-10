@@ -54,13 +54,14 @@ class Cache {
 		return $_CACHE[$key] ?? null;
 	}
 
+	// read() 返回 pre_cache.v 的原始值，与 MySQL 保持一致
 	public function read($key = 'config') {
 		if ($this->useRedis && !$this->mysqlFallback) {
 			if ($this->redisConnect()) {
 				try {
 					$val = $this->redis->get($key);
 					if ($val !== false && $val !== null) {
-						return @unserialize($val);
+						return $val;
 					}
 				} catch (\Exception $e) {
 					$this->mysqlFallback = true;
@@ -68,10 +69,10 @@ class Cache {
 			}
 		}
 		global $DB;
-		$value = $DB->getColumn("SELECT v FROM pre_cache WHERE k=:key LIMIT 1", [':key'=>$key]);
-		return $value;
+		return $DB->getColumn("SELECT v FROM pre_cache WHERE k=:key LIMIT 1", [':key'=>$key]);
 	}
 
+	// save() 存原始序列化串到 Redis，保持与 MySQL REPLACE INTO 一致的存储格式
 	public function save($key, $value, $expire=0) {
 		global $DB, $_CACHE;
 		$serialized = is_array($value) ? serialize($value) : $value;
