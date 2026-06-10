@@ -167,13 +167,16 @@ if(isset($_GET['editid'])){
             </label>
           </div>
           <div class="panel-body" style="padding:10px;">
-            <?php foreach($items as $perm => $label): ?>
-            <label class="checkbox-inline" style="margin-right:20px;">
-              <input type="checkbox" name="permissions[]" value="<?= $perm ?>" data-group="<?= md5($groupName) ?>"
+            <?php $isFirst = true; foreach($items as $perm => $label): ?>
+            <label class="<?= $isFirst ? 'checkbox-inline perm-master' : 'checkbox-inline' ?>" style="margin-right:20px;<?= $isFirst ? 'font-weight:bold;' : '' ?>">
+              <input type="checkbox" name="permissions[]" value="<?= $perm ?>"
+                data-group="<?= md5($groupName) ?>"
+                <?= $isFirst ? 'data-master="1"' : 'data-child="1"' ?>
                 <?= in_array($perm, $editRole['perm_arr']) ? 'checked' : '' ?>>
-              <?= htmlspecialchars($label) ?> <code><?= $perm ?></code>
+              <?= htmlspecialchars($label) ?> <small style="opacity:.6"><code><?= $perm ?></code></small>
             </label>
-            <?php endforeach; ?>
+            <?php if($isFirst): ?><hr style="margin:6px 0"><?php endif; ?>
+            <?php $isFirst = false; endforeach; ?>
           </div>
         </div>
         <?php endforeach; ?>
@@ -263,7 +266,22 @@ function delRole(id, name) {
     layer.close(index);
   });
 }
-// 全选/取消全选
+// 总开关：勾选/取消时同步所有子项
+$(document).on('change', '[data-master="1"]', function(){
+  var group = $(this).data('group');
+  var checked = $(this).is(':checked');
+  $('[data-group="' + group + '"][data-child="1"]').prop('checked', checked);
+});
+
+// 子项变化时：全选则勾总开关，有未选则取消总开关
+$(document).on('change', '[data-child="1"]', function(){
+  var group = $(this).data('group');
+  var total   = $('[data-group="' + group + '"][data-child="1"]').length;
+  var checked = $('[data-group="' + group + '"][data-child="1"]:checked').length;
+  $('[data-group="' + group + '"][data-master="1"]').prop('checked', total === checked);
+});
+
+// 顶部全选按钮：全选该分组所有项（含总开关）
 $(document).on('change', '.group-all', function(){
   var group = $(this).data('group');
   var checked = $(this).is(':checked');
