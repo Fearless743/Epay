@@ -173,6 +173,47 @@ class chuangyupay_plugin
     }
 
     /**
+     * 通过订单编号（order_sn）查找创鱼平台内部 INT id
+     *  workaround：创鱼退款 API 的 order_id 参数实际是 INT 主键，但 find() 有 bug 会把字符串当主键查返回 null
+     *  所以必须先通过列表接口找到 order_sn 对应的 INT id，再用该 id 调用退款
+     */
+    private static function _findOrderIdBySn(string $orderSn, string $token): ?int
+    {
+        $url = self::API_BASE . "/api/orders/lists";
+        $page = 1;
+
+        do {
+            $data = self::_post($url, [
+                "order_type" => 1,
+                "order_sn" => "",
+                "order_status" => "",
+                "delivery_status" => "",
+                "evaluate_status" => "",
+                "refund_status" => "",
+                "page" => $page,
+                "limit" => 50,
+            ], $token);
+
+            if (!is_array($data) || $data["code"] != 200) {
+                return null;
+            }
+
+            $orderList = $data["data"]["data"] ?? [];
+            $lastPage = $data["data"]["last_page"] ?? 1;
+
+            foreach ($orderList as $cyOrder) {
+                if (($cyOrder["order_sn"] ?? "") === $orderSn) {
+                    return intval($cyOrder["id"]);
+                }
+            }
+
+            $page++;
+        } while ($page <= $lastPage);
+
+        return null;
+    }
+
+    /**
      * 退款处理
      * 流程：买家发起退款 → 卖家同意退款
      */
@@ -180,8 +221,8 @@ class chuangyupay_plugin
     {
         global $channel;
 
-        $orderId = trim($order["api_trade_no"]);
-        if ($orderId === '') {
+        $orderSn = trim($order["api_trade_no"]);
+        if ($orderSn === '') {
             return ["code" => -1, "msg" => "订单未关联创鱼平台订单号"];
         }
 
@@ -191,32 +232,38 @@ class chuangyupay_plugin
         }
 
         try {
-            // 1. 买家登录并发起退款
+            // 0. 通过订单编号查找创鱼平台内部 INT id（workaround：创鱼 API 的 order_id 参数实际是 INT 主键）
             $buyerToken = self::_login($channel, "buyer");
+            $intId = self::_findOrderIdBySn($orderSn, $buyerToken);
 
+            if ($intId === 0 || $intId === null) {
+                return ["code" => -1, "msg" => "未在创鱼平台找到订单（order_sn={$orderSn}），请确认订单已创建成功"];
+            }
+
+            // 1. 买家发起退款
             $refundUrl = self::API_BASE . "/api/orders/refundOrder";
             $refundData = self::_post($refundUrl, [
-                "order_id" => $orderId,
+                "order_id" => (string) $intId,
                 "refund_case" => "个人原因（不喜欢/不想要）",
             ], $buyerToken);
 
             if (!is_array($refundData) || $refundData["code"] != 200) {
-                return ["code" => -1, "msg" => "发起退款失败：" . ($refundData["msg"] ?? "无响应")];
+                return ["code" => -1, "msg" => "发起退款失败：原始响应：" . json_encode($refundData, JSON_UNESCAPED_UNICODE)];
             }
 
-            // 2. 卖家登录并同意退款
+            // 2. 卖家同意退款
             $sellerToken = self::_login($channel, "seller");
 
             $checkUrl = self::API_BASE . "/api/orders/sellerCheckRefund";
             $checkData = self::_post($checkUrl, [
-                "order_id" => $orderId,
+                "order_id" => (string) $intId,
                 "refund_status" => 2,
                 "refund_fail_case" => "",
                 "price" => number_format($refundFee, 2, ".", ""),
             ], $sellerToken);
 
             if (!is_array($checkData) || $checkData["code"] != 200) {
-                return ["code" => -1, "msg" => "卖家同意退款失败：" . ($checkData["msg"] ?? "无响应")];
+                return ["code" => -1, "msg" => "卖家同意退款失败：原始响应：" . json_encode($checkData, JSON_UNESCAPED_UNICODE)];
             }
 
             return [
@@ -491,6 +538,15 @@ class chuangyupay_plugin
         curl_close($ch);
         $elapsed = (microtime(true) - $t0) * 1000;
 
-        return json_decode($resp, true);
+        if ($httpCode < 200 || $httpCode >= 300) {
+            return ["_http_code" => $httpCode, "_raw" => $resp, "_curl_error" => $curlErr];
+        }
+
+        $result = json_decode($resp, true);
+        if ($result === null && !empty($resp)) {
+            return ["_http_code" => $httpCode, "_raw" => $resp, "_decode_error" => json_last_error_msg()];
+        }
+
+        return $result;
     }
 }
