@@ -201,13 +201,20 @@ $menuPermissions = [
             <li><a href="./set.php?mod=proxy">中转代理配置</a><li>
             <?php if(menuVisible('update', $menuPermissions)): ?><li><a href="./update.php">系统更新</a></li><?php endif; ?>
             <li><a href="./set_wxkf.php">H5跳转微信客服支付</a></li>
-            <li role="separator" class="divider"></li>
-            <?php if(menuVisible('admin_manage', $menuPermissions)): ?><li><a href="./admin_manage.php"><i class="fa fa-users"></i> 管理员管理</a></li><li><a href="./role_manage.php"><i class="fa fa-key"></i> 角色权限管理</a></li><?php endif; ?>
             </ul>
             <?php else: ?>
             <a href="./set.php?mod=site"><i class="fa fa-cog"></i> 系统设置</a>
             <?php endif; ?>
           </li>
+          <?php if(menuVisible('admin_manage', $menuPermissions)): ?>
+          <li class="<?php echo checkIfActive('admin_manage,role_manage')?>">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-users"></i> 管理员<b class="caret"></b></a>
+            <ul class="dropdown-menu">
+              <li><a href="./admin_manage.php">管理员管理</a></li>
+              <li><a href="./role_manage.php">角色权限管理</a></li>
+            </ul>
+          </li>
+          <?php endif; ?>
 		  <li class="<?php echo checkIfActive('clean,log,risk,gettoken,complain,complain_info,mchrisk')?>">
             <?php if(menuVisible('log', $menuPermissions) || menuVisible('risk', $menuPermissions) || menuVisible('clean', $menuPermissions)): ?>
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-cube"></i> 其他功能<b class="caret"></b></a>
