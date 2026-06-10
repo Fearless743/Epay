@@ -12,9 +12,7 @@ if($admin_cdnpublic==1){
 	$cdnpublic = '/assets/vendor/';
 }
 
-// 管理员认证
-$adminInfo = \lib\AdminAuth::check();
-$islogin = 0;
+// 管理员认证（$adminInfo 已由 member.php 设置）
 $admin_id = 0;
 $admin_username = '';
 $admin_role_name = '';
@@ -22,7 +20,6 @@ if ($adminInfo) {
     $islogin = 1;
     $admin_id = $adminInfo['id'];
     $admin_username = $adminInfo['username'];
-    // 获取角色名称
     if (!empty($adminInfo['role_id'])) {
         $role = $DB->find('admin_role', '*', ['id' => $adminInfo['role_id']]);
         $admin_role_name = $role ? $role['name'] : '未知角色';
