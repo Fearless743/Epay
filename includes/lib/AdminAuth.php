@@ -60,10 +60,10 @@ class AdminAuth
     {
         global $DB, $conf;
 
-        // 确保 pre_admin 表已初始化
-        $tableExists = self::ensureAdminTable();
-        if (!$tableExists) {
-            // 降级：使用旧系统配置验证（表不存在时的回退）
+        // 检查表是否存在并获取管理员数（一次查询）
+        $adminCount = $DB->getColumn("SELECT COUNT(*) FROM pre_admin");
+        if ($adminCount === false) {
+            // 表不存在，降级到旧系统配置验证
             if ($username === $conf['admin_user'] && $password === $conf['admin_pwd']) {
                 $admin = self::buildAdminFromConfig($username);
                 return ['success' => true, 'admin' => $admin, 'msg' => '', 'need_totp' => false];
@@ -71,8 +71,7 @@ class AdminAuth
             return ['success' => false, 'admin' => null, 'msg' => '用户名或密码错误', 'need_totp' => false];
         }
 
-        // 如果表存在但为空，自动迁移旧配置
-        $adminCount = $DB->getColumn("SELECT COUNT(*) FROM pre_admin");
+        // 表存在但为空，自动迁移旧配置
         if ($adminCount == 0) {
             self::migrateFromConfig();
         }
@@ -158,9 +157,9 @@ class AdminAuth
             return null;
         }
 
-        $tableExists = self::ensureAdminTable();
-        if (!$tableExists) {
-            // 降级到旧系统
+        $tableCount = $DB->getColumn("SELECT COUNT(*) FROM pre_admin");
+        if ($tableCount === false) {
+            // 表不存在，降级到旧系统
             return self::checkFromConfig($key, $sid);
         }
 
