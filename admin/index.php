@@ -7,8 +7,6 @@ if($islogin==1){}else exit("<script language='javascript'>window.location.href='
 <?php
 if($conf['admin_pwd']==='123456'){
 	$msg[]='<li class="list-group-item list-group-item-danger"><span class="btn-sm btn-danger"><i class="fa fa-info-circle"></i> 提示</span>&nbsp;请及时修改网站默认管理员密码！</li>';
-}elseif(strlen($conf['admin_pwd'])<6 || is_numeric($conf['admin_pwd']) && strlen($conf['admin_pwd'])<=10 || $conf['admin_pwd']===$conf['kfqq'] || $conf['admin_user']===$conf['admin_pwd']){
-	$msg[]='<li class="list-group-item list-group-item-danger"><span class="btn-sm btn-danger"><i class="fa fa-info-circle"></i> 提示</span>&nbsp;网站管理员密码过于简单，请及时修改密码！</li>';
 }
 ?>
 <div class="container" style="padding-top:70px;">
@@ -37,7 +35,7 @@ if($conf['admin_pwd']==='123456'){
           <ul class="list-group text-center">
             <li class="list-group-item">
 			<img src="<?php echo ($conf['kfqq'])?'//q2.qlogo.cn/headimg_dl?bs=qq&dst_uin='.$conf['kfqq'].'&src_uin='.$conf['kfqq'].'&fid='.$conf['kfqq'].'&spec=100&url_enc=0&referer=bu_interface&term_type=PC':'../assets/img/user.png'?>" alt="avatar" class="img-circle img-thumbnail"></br>
-			<span class="text-muted"><strong>用户名：</strong><font color="blue"><?php echo $conf['admin_user']?></font></span><br/><span class="text-muted"><strong>用户权限：</strong><font color="orange">管理员</font></span></li>
+			<span class="text-muted"><strong>用户名：</strong><font color="blue"><?php echo $islogin==1 ? htmlspecialchars($admin_username) : htmlspecialchars($conf['admin_user']); ?></font></span><br/><span class="text-muted"><strong>用户权限：</strong><font color="orange"><?php echo $islogin==1 ? htmlspecialchars($admin_role_name) : '管理员'; ?></font></span></li>
 			<li class="list-group-item"><a href="../" class="btn btn-xs btn-default">返回首页</a>&nbsp;<a href="./set.php?mod=account" class="btn btn-xs btn-info">修改密码</a>&nbsp;<a href="./login.php?logout" class="btn btn-xs btn-danger">退出登录</a>
 			</li>
           </ul>

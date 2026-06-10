@@ -1592,3 +1592,26 @@ function get_lang_list() {
         'en' => 'English',
     ];
 }
+
+/**
+ * 检查当前管理员是否有指定权限
+ * @param string $permission 权限代码
+ * @return bool
+ */
+function adminHasPermission(string $permission): bool
+{
+    global $adminInfo;
+    if (!$adminInfo) return false;
+    return \lib\AdminAuth::hasPermission($permission, $adminInfo);
+}
+
+/**
+ * 要求特定权限，无权限则退出并提示
+ * @param string $permission 权限代码
+ */
+function requirePermission(string $permission): void
+{
+    if (!adminHasPermission($permission)) {
+        sysmsg('您没有权限访问此页面，请联系管理员开通相关权限', '权限不足');
+    }
+}

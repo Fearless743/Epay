@@ -33,7 +33,7 @@ if($islogin==1){}else exit("<script language='javascript'>window.location.href='
 ?>
   <div class="container" style="padding-top:70px;">
 <?php
-if(!isset($_SESSION['paypwd']) || $_SESSION['paypwd']!==$conf['admin_paypwd'])showmsg('支付密码错误，请返回重新进入该页面');
+if(!isset($_SESSION['paypwd_verified']) || $_SESSION['paypwd_verified'] != ($adminInfo['id'] ?? 0))showmsg('支付密码错误，请返回重新进入该页面');
 
 if(isset($_GET['batch'])){
 	$batch=$_GET['batch'];

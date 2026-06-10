@@ -236,7 +236,7 @@ case 'operation': //批量操作订单
 	exit('{"code":0,"msg":"成功改变'.$i.'条订单状态"}');
 break;
 case 'getmoney': //退款查询
-	if(!$conf['admin_paypwd'])exit('{"code":-1,"msg":"你还未设置支付密码"}');
+	if(!$adminInfo)exit('{"code":-1,"msg":"请重新登录"}');
 	$trade_no=trim($_POST['trade_no']);
 	$api=isset($_POST['api'])?intval($_POST['api']):0;
 	$result = \lib\Order::refund_info($trade_no, $api);
@@ -259,7 +259,7 @@ case 'apirefund': //API退款操作
 	$paypwd=trim($_POST['paypwd']);
 	$money = trim($_POST['money']);
 	if(!is_numeric($money) || !preg_match('/^[0-9.]+$/', $money))exit('{"code":-1,"msg":"金额输入错误"}');
-	if($paypwd!=$conf['admin_paypwd'])
+	if(!$adminInfo || !\lib\AdminAuth::verifyPayPassword($adminInfo['id'], $paypwd))
 		exit('{"code":-1,"msg":"支付密码输入错误！"}');
 	
 	$refund_no = date("YmdHis").rand(11111,99999);

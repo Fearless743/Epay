@@ -197,33 +197,30 @@ $("select[name='homepage']").change(function(){
 	$newpwd=trim($_POST['newpwd']);
 	$newpwd2=trim($_POST['newpwd2']);
 	if(!empty($newpwd) && !empty($newpwd2)){
-		if($oldpwd!=$conf['admin_paypwd'])showmsg('旧密码不正确！',3);
+		if(!$adminInfo || !\lib\AdminAuth::verifyPayPassword($adminInfo['id'], $oldpwd))showmsg('旧密码不正确！',3);
 		if($newpwd!=$newpwd2)showmsg('两次输入的密码不一致！',3);
 		if(strlen($newpwd)<6)showmsg('密码不能少于6位',3);
 		if(strlen($newpwd)>100)showmsg('密码位数过长',3);
-		saveSetting('admin_paypwd',$newpwd);
+		\lib\AdminAuth::changePayPassword($adminInfo['id'], $newpwd);
 	}else{
 		showmsg('新密码不能为空',3);
 	}
-	$ad=$CACHE->clear();
-	if($ad)showmsg('修改成功！',1);
-	else showmsg('修改失败！<br/>'.$DB->error(),4);
+	showmsg('修改成功！',1);
 }elseif($mod=='account_n' && $_POST['do']=='submit'){
 	if(!checkRefererHost())exit;
-	$user=trim($_POST['user']);
 	$oldpwd=trim($_POST['oldpwd']);
 	$newpwd=trim($_POST['newpwd']);
 	$newpwd2=trim($_POST['newpwd2']);
-	if($user==null)showmsg('用户名不能为空！',3);
-	saveSetting('admin_user',$user);
+	if(!$adminInfo)showmsg('登录已过期，请重新登录',3);
 	if(!empty($newpwd) && !empty($newpwd2)){
-		if($oldpwd!=$conf['admin_pwd'])showmsg('旧密码不正确！',3);
+		$loginCheck = \lib\AdminAuth::login($adminInfo['username'], $oldpwd);
+		if(!$loginCheck['success'])showmsg('旧密码不正确！',3);
 		if($newpwd!=$newpwd2)showmsg('两次输入的密码不一致！',3);
-		saveSetting('admin_pwd',$newpwd);
+		if(strlen($newpwd)<6)showmsg('密码不能少于6位',3);
+		\lib\AdminAuth::changePassword($adminInfo['id'], $newpwd);
+		saveSetting('admin_pwd','');
 	}
-	$ad=$CACHE->clear();
-	if($ad)showmsg('修改成功！请重新登录',1);
-	else showmsg('修改失败！<br/>'.$DB->error(),4);
+	showmsg('修改成功！请重新登录',1);
 }elseif($mod=='account'){
 ?>
 <div class="panel panel-primary">
@@ -231,8 +228,8 @@ $("select[name='homepage']").change(function(){
 <div class="panel-body">
   <form action="./set.php?mod=account_n" method="post" class="form-horizontal" role="form"><input type="hidden" name="do" value="submit"/>
 	<div class="form-group">
-	  <label class="col-sm-2 control-label">用户名</label>
-	  <div class="col-sm-10"><input type="text" name="user" value="<?php echo $conf['admin_user']; ?>" class="form-control" required/></div>
+	  <label class="col-sm-2 control-label">当前用户名</label>
+	  <div class="col-sm-10"><input type="text" value="<?php echo htmlspecialchars($admin_username ?: $conf['admin_user']); ?>" class="form-control" disabled/><small class="text-muted">如需修改用户名，请前往<a href="./admin_manage.php">管理员管理</a></small></div>
 	</div><br/>
 	<div class="form-group">
 	  <label class="col-sm-2 control-label">旧密码</label>
