@@ -263,6 +263,8 @@ class AdminAuth
     public static function logout(): void
     {
         setcookie('admin_token', '', time() - 2592000, '/', null, null, true);
+        setcookie('admin_token', '', time() - 2592000, '/admin/', null, null, true);
+        setcookie('admin_token', '', time() - 2592000, '/admin', null, null, true);
     }
 
     /**

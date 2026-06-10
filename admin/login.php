@@ -102,7 +102,7 @@ if(isset($_GET['act']) && $_GET['act']=='login'){
 }elseif(isset($_GET['logout'])){
 	if(!checkRefererHost())exit();
 	\lib\AdminAuth::logout();
-	exit("<script language='javascript'>window.location.href='./login.php';</script>");
+	exit("<script>document.cookie='admin_token=;path=/;expires=Thu, 01 Jan 1970 00:00:00 GMT';document.cookie='admin_token=;path=/admin/;expires=Thu, 01 Jan 1970 00:00:00 GMT';window.location.href='./login.php';</script>");
 }elseif($islogin==1){
 	exit("<script language='javascript'>alert('您已登录！');window.location.href='./';</script>");
 }
