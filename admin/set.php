@@ -1874,6 +1874,7 @@ elseif($mod=='proxy'){
 	  <option value="0">关闭</option>
 	  <option value="1">代理服务器</option>
 	  <option value="2">代理API</option>
+	  <option value="3">镜像源（自动回退）</option>
 	  </select></div>
 	</div><br/>
 	<h5 style="text-align:center">代理服务器设置</h5>

@@ -9,6 +9,11 @@ $act = isset($_GET['act']) ? daddslashes($_GET['act']) : null;
 $github_repo = 'Fearless743/Epay';
 $github_api = "https://api.github.com/repos/{$github_repo}/releases";
 
+// GitHub 镜像源（国内可直连，解决服务器无法访问 GitHub 的问题）
+$github_mirrors = [
+    "https://gh-proxy.com/{$github_api}",
+];
+
 switch($act) {
     /**
      * 检查更新 - 获取 GitHub 所有 Release，计算与本地版本的差异
@@ -219,8 +224,8 @@ function proxyGitHub($url) {
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
 
-    // 使用系统代理设置
-    if(!empty($conf['proxy']) && $conf['proxy'] == 1 && !empty($conf['proxy_server'])) {
+    // 使用系统代理设置（proxy=1 代理服务器，proxy=3 镜像源+代理）
+    if(!empty($conf['proxy']) && $conf['proxy'] != 0 && $conf['proxy'] != 2 && !empty($conf['proxy_server'])) {
         $proxy_type = $conf['proxy_type'] ?? 'http';
         $port = $conf['proxy_port'] ?? '';
         $server = $conf['proxy_server'] ?? '';
@@ -244,8 +249,42 @@ function proxyGitHub($url) {
 
 /**
  * 获取 GitHub Release 列表（支持分页）
+ * 优先尝试镜像源，失败后回退到 GitHub 直连
  */
 function getGitHubReleases($api_url) {
+    // 先尝试镜像源
+    foreach($GLOBALS['github_mirrors'] as $mirror_url) {
+        $releases = [];
+        $page = 1;
+        $mirrored = true;
+        while(true) {
+            $url = $mirror_url.'?per_page=100&page='.$page;
+            $response = proxyGitHub($url);
+            if(!$response) {
+                if($mirrored) {
+                    $page++;
+                    if($page > 1) break; // 第一页失败，换镜像
+                    continue;
+                }
+                break;
+            }
+            $data = json_decode($response, true);
+            if(!is_array($data) || empty($data)) break;
+            $releases = array_merge($releases, $data);
+            if(count($data) < 100) break;
+            $page++;
+        }
+        if(!empty($releases)) return $releases;
+    }
+
+    // 镜像全部失败，回退到 GitHub 直连
+    return _getGitHubReleasesDirect($api_url);
+}
+
+/**
+ * 直接从 GitHub API 获取 Release 列表
+ */
+function _getGitHubReleasesDirect($api_url) {
     $releases = [];
     $page = 1;
     while(true) {
@@ -263,8 +302,21 @@ function getGitHubReleases($api_url) {
 
 /**
  * 下载文件
+ * 优先尝试镜像源，失败后回退到直连
  */
 function downloadFile($url, $dest) {
+    // 尝试镜像前缀
+    $mirror_prefixes = [
+        "https://gh-proxy.com/",
+    ];
+    foreach($mirror_prefixes as $prefix) {
+        $mirrored_url = $prefix . $url;
+        $content = proxyGitHub($mirrored_url);
+        if($content && strlen($content) >= 100) {
+            return file_put_contents($dest, $content) !== false;
+        }
+    }
+    // 镜像全部失败，尝试直连
     $content = proxyGitHub($url);
     if(!$content || strlen($content) < 100) return false;
     return file_put_contents($dest, $content) !== false;
