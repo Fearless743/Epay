@@ -80,6 +80,25 @@ $menuPermissions = [
     'admin_manage'    => 'admin.manage',
     'role_manage'     => 'admin.manage',
 ];
+
+// 自动根据当前页面名检查权限，已登录但无权限时拦截
+if ($adminInfo) {
+    $currentPage = basename($_SERVER['PHP_SELF'], '.php');
+    if (isset($menuPermissions[$currentPage])) {
+        $required = $menuPermissions[$currentPage];
+        if ($required !== true) {
+            if (!is_array($required)) $required = [$required];
+            $hasAccess = false;
+            foreach ($required as $perm) {
+                if (adminHasPermission($perm)) { $hasAccess = true; break; }
+            }
+            if (!$hasAccess) {
+                sysmsg('您没有权限访问此页面，请联系管理员开通相关权限', '权限不足');
+                exit;
+            }
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="zh-cn">
