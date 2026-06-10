@@ -180,8 +180,8 @@ class chuangyupay_plugin
     {
         global $channel;
 
-        $orderId = intval($order["api_trade_no"]);
-        if (empty($orderId)) {
+        $orderId = trim($order["api_trade_no"]);
+        if ($orderId === '') {
             return ["code" => -1, "msg" => "订单未关联创鱼平台订单号"];
         }
 
