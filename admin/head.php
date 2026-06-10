@@ -93,7 +93,7 @@ if ($adminInfo) {
                 if (adminHasPermission($perm)) { $hasAccess = true; break; }
             }
             if (!$hasAccess) {
-                sysmsg('您没有权限访问此页面，请联系管理员开通相关权限', '权限不足');
+                header('Location: ./');
                 exit;
             }
         }
