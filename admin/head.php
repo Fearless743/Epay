@@ -137,8 +137,8 @@ if ($adminInfo) {
           <li class="<?php echo checkIfActive('index,')?>">
             <a href="./"><i class="fa fa-home"></i> 平台首页</a>
           </li>
+          <?php if(menuVisible('order', $menuPermissions)): ?>
           <li class="<?php echo checkIfActive('order,export,ps_receiver,ps_order,buyerstat,blacklist')?>">
-            <?php if(menuVisible('order', $menuPermissions)): ?>
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-list"></i> 收款订单<b class="caret"></b></a>
             <ul class="dropdown-menu">
               <li><a href="./order.php">订单管理</a></li>
@@ -148,12 +148,10 @@ if ($adminInfo) {
               <li role="separator" class="divider"></li>
               <?php if(menuVisible('ps_receiver', $menuPermissions)): ?><li><a href="./ps_receiver.php">分账规则</a></li><li><a href="./ps_order.php">分账记录</a></li><?php endif; ?>
             </ul>
-            <?php else: ?>
-            <a href="./order.php"><i class="fa fa-list"></i> 收款订单</a>
-            <?php endif; ?>
           </li>
+          <?php endif; ?>
+          <?php if(menuVisible('slist', $menuPermissions)): ?>
           <li class="<?php echo checkIfActive('settle,settle_batch,slist,transfer,transfer_add,transfer_export,transfer_red,transfer_batch,transfer_stat')?>">
-            <?php if(menuVisible('slist', $menuPermissions)): ?>
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-cloud"></i> 付款管理<b class="caret"></b></a>
             <ul class="dropdown-menu">
               <li><a href="./slist.php">结算管理</a></li>
@@ -164,67 +162,58 @@ if ($adminInfo) {
               <?php if(menuVisible('transfer_export', $menuPermissions)): ?><li><a href="./transfer_export.php">导出付款记录</a></li><?php endif; ?>
               <?php if(class_exists('\\lib\\AlipaySATF\\AlipaySATF')){?><li><a href="./satf_transfer.php">安全发转账记录</a></li><?php }?>
             </ul>
-            <?php else: ?>
-            <a href="./slist.php"><i class="fa fa-cloud"></i> 付款管理</a>
-            <?php endif; ?>
           </li>
-		  <li class="<?php echo checkIfActive('ulist,glist,gedit,group,record,uset,domain,ustat,invitecode,uexport')?>">
-            <?php if(menuVisible('ulist', $menuPermissions)): ?>
+          <?php endif; ?>
+          <?php if(menuVisible('ulist', $menuPermissions)): ?>
+          <li class="<?php echo checkIfActive('ulist,glist,gedit,group,record,uset,domain,ustat,invitecode,uexport')?>">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> 商户管理<b class="caret"></b></a>
             <ul class="dropdown-menu">
               <li><a href="./ulist.php">用户列表</a></li>
-			  <li><a href="./glist.php">用户组设置</a></li>
-			  <li><a href="./group.php">用户组购买</a></li>
-			  <?php if(menuVisible('record', $menuPermissions)): ?><li><a href="./record.php">资金明细</a></li><?php endif; ?>
-            <?php if(menuVisible('ustat', $menuPermissions)): ?><li><a href="./ustat.php">支付统计</a></li><?php endif; ?>
-            <?php if(menuVisible('domain', $menuPermissions)): ?><?php if($conf['pay_domain_forbid']==1 || $conf['pay_domain_open']==1){?><li><a href="./domain.php">授权域名</a></li><?php } ?><?php endif; ?>
-            <?php if(menuVisible('invitecode', $menuPermissions)): ?><?php if($conf['reg_open']==2){?><li><a href="./invitecode.php">邀请码管理</a></li><?php } ?><?php endif; ?>
+              <li><a href="./glist.php">用户组设置</a></li>
+              <li><a href="./group.php">用户组购买</a></li>
+              <?php if(menuVisible('record', $menuPermissions)): ?><li><a href="./record.php">资金明细</a></li><?php endif; ?>
+              <?php if(menuVisible('ustat', $menuPermissions)): ?><li><a href="./ustat.php">支付统计</a></li><?php endif; ?>
+              <?php if(menuVisible('domain', $menuPermissions)): ?><?php if($conf['pay_domain_forbid']==1 || $conf['pay_domain_open']==1){?><li><a href="./domain.php">授权域名</a></li><?php } ?><?php endif; ?>
+              <?php if(menuVisible('invitecode', $menuPermissions)): ?><?php if($conf['reg_open']==2){?><li><a href="./invitecode.php">邀请码管理</a></li><?php } ?><?php endif; ?>
             </ul>
-            <?php else: ?>
-            <a href="./ulist.php"><i class="fa fa-user"></i> 商户管理</a>
-            <?php endif; ?>
           </li>
-		  <li class="<?php echo checkIfActive('pay_channel,pay_roll,pay_type,pay_plugin,pay_weixin,applyments_channel,applyments_merchant,applyments_form')?>">
-            <?php if(menuVisible('pay_channel', $menuPermissions)): ?>
+          <?php endif; ?>
+          <?php if(menuVisible('pay_channel', $menuPermissions)): ?>
+          <li class="<?php echo checkIfActive('pay_channel,pay_roll,pay_type,pay_plugin,pay_weixin,applyments_channel,applyments_merchant,applyments_form')?>">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-credit-card"></i> 支付接口<b class="caret"></b></a>
             <ul class="dropdown-menu">
               <li><a href="./pay_channel.php">支付通道</a></li>
-			  <li><a href="./pay_type.php">支付方式</a></li>
-			  <li><a href="./pay_plugin.php">支付插件</a></li>
-            <?php if(menuVisible('pay_channel', $menuPermissions)): ?><li><a href="./pay_roll.php">支付通道轮询</a></li><?php endif; ?>
-            <?php if(menuVisible('pay_channel', $menuPermissions)): ?><li><a href="./pay_weixin.php">公众号小程序</a></li><?php endif; ?>
-            <?php if(class_exists('\\lib\\Applyments\\CommUtil')){?><li><a href="./applyments_channel.php">进件渠道管理</a></li>
-            <li><a href="./applyments_merchant.php">进件商户管理</a></li><?php }?>
+              <li><a href="./pay_type.php">支付方式</a></li>
+              <li><a href="./pay_plugin.php">支付插件</a></li>
+              <li><a href="./pay_roll.php">支付通道轮询</a></li>
+              <li><a href="./pay_weixin.php">公众号小程序</a></li>
+              <?php if(class_exists('\\lib\\Applyments\\CommUtil')){?><li><a href="./applyments_channel.php">进件渠道管理</a></li><li><a href="./applyments_merchant.php">进件商户管理</a></li><?php }?>
             </ul>
-            <?php else: ?>
-            <a href="./pay_channel.php"><i class="fa fa-credit-card"></i> 支付接口</a>
-            <?php endif; ?>
           </li>
-		  <li class="<?php echo checkIfActive('set,gonggao,set_wxkf,update')?>">
-            <?php if(menuVisible('set', $menuPermissions)): ?>
+          <?php endif; ?>
+          <?php if(menuVisible('set', $menuPermissions)): ?>
+          <li class="<?php echo checkIfActive('set,gonggao,set_wxkf,update')?>">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-cog"></i> 系统设置<b class="caret"></b></a>
             <ul class="dropdown-menu">
               <li><a href="./set.php?mod=site">网站信息配置</a></li>
-			  <li><a href="./set.php?mod=pay">支付相关配置</a><li>
-            <li><a href="./set.php?mod=risk">风控检测配置</a><li>
-            <li><a href="./set.php?mod=settle">结算规则配置</a><li>
-			  <li><a href="./set.php?mod=transfer">转账付款配置</a><li>
-			  <li><a href="./set.php?mod=oauth">快捷登录配置</a><li>
-            <li><a href="./set.php?mod=notice">消息提醒配置</a><li>
-			  <li><a href="./set.php?mod=certificate">实名认证配置</a><li>
-			  <li><a href="./gonggao.php">网站公告配置</a></li>
-			  <li><a href="./set.php?mod=template">首页模板配置</a><li>
-			  <li><a href="./set.php?mod=mail">邮箱与短信配置</a><li>
-			  <li><a href="./set.php?mod=upimg">网站Logo上传</a><li>
-			  <li><a href="./set.php?mod=cron">计划任务配置</a><li>
-            <li><a href="./set.php?mod=proxy">中转代理配置</a><li>
-            <?php if(menuVisible('update', $menuPermissions)): ?><li><a href="./update.php">系统更新</a></li><?php endif; ?>
-            <li><a href="./set_wxkf.php">H5跳转微信客服支付</a></li>
+              <li><a href="./set.php?mod=pay">支付相关配置</a></li>
+              <li><a href="./set.php?mod=risk">风控检测配置</a></li>
+              <li><a href="./set.php?mod=settle">结算规则配置</a></li>
+              <li><a href="./set.php?mod=transfer">转账付款配置</a></li>
+              <li><a href="./set.php?mod=oauth">快捷登录配置</a></li>
+              <li><a href="./set.php?mod=notice">消息提醒配置</a></li>
+              <li><a href="./set.php?mod=certificate">实名认证配置</a></li>
+              <li><a href="./gonggao.php">网站公告配置</a></li>
+              <li><a href="./set.php?mod=template">首页模板配置</a></li>
+              <li><a href="./set.php?mod=mail">邮箱与短信配置</a></li>
+              <li><a href="./set.php?mod=upimg">网站Logo上传</a></li>
+              <li><a href="./set.php?mod=cron">计划任务配置</a></li>
+              <li><a href="./set.php?mod=proxy">中转代理配置</a></li>
+              <?php if(menuVisible('update', $menuPermissions)): ?><li><a href="./update.php">系统更新</a></li><?php endif; ?>
+              <li><a href="./set_wxkf.php">H5跳转微信客服支付</a></li>
             </ul>
-            <?php else: ?>
-            <a href="./set.php?mod=site"><i class="fa fa-cog"></i> 系统设置</a>
-            <?php endif; ?>
           </li>
+          <?php endif; ?>
           <?php if(menuVisible('admin_manage', $menuPermissions)): ?>
           <li class="<?php echo checkIfActive('admin_manage,role_manage')?>">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-users"></i> 管理员<b class="caret"></b></a>
@@ -234,21 +223,19 @@ if ($adminInfo) {
             </ul>
           </li>
           <?php endif; ?>
-		  <li class="<?php echo checkIfActive('clean,log,risk,gettoken,complain,complain_info,mchrisk')?>">
-            <?php if(menuVisible('log', $menuPermissions) || menuVisible('risk', $menuPermissions) || menuVisible('clean', $menuPermissions)): ?>
+          <?php if(menuVisible('log', $menuPermissions) || menuVisible('risk', $menuPermissions) || menuVisible('clean', $menuPermissions)): ?>
+          <li class="<?php echo checkIfActive('clean,log,risk,gettoken,complain,complain_info,mchrisk')?>">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-cube"></i> 其他功能<b class="caret"></b></a>
             <ul class="dropdown-menu">
               <?php if(menuVisible('risk', $menuPermissions)): ?><li><a href="./risk.php">风控记录</a></li><?php endif; ?>
               <?php if(menuVisible('log', $menuPermissions)): ?><li><a href="./log.php">登录日志</a></li><?php endif; ?>
               <?php if(menuVisible('clean', $menuPermissions)): ?><li><a href="./clean.php">数据清理</a></li><?php endif; ?>
-            <?php if(menuVisible('token', $menuPermissions)): ?><li><a href="./gettoken.php">获取用户标识</a></li><?php endif; ?>
-            <?php if(class_exists('\\lib\\Complain\\CommUtil')){?><li><a href="./complain.php">支付交易投诉</a></li><?php }?>
-            <?php if(class_exists('\\lib\\WxMchRisk')){?><li><a href="./mchrisk.php">渠道商户违规记录</a></li><?php }?>
+              <?php if(menuVisible('token', $menuPermissions)): ?><li><a href="./gettoken.php">获取用户标识</a></li><?php endif; ?>
+              <?php if(class_exists('\\lib\\Complain\\CommUtil')){?><li><a href="./complain.php">支付交易投诉</a></li><?php }?>
+              <?php if(class_exists('\\lib\\WxMchRisk')){?><li><a href="./mchrisk.php">渠道商户违规记录</a></li><?php }?>
             </ul>
-            <?php else: ?>
-            <a href="./log.php"><i class="fa fa-cube"></i> 其他功能</a>
-            <?php endif; ?>
           </li>
+          <?php endif; ?>
           <li><a href="./login.php?logout" onclick="return confirm('是否确定退出登录？')"><i class="fa fa-power-off"></i> 退出登录</a></li>
         </ul>
       </div><!-- /.navbar-collapse -->
