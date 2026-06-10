@@ -74,7 +74,7 @@ if(isset($_GET['act']) && $_GET['act']=='login'){
   $session = md5($admin['username'] . $admin['password'] . $password_hash);
   $expiretime = time() + 2592000;
   $token = authcode("{$admin['id']}\t{$session}\t{$expiretime}", 'ENCODE', SYS_KEY);
-  setcookie("admin_token", $token, $expiretime, null, null, null, true);
+  setcookie("admin_token", $token, $expiretime, '/', null, null, true);
   unset($_SESSION['vc_code']);
   exit(json_encode(['code'=>0]));
 }elseif(isset($_GET['act']) && $_GET['act']=='totp'){
@@ -96,7 +96,7 @@ if(isset($_GET['act']) && $_GET['act']=='login'){
   $session = md5($admin['username'] . $admin['password'] . $password_hash);
   $expiretime = time() + 2592000;
   $token = authcode("{$admin['id']}\t{$session}\t{$expiretime}", 'ENCODE', SYS_KEY);
-  setcookie("admin_token", $token, $expiretime, null, null, null, true);
+  setcookie("admin_token", $token, $expiretime, '/', null, null, true);
   unset($_SESSION['_admin_pending']);
   exit(json_encode(['code'=>0]));
 }elseif(isset($_GET['logout'])){
