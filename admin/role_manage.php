@@ -20,12 +20,12 @@ $allPerms = [
         'settle' => '结算操作（查看+批量结算）',
     ],
     '转账付款' => [
-        'transfer.view'  => '查看付款记录',
-        'transfer'       => '付款操作（新增/红包/批量）',
+        'transfer.view'  => '查看付款记录/统计/导出',
+        'transfer'       => '付款操作（新增付款/创建红包）',
         'transfer_batch' => '批量转账',
     ],
     '商户管理' => [
-        'user.manage' => '商户管理（列表/组/统计）',
+        'user.manage' => '商户管理（用户列表/用户组/支付统计）',
         'record'      => '资金明细',
         'domain'      => '授权域名',
         'invitecode'  => '邀请码管理',

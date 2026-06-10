@@ -55,12 +55,13 @@ $menuPermissions = [
     'transfer'        => 'transfer.view',
     'transfer_add'    => 'transfer',
     'transfer_red'    => 'transfer',
-    'transfer_batch'  => 'transfer',
+    'transfer_batch'  => 'transfer_batch',
     'transfer_stat'   => 'transfer.view',
     'transfer_export' => 'transfer.view',
     'ulist'           => 'user.manage',
     'glist'           => 'user.manage',
     'group'           => 'user.manage',
+    'ustat'           => 'user.manage',
     'record'          => 'record',
     'ustat'           => 'user.manage',
     'domain'          => 'domain',
@@ -150,27 +151,33 @@ if ($adminInfo) {
             </ul>
           </li>
           <?php endif; ?>
-          <?php if(menuVisible('slist', $menuPermissions)): ?>
+          <?php if(menuVisible('slist', $menuPermissions) || menuVisible('transfer', $menuPermissions) || menuVisible('transfer_add', $menuPermissions) || menuVisible('transfer_batch', $menuPermissions)): ?>
           <li class="<?php echo checkIfActive('settle,settle_batch,slist,transfer,transfer_add,transfer_export,transfer_red,transfer_batch,transfer_stat')?>">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-cloud"></i> 付款管理<b class="caret"></b></a>
             <ul class="dropdown-menu">
+              <?php if(menuVisible('slist', $menuPermissions)): ?>
               <li><a href="./slist.php">结算管理</a></li>
               <?php if(menuVisible('settle', $menuPermissions)): ?><li><a href="./settle.php">批量结算</a></li><?php endif; ?>
-              <li role="separator" class="divider"></li>
-              <?php if(menuVisible('transfer', $menuPermissions)): ?><li><a href="./transfer.php">付款记录</a></li><li><a href="./transfer_add.php">新增付款</a></li><li><a href="./transfer_red.php">创建红包</a></li><?php endif; ?>
+              <?php if(menuVisible('transfer', $menuPermissions) || menuVisible('transfer_add', $menuPermissions) || menuVisible('transfer_batch', $menuPermissions)): ?><li role="separator" class="divider"></li><?php endif; ?>
+              <?php endif; ?>
+              <?php if(menuVisible('transfer', $menuPermissions)): ?><li><a href="./transfer.php">付款记录</a></li><?php endif; ?>
+              <?php if(menuVisible('transfer_add', $menuPermissions)): ?><li><a href="./transfer_add.php">新增付款</a></li><li><a href="./transfer_red.php">创建红包</a></li><?php endif; ?>
+              <?php if(menuVisible('transfer_batch', $menuPermissions)): ?><li><a href="./transfer_batch.php">批量转账</a></li><?php endif; ?>
               <?php if(menuVisible('transfer_stat', $menuPermissions)): ?><li><a href="./transfer_stat.php">付款统计</a></li><?php endif; ?>
               <?php if(menuVisible('transfer_export', $menuPermissions)): ?><li><a href="./transfer_export.php">导出付款记录</a></li><?php endif; ?>
               <?php if(class_exists('\\lib\\AlipaySATF\\AlipaySATF')){?><li><a href="./satf_transfer.php">安全发转账记录</a></li><?php }?>
             </ul>
           </li>
           <?php endif; ?>
-          <?php if(menuVisible('ulist', $menuPermissions)): ?>
+          <?php if(menuVisible('ulist', $menuPermissions) || menuVisible('record', $menuPermissions) || menuVisible('domain', $menuPermissions) || menuVisible('invitecode', $menuPermissions)): ?>
           <li class="<?php echo checkIfActive('ulist,glist,gedit,group,record,uset,domain,ustat,invitecode,uexport')?>">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-user"></i> 商户管理<b class="caret"></b></a>
             <ul class="dropdown-menu">
+              <?php if(menuVisible('ulist', $menuPermissions)): ?>
               <li><a href="./ulist.php">用户列表</a></li>
               <li><a href="./glist.php">用户组设置</a></li>
               <li><a href="./group.php">用户组购买</a></li>
+              <?php endif; ?>
               <?php if(menuVisible('record', $menuPermissions)): ?><li><a href="./record.php">资金明细</a></li><?php endif; ?>
               <?php if(menuVisible('ustat', $menuPermissions)): ?><li><a href="./ustat.php">支付统计</a></li><?php endif; ?>
               <?php if(menuVisible('domain', $menuPermissions)): ?><?php if($conf['pay_domain_forbid']==1 || $conf['pay_domain_open']==1){?><li><a href="./domain.php">授权域名</a></li><?php } ?><?php endif; ?>
@@ -178,16 +185,18 @@ if ($adminInfo) {
             </ul>
           </li>
           <?php endif; ?>
-          <?php if(menuVisible('pay_channel', $menuPermissions)): ?>
+          <?php if(menuVisible('pay_channel', $menuPermissions) || menuVisible('pay_type', $menuPermissions) || menuVisible('pay_plugin', $menuPermissions)): ?>
           <li class="<?php echo checkIfActive('pay_channel,pay_roll,pay_type,pay_plugin,pay_weixin,applyments_channel,applyments_merchant,applyments_form')?>">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-credit-card"></i> 支付接口<b class="caret"></b></a>
             <ul class="dropdown-menu">
+              <?php if(menuVisible('pay_channel', $menuPermissions)): ?>
               <li><a href="./pay_channel.php">支付通道</a></li>
-              <li><a href="./pay_type.php">支付方式</a></li>
-              <li><a href="./pay_plugin.php">支付插件</a></li>
               <li><a href="./pay_roll.php">支付通道轮询</a></li>
               <li><a href="./pay_weixin.php">公众号小程序</a></li>
               <?php if(class_exists('\\lib\\Applyments\\CommUtil')){?><li><a href="./applyments_channel.php">进件渠道管理</a></li><li><a href="./applyments_merchant.php">进件商户管理</a></li><?php }?>
+              <?php endif; ?>
+              <?php if(menuVisible('pay_type', $menuPermissions)): ?><li><a href="./pay_type.php">支付方式</a></li><?php endif; ?>
+              <?php if(menuVisible('pay_plugin', $menuPermissions)): ?><li><a href="./pay_plugin.php">支付插件</a></li><?php endif; ?>
             </ul>
           </li>
           <?php endif; ?>
