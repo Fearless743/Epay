@@ -114,11 +114,11 @@ if(isset($_GET['act']) && $_GET['act']=='do'){
 				}else{
 					$message='转账失败 '.$result['msg'];
 					$DB->update('settle', ['status'=>3, 'result'=>$result["msg"], 'transfer_status'=>2, 'transfer_result'=>$message], ['id'=>$settleid]);
-					\lib\MsgNotice::send('apply', 0, ['uid'=>$uid, 'money'=>$money, 'realmoney'=>$realmoney, 'type'=>display_type($userrow['settle_id']), 'account'=>$userrow['account'], 'username'=>$userrow['username'], 'usdt_chain'=>$userrow['usdt_chain']]);
+					\lib\MsgNotice::sendAsync('apply', 0, ['uid'=>$uid, 'money'=>$money, 'realmoney'=>$realmoney, 'type'=>display_type($userrow['settle_id']), 'account'=>$userrow['account'], 'username'=>$userrow['username'], 'usdt_chain'=>$userrow['usdt_chain']]);
 					exit("<script language='javascript'>alert('".__('js_withdraw_transfer_fail')."');window.location.href='./settle.php';</script>");
 				}
 			}else{
-				\lib\MsgNotice::send('apply', 0, ['uid'=>$uid, 'money'=>$money, 'realmoney'=>$realmoney, 'type'=>display_type($userrow['settle_id']), 'account'=>$userrow['account'], 'username'=>$userrow['username'], 'usdt_chain'=>$userrow['usdt_chain']]);
+				\lib\MsgNotice::sendAsync('apply', 0, ['uid'=>$uid, 'money'=>$money, 'realmoney'=>$realmoney, 'type'=>display_type($userrow['settle_id']), 'account'=>$userrow['account'], 'username'=>$userrow['username'], 'usdt_chain'=>$userrow['usdt_chain']]);
 			}
 		}
 		exit("<script language='javascript'>alert('".__('js_withdraw_success')."');window.location.href='./settle.php';</script>");

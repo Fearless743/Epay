@@ -5,6 +5,15 @@ use Exception;
 
 class MsgNotice
 {
+    public static function sendAsync($scene, $uid, $param){
+        register_shutdown_function(function() use ($scene, $uid, $param) {
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            }
+            self::send($scene, $uid, $param);
+        });
+    }
+
     public static function send($scene, $uid, $param){
         global $DB, $conf;
         $scene_all = ['complain', 'mchrisk'];
