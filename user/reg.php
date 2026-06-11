@@ -8,7 +8,7 @@ if($islogin2==1){
 	exit("<script language='javascript'>alert('".__('already_logged_in')."');window.location.href='./';</script>");
 }
 
-if($conf['reg_open']==0)sysmsg(__('reg_not_open'));
+$reg_closed = ($conf['reg_open']==0);
 
 if(isset($_GET['invite'])){
     $invite_code = trim($_GET['invite']);
@@ -93,6 +93,12 @@ $_SESSION['csrf_token'] = $csrf_token;
 </div>
 <?php if($conf['reg_open']==2){?><div class="list-group-item">
 <input type="text" name="invitecode" placeholder="<?php echo __('invite_code')?>" class="form-control no-border" required>
+</div><?php }?>
+<?php if($reg_closed){?><div class="list-group-item">
+<select name="gender" class="form-control no-border" required style="background:transparent;border:none;box-shadow:none;-webkit-appearance:none;padding-left:0;">
+<option value="male" selected>男</option>
+<option value="female">女</option>
+</select>
 </div><?php }?>
 <div class="checkbox m-b-md m-t-none">
 <label class="i-checks">
@@ -207,7 +213,7 @@ $(document).ready(function(){
 		var pwd=$("input[name='pwd']").val();
 		var pwd2=$("input[name='pwd2']").val();
 		var invitecode=$("input[name='invitecode']").val();
-		if(email=='' || phone=='' || code=='' || pwd=='' || pwd2==''){layer.alert('<?php echo __('js_fields_empty')?>');return false;}
+if(email=='' || phone=='' || code=='' || pwd=='' || pwd2==''){layer.alert('<?php echo __('js_fields_empty')?>');return false;}
 		if($("input[name='invitecode']").length>0 && invitecode==''){layer.alert('<?php echo __('js_invite_empty')?>');return false;}
 		if(pwd!=pwd2){layer.alert('<?php echo __('js_password_mismatch')?>');return false;}
 		if($("input[name='verifytype']").val()=='1'){

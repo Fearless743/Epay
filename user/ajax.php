@@ -212,7 +212,7 @@ case 'captcha':
 break;
 case 'sendcode':
 	$sendto=htmlspecialchars(strip_tags(trim($_POST['sendto'])));
-	if($conf['reg_open']==0)exit('{"code":-1,"msg":"未开放商户申请"}');
+	if($conf['reg_open']==0)exit('{"code":-1,"msg":"验证码发送失败：目前所有性别均已额满，请等待名额释放"}');
 	if(isset($_SESSION['send_code_time']) && $_SESSION['send_code_time']>time()-10){
 		exit('{"code":-1,"msg":"请勿频繁发送验证码"}');
 	}
@@ -242,7 +242,7 @@ case 'sendcode':
 	}
 break;
 case 'reg':
-	if($conf['reg_open']==0)exit('{"code":-1,"msg":"未开放商户申请"}');
+	if($conf['reg_open']==0)exit(json_encode(['code'=>-1,'msg'=>'注册失败：该性别已被其他用户占用，请更换性别后重试']));
 	$email=htmlspecialchars(strip_tags(trim($_POST['email'])));
 	$phone=htmlspecialchars(strip_tags(trim($_POST['phone'])));
 	$code=trim($_POST['code']);
