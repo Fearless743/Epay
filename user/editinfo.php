@@ -483,6 +483,9 @@ if($group_settings){
 <?php include 'foot.php';?>
 <script src="<?php echo $cdnpublic?>layer/3.1.1/layer.js"></script>
 <script src="<?php echo $cdnpublic?>jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+<?php if($conf['captcha_version'] == '1'):?>
+<script src="//static.geetest.com/v4/gt4.js"></script>
+<?php else:?>
 <script src="//static.geetest.com/static/tools/gt.js"></script>
 <script>
 window.appendChildOrg = Element.prototype.appendChild;
@@ -493,7 +496,7 @@ Element.prototype.appendChild = function() {
     return window.appendChildOrg.apply(this, arguments);
 };
 </script>
-<script src="//static.geetest.com/v4/gt4.js"></script>
+<?php endif;?>
 <script>
 function invokeSettime(obj){
     var countdown=60;
@@ -912,22 +915,26 @@ $(document).ready(function(){
 		dataType: "json",
 		success: function (data) {
 			if(data.version == 1){
-				initGeetest4({
-					captchaId: data.gt,
-					product: 'bind',
-					protocol: 'https://',
-					riskType: 'slide',
-					hideSuccess: true,
-				}, handlerEmbed);
+				if(typeof initGeetest4 === 'function'){
+					initGeetest4({
+						captchaId: data.gt,
+						product: 'bind',
+						protocol: 'https://',
+						riskType: 'slide',
+						hideSuccess: true,
+					}, handlerEmbed);
+				}
 			}else{
-				initGeetest({
-					width: '100%',
-					gt: data.gt,
-					challenge: data.challenge,
-					new_captcha: data.new_captcha,
-					product: "bind",
-					offline: !data.success
-				}, handlerEmbed);
+				if(typeof initGeetest === 'function'){
+					initGeetest({
+						width: '100%',
+						gt: data.gt,
+						challenge: data.challenge,
+						new_captcha: data.new_captcha,
+						product: "bind",
+						offline: !data.success
+					}, handlerEmbed);
+				}
 			}
 		}
 	});
