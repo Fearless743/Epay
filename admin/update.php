@@ -115,7 +115,7 @@ function checkUpdate() {
                 var badge = r.is_behind
                     ? '<span class="label label-warning">待更新</span>'
                     : '<span class="label label-success">已安装</span>';
-                var body = r.body ? r.body.replace(/\n/g, '<br>') : '-';
+                var body = r.body ? renderMarkdown(r.body) : '-';
                 var pubDate = r.published_at ? r.published_at.replace('T', ' ').replace('Z', '') : '-';
                 html += '<tr class="' + (r.is_behind ? 'warning' : '') + '">';
                 html += '<td><b>' + r.tag + '</b></td>';
@@ -194,6 +194,61 @@ function doUpgrade() {
 function setProgress(pct, text) {
     $('#progress_bar').css('width', pct + '%').text(pct + '%');
     if (text) $('#progress_text').text(text);
+}
+
+function renderMarkdown(text) {
+    // Escape HTML first
+    text = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var lines = text.split('\n');
+    var html = '';
+    var inList = false;
+    for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        // Headings
+        if (/^### (.+)/.test(line)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<b>' + line.replace(/^### /, '') + '</b><br>';
+            continue;
+        }
+        if (/^## (.+)/.test(line)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<b>' + line.replace(/^## /, '') + '</b><br>';
+            continue;
+        }
+        if (/^# (.+)/.test(line)) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<b>' + line.replace(/^# /, '') + '</b><br>';
+            continue;
+        }
+        // List items
+        if (/^[-*] (.+)/.test(line)) {
+            if (!inList) { html += '<ul style="margin:4px 0 4px 18px;padding:0;">'; inList = true; }
+            html += '<li>' + inlineMarkdown(line.replace(/^[-*] /, '')) + '</li>';
+            continue;
+        }
+        // End list on blank or non-list line
+        if (inList) { html += '</ul>'; inList = false; }
+        if (line.trim() === '') {
+            html += '<br>';
+        } else {
+            html += inlineMarkdown(line) + '<br>';
+        }
+    }
+    if (inList) html += '</ul>';
+    return html;
+}
+function inlineMarkdown(text) {
+    // Bold
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    // Italic
+    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    text = text.replace(/_(.+?)_/g, '<em>$1</em>');
+    // Inline code
+    text = text.replace(/`(.+?)`/g, '<code>$1</code>');
+    // Links
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+    return text;
 }
 
 // 页面加载后自动检查
