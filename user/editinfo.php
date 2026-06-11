@@ -177,7 +177,7 @@ if(strlen($userrow['phone'])==11){
 						<input class="form-control" type="text" name="usdt_chain" value="<?php echo $userrow['usdt_chain']?>" placeholder="如 TRC20 / ERC20 / 币安">
 					</div>
 				</div>
-				<div class="form-group">
+				<div class="form-group" id="realname_form">
 					<label class="col-sm-2 control-label"><?php echo __('real_name_label')?></label>
 					<div class="col-sm-9">
 						<input class="form-control" type="text" name="username" value="<?php echo $userrow['username']?>">
@@ -604,8 +604,10 @@ $(document).ready(function(){
 		}
 		if($(this).val() == 5){
 			$("#usdt_chain_form").show();
+			$("#realname_form").hide();
 		}else{
 			$("#usdt_chain_form").hide();
+			$("#realname_form").show();
 		}
 	});
 	$("select[name='stype']").change();
