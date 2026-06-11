@@ -80,12 +80,15 @@ $(document).ready(function(){
 			},
 			{
 				field: 'account',
-				title: '<?php echo __('settle_account')?>'
+				title: '<?php echo __('settle_account')?>',
+				formatter: function(value, row, index) {
+					if(row.type == '5' && row.usdt_chain){
+						return '<span>'+value+'</span><br/><small>'+row.usdt_chain+'</small>';
+					}
+					return value;
+				}
 			},
 			{
-				if(row.type == '5' && row.usdt_chain){
-					return '<span>'+value+'</span><br/><small>'+row.usdt_chain+'</small>';
-				}
 				field: 'money',
 				title: '<?php echo __('settle_amount_label')?>',
 				formatter: function(value, row, index) {

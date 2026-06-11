@@ -218,7 +218,7 @@ class MsgNotice
                     'text' => $content,
                 ],
             ];
-        } elseif (strpos($url, 'api.telegram.org')) {
+        } elseif (strpos($url, 'api.telegram.org') || preg_match('#/bot[^/]+/sendMessage#', parse_url($url, PHP_URL_PATH) ?? '')) {
             $urlParts = parse_url($url);
             parse_str($urlParts['query'] ?? '', $queryParams);
             $chat_id = $queryParams['chat_id'] ?? '';
