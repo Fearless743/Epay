@@ -54,7 +54,6 @@ jobs:
           cd release_package
           zip -r ../Epay-${{ steps.get_tag.outputs.tag }}.zip Epay/
           cd ..
-          tar -czf Epay-${{ steps.get_tag.outputs.tag }}.tar.gz -C release_package Epay/
 
       - name: Build incremental update archive
         if: steps.prev_tag.outputs.has_prev == 'true'
@@ -84,7 +83,6 @@ jobs:
           cd update_package
           zip -r ../Epay-update-${{ steps.get_tag.outputs.tag }}.zip Epay/
           cd ..
-          tar -czf Epay-update-${{ steps.get_tag.outputs.tag }}.tar.gz -C update_package Epay/
 
       - name: Generate changelog
         id: changelog
@@ -120,9 +118,7 @@ jobs:
             - 更新包：`Epay-${{ steps.get_tag.outputs.tag }}.zip`
           files: |
             Epay-${{ steps.get_tag.outputs.tag }}.zip
-            Epay-${{ steps.get_tag.outputs.tag }}.tar.gz
             Epay-update-${{ steps.get_tag.outputs.tag }}.zip
-            Epay-update-${{ steps.get_tag.outputs.tag }}.tar.gz
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
