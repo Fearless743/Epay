@@ -92,7 +92,7 @@ $_SESSION['csrf_token'] = $csrf_token;
 <div class="line line-dashed"></div>
 <div class="form-group">
 	<a href="findpwd.php" class="btn btn-info btn-rounded"><i class="fa fa-unlock"></i>&nbsp;<?php echo __('forgot_password')?></a>
-	<a href="reg.php" class="btn btn-danger btn-rounded <?php echo $conf['reg_open']==0?'hide':null;?>" style="float:right;"><i class="fa fa-user-plus"></i>&nbsp;<?php echo __('register_merchant')?></a>
+	<a href="reg.php" class="btn btn-danger btn-rounded" style="float:right;"><i class="fa fa-user-plus"></i>&nbsp;<?php echo __('register_merchant')?></a>
 </div>
 <?php if(!isset($_GET['connect'])){?>
 <div class="wrapper text-center">
