@@ -70,7 +70,7 @@ if($mod=='site'){
 	</div><br/>
 	<div class="form-group">
 	  <label class="col-sm-2 control-label">用户验证方式</label>
-	  <div class="col-sm-10"><select class="form-control" name="verifytype" default="<?php echo $conf['verifytype']?>"><option value="0">邮箱验证</option><option value="1">手机验证</option></select></div>
+	  <div class="col-sm-10"><select class="form-control" name="verifytype" default="<?php echo $conf['verifytype']?>"><option value="0">邮箱验证</option><option value="1">手机验证</option><option value="2">关闭验证</option></select></div>
 	</div><br/>
 	<div class="form-group">
 	  <label class="col-sm-2 control-label">开放注册</label>

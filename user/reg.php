@@ -74,6 +74,10 @@ $_SESSION['csrf_token'] = $csrf_token;
 <a class="input-group-addon" id="sendcode"><?php echo __('get_code')?></a>
 </div>
 </div>
+<?php }elseif($conf['verifytype']==2){?>
+<div class="list-group-item">
+<input type="email" name="email" placeholder="<?php echo __('email_address')?>" class="form-control no-border" required>
+</div>
 <?php }else{?>
 <div class="list-group-item">
 <input type="email" name="email" placeholder="<?php echo __('email_address')?>" class="form-control no-border" required>
@@ -213,10 +217,17 @@ $(document).ready(function(){
 		var pwd=$("input[name='pwd']").val();
 		var pwd2=$("input[name='pwd2']").val();
 		var invitecode=$("input[name='invitecode']").val();
-if(email=='' || phone=='' || code=='' || pwd=='' || pwd2==''){layer.alert('<?php echo __('js_fields_empty')?>');return false;}
+		var verifytype=$("input[name='verifytype']").val();
+		if(verifytype=='1'){
+			if(phone=='' || code=='' || pwd=='' || pwd2==''){layer.alert('<?php echo __('js_fields_empty')?>');return false;}
+		}else if(verifytype=='2'){
+			if(email=='' || pwd=='' || pwd2==''){layer.alert('<?php echo __('js_fields_empty')?>');return false;}
+		}else{
+			if(email=='' || code=='' || pwd=='' || pwd2==''){layer.alert('<?php echo __('js_fields_empty')?>');return false;}
+		}
 		if($("input[name='invitecode']").length>0 && invitecode==''){layer.alert('<?php echo __('js_invite_empty')?>');return false;}
 		if(pwd!=pwd2){layer.alert('<?php echo __('js_password_mismatch')?>');return false;}
-		if($("input[name='verifytype']").val()=='1'){
+		if(verifytype=='1'){
 			if(phone.length!=11){layer.alert('<?php echo __('js_phone_invalid')?>');return false;}
 		}else{
 			var reg = /^([a-zA-Z0-9_-])+@([a-zA-Z0-9_-])+(.[a-zA-Z0-9_-])+/;

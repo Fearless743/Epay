@@ -253,7 +253,7 @@ case 'reg':
 	if(isset($_SESSION['reg_submit']) && $_SESSION['reg_submit']>time()-600){
 		exit('{"code":-1,"msg":"请勿频繁注册"}');
 	}
-	if($conf['verifytype']==1 && empty($phone) || $conf['verifytype']==0 && empty($email) || empty($code) || empty($pwd)){
+	if($conf['verifytype']==1 && empty($phone) || $conf['verifytype']!=1 && empty($email) || ($conf['verifytype']!=2 && empty($code)) || empty($pwd)){
 		exit('{"code":-1,"msg":"请确保各项不能为空"}');
 	}
 	if(!$_POST['csrf_token'] || $_POST['csrf_token']!=$_SESSION['csrf_token'])exit('{"code":-1,"msg":"CSRF TOKEN ERROR"}');
@@ -299,16 +299,18 @@ case 'reg':
 			exit('{"code":-1,"msg":"该邮箱已经注册过商户，如需找回商户信息，请返回登录页面点击找回商户"}');
 		}
 	}
-	if($conf['verifytype']==1){
-		$sendto = $phone;
-		$type = 1;
-	}else{
-		$sendto = $email;
-		$type = 0;
-	}
-	$result = \lib\VerifyCode::verify_code('reg', $type, $sendto, $code);
-	if($result !== true){
-		exit(json_encode(['code'=>-1, 'msg'=>$result]));
+	if($conf['verifytype']!=2){
+		if($conf['verifytype']==1){
+			$sendto = $phone;
+			$type = 1;
+		}else{
+			$sendto = $email;
+			$type = 0;
+		}
+		$result = \lib\VerifyCode::verify_code('reg', $type, $sendto, $code);
+		if($result !== true){
+			exit(json_encode(['code'=>-1, 'msg'=>$result]));
+		}
 	}
 	$upid = $_SESSION['invite_uid']?$_SESSION['invite_uid']:0;
 	if($conf['reg_pay']==1){
