@@ -40,6 +40,8 @@ case 'orderList':
 		if(substr($_POST['dstatus'], 0, 6) == 'settle'){
 			$dstatus = intval(substr($_POST['dstatus'], 7));
 			$sql.=" AND A.settle={$dstatus}";
+		}elseif($_POST['dstatus'] == 'notify_failed'){
+			$sql.=" AND A.notify>0";
 		}else{
 			$dstatus = intval($_POST['dstatus']);
 			$sql.=" AND A.status={$dstatus}";

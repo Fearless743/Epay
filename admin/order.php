@@ -54,7 +54,7 @@ unset($rs);
 	<input type="text" id="endtime" name="endtime" class="form-control dates" placeholder="结束日期" autocomplete="off" title="留空则不限时间范围">
   </div>
   <div class="form-group">
-	<select name="dstatus" class="form-control"><option value="">全部状态</option><optgroup label="订单状态"><option value="0">未支付</option><option value="1">已支付</option><option value="2">已退款</option><option value="3">已冻结</option><option value="4">预授权</option></optgroup><optgroup label="结算状态"><option value="settle_1">待结算</option><option value="settle_2">结算成功</option><option value="settle_3">结算失败</option></optgroup></select>
+	<select name="dstatus" class="form-control"><option value="">全部状态</option><optgroup label="订单状态"><option value="0">未支付</option><option value="1">已支付</option><option value="2">已退款</option><option value="3">已冻结</option><option value="4">预授权</option></optgroup><optgroup label="结算状态"><option value="settle_1">待结算</option><option value="settle_2">结算成功</option><option value="settle_3">结算失败</option></optgroup><optgroup label="通知状态"><option value="notify_failed">通知失败</option></optgroup></select>
   </div>
   <button type="submit" class="btn btn-primary">&nbsp;搜索&nbsp;</button>
   <a href="javascript:searchClear()" class="btn btn-default" title="刷新订单列表"><i class="fa fa-refresh"></i></a>
