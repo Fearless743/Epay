@@ -19,13 +19,20 @@ if($conf['admin_pwd']==='123456'){
         <div class="panel-heading"><h3 class="panel-title" id="title">后台管理首页</h3></div>
           <ul class="list-group">
 			<?php if($msg){foreach($msg as $x){echo $x;}}?>
+			<?php if(adminHasPermission('dashboard') || adminHasPermission('dashboard.order_stat')): ?>
             <li class="list-group-item"><span class="glyphicon glyphicon-stats"></span> <b>订单总数：</b><a id="count1" href="./order.php"></a></li>
+			<?php endif; ?>
+			<?php if(adminHasPermission('dashboard') || adminHasPermission('dashboard.merchant_stat')): ?>
 			<li class="list-group-item"><span class="glyphicon glyphicon-tint"></span> <b>商户数量：</b><a id="count2" href="./ulist.php"></a></li>
+			<?php endif; ?>
+			<?php if(adminHasPermission('dashboard') || adminHasPermission('dashboard.money_stat')): ?>
 			<li class="list-group-item"><span class="glyphicon glyphicon-tint"></span> <b>总计余额：</b><span id="usermoney"></span> 元（1小时更新一次）</li>
 			<li class="list-group-item"><span class="glyphicon glyphicon-tint"></span> <b>结算总额：</b><span id="settlemoney"></span> 元（1小时更新一次）</li>
+			<?php endif; ?>
+			<?php if(adminHasPermission('dashboard') || adminHasPermission('dashboard.order_stat')): ?>
 			<li class="list-group-item"><span class="glyphicon glyphicon-stats"></span> <b>今日订单成功率：</b><span id="success_rate"></span> %</li>
+			<?php endif; ?>
             <li class="list-group-item"><span class="glyphicon glyphicon-time"></span> <b>现在时间：</b> <?=$date?></li>
-			</li>
           </ul>
       </div>
 	</div>
@@ -42,6 +49,7 @@ if($conf['admin_pwd']==='123456'){
       </div>
 	</div>
 </div>
+	  <?php if(adminHasPermission('dashboard') || adminHasPermission('dashboard.paytype_stat')): ?>
 	  <div class="panel panel-success">
 	    <div class="panel-heading"><h3 class="panel-title">支付方式收入统计（1小时更新一次）<span class="pull-right"><a href="javascript:getData(true)" class="btn btn-default btn-xs"><i class="fa fa-refresh"></i></a></span></h3></div>
           <table class="table table-bordered table-striped">
@@ -50,6 +58,8 @@ if($conf['admin_pwd']==='123456'){
 			</tbody>
           </table>
       </div>
+	  <?php endif; ?>
+	  <?php if(adminHasPermission('dashboard') || adminHasPermission('dashboard.channel_stat')): ?>
 	  <div class="panel panel-warning">
 	    <div class="panel-heading"><h3 class="panel-title">支付通道收入统计（1小时更新一次）<span class="pull-right"><a href="javascript:getData(true)" class="btn btn-default btn-xs"><i class="fa fa-refresh"></i></a></span></h3></div>
 		<div class="table-responsive">
@@ -60,6 +70,8 @@ if($conf['admin_pwd']==='123456'){
           </table>
 		</div>
       </div>
+	  <?php endif; ?>
+	  <?php if(adminHasPermission('dashboard') || adminHasPermission('dashboard.profit_stat')): ?>
 	  <div class="panel panel-warning">
 	    <div class="panel-heading" style="background-color: #c09853;"><h3 class="panel-title">支付方式手续费利润（已扣除通道成本，按月统计）<span class="pull-right"><a href="javascript:getData(true)" class="btn btn-default btn-xs"><i class="fa fa-refresh"></i></a></span></h3></div>
           <table class="table table-bordered table-striped">
@@ -68,6 +80,7 @@ if($conf['admin_pwd']==='123456'){
 			</tbody>
           </table>
       </div>
+	  <?php endif; ?>
     </div>
   </div>
 <script>

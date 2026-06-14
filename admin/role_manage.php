@@ -10,6 +10,15 @@ $act = isset($_GET['act']) ? $_GET['act'] : '';
 // 所有权限项（分组）
 // 每个分组第一项为总开关，勾选后该分组全部功能可见；其余为子项独立权限
 $allPerms = [
+    '首页概览' => [
+        'dashboard'            => '首页概览（总开关）',
+        'dashboard.order_stat' => '├ 订单统计（订单总数/成功率）',
+        'dashboard.merchant_stat' => '├ 商户统计（商户数量）',
+        'dashboard.money_stat' => '├ 资金统计（总计余额/结算总额）',
+        'dashboard.paytype_stat'  => '├ 支付方式收入统计',
+        'dashboard.channel_stat'  => '├ 支付通道收入统计',
+        'dashboard.profit_stat'   => '└ 手续费利润统计',
+    ],
     '收款订单' => [
         'order'              => '收款订单（总开关）',
         'order.view'         => '├ 订单管理',
