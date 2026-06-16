@@ -1,4 +1,4 @@
 <?php
-if(!defined('IN_CRONLITE'))exit();
+if(!defined('INDEX_ROOT'))exit();
 ?>
 <script>window.location.href='/doc/index.html'</script>
