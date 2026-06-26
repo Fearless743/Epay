@@ -60,7 +60,35 @@ case 'orderList':
 	if(isset($_POST['value']) && !empty($_POST['value'])) {
 		$column = preg_replace('/[^a-zA-Z0-9_]/', '', $_POST['column']);
 		$value = daddslashes($_POST['value']);
-		if($column=='name'){
+		if($column=='cy_order_sn'){
+			// 创鱼支付：输入CYM付款单号，调用商家账号API换取CY订单号及系统订单号后再精确查询本地订单
+			$cyChannel = null;
+			if(!empty($_POST['channel'])){
+				$c = \lib\Channel::get(intval($_POST['channel']));
+				if($c && $c['plugin']=='chuangyupay') $cyChannel = $c;
+			}
+			if(!$cyChannel){
+				$cid = $DB->getColumn("SELECT id FROM pre_channel WHERE plugin='chuangyupay' AND status=1 ORDER BY id ASC LIMIT 1");
+				if($cid) $cyChannel = \lib\Channel::get($cid);
+			}
+			if(!$cyChannel){
+				exit(json_encode(['total'=>0, 'rows'=>[], 'msg'=>'未找到可用的创鱼支付通道']));
+			}
+			$lookup = \lib\Plugin::call('lookupOrderSn', $cyChannel, trim($_POST['value']));
+			if(isset($lookup['error'])){
+				exit(json_encode(['total'=>0, 'rows'=>[], 'msg'=>$lookup['error']]));
+			}
+			$conds = [];
+			if(!empty($lookup['order_sns'])){
+				$in = implode("','", array_map('daddslashes', $lookup['order_sns']));
+				$conds[] = "A.`api_trade_no` IN ('$in')";
+			}
+			if(!empty($lookup['trade_nos'])){
+				$in = implode("','", array_map('daddslashes', $lookup['trade_nos']));
+				$conds[] = "A.`trade_no` IN ('$in')";
+			}
+			$sql.= empty($conds) ? " AND 1=0" : " AND (".implode(" OR ", $conds).")";
+		}elseif($column=='name'){
 			$value = str_replace(['%', '_'], ['\\%', '\\_'], $value);
 			$sql.=" AND A.`$column` like '%$value%'";
 		}else{

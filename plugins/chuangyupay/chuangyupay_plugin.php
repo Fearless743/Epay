@@ -214,6 +214,70 @@ class chuangyupay_plugin
     }
 
     /**
+     * 后台订单搜索：通过关键词（如 CYM 付款单号）调用创鱼平台订单列表接口，
+     * 换取对应的 CY 订单号（order_sn）以及下单时写入的系统订单号（gather_info），
+     * 供 admin/ajax_order.php 在本地订单表中二次精确查询。
+     *
+     * @param array  $channel  支付通道配置（含买家/卖家账号）
+     * @param string $keyword  搜索关键词（CYM 付款单号 / CY 订单号等）
+     * @return array 成功返回 ['order_sns'=>[...], 'trade_nos'=>[...]]，失败返回 ['error'=>msg]
+     */
+    public static function lookupOrderSn($channel, string $keyword): array
+    {
+        $keyword = trim($keyword);
+        if ($keyword === "") {
+            return ["error" => "搜索内容为空"];
+        }
+
+        // 优先使用卖家账号（可查询 order_type=2 的销售订单，与抓包请求一致），未配置时回退买家账号
+        try {
+            $token = self::_login($channel, "seller");
+        } catch (\Exception $e) {
+            try {
+                $token = self::_login($channel, "buyer");
+            } catch (\Exception $e2) {
+                return ["error" => "创鱼登录失败：" . $e->getMessage()];
+            }
+        }
+
+        $url = self::API_BASE . "/api/orders/lists";
+        $data = self::_post($url, [
+            "page" => 1,
+            "limit" => 10,
+            "keyword" => $keyword,
+            "order_sn" => $keyword,
+            "order_type" => 2,
+            "delivery_status" => "",
+            "evaluate_status" => "",
+            "refund_status" => "",
+            "order_status" => "",
+        ], $token);
+
+        if (!is_array($data) || ($data["code"] ?? 0) != 200) {
+            return ["error" => "创鱼订单查询失败：" . ($data["msg"] ?? "无响应")];
+        }
+
+        $list = $data["data"]["data"] ?? [];
+        $orderSns = [];
+        $tradeNos = [];
+        foreach ($list as $cyOrder) {
+            if (!empty($cyOrder["order_sn"])) {
+                $orderSns[] = $cyOrder["order_sn"];
+            }
+            // gather_info 中保存了下单时写入的系统订单号
+            $gather = trim((string) ($cyOrder["gather_info"] ?? ""));
+            if ($gather !== "") {
+                $tradeNos[] = $gather;
+            }
+        }
+
+        return [
+            "order_sns" => array_values(array_unique($orderSns)),
+            "trade_nos" => array_values(array_unique($tradeNos)),
+        ];
+    }
+
+    /**
      * 退款处理
      * 流程：买家发起退款 → 卖家同意退款
      */

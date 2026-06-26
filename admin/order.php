@@ -34,7 +34,7 @@ unset($rs);
   <input type="hidden" name="applyid" value="">
   <div class="form-group">
     <label>搜索</label>
-	<select name="column" class="form-control"><option value="trade_no">订单号</option><option value="out_trade_no">商户订单号</option><option value="api_trade_no">接口订单号</option><option value="bill_mch_trade_no">渠道交易单号</option><option value="bill_trade_no">用户交易单号</option><option value="name">商品名称</option><option value="money">订单金额</option><option value="realmoney">实付金额</option><option value="getmoney">分成金额</option><option value="domain">网站域名</option><option value="buyer">支付账号</option><option value="ip">支付IP</option><option value="mobile">手机号码</option><option value="param">扩展参数</option></select>
+	<select name="column" class="form-control"><option value="trade_no">订单号</option><option value="out_trade_no">商户订单号</option><option value="api_trade_no">接口订单号</option><option value="cy_order_sn">创鱼订单号(API)</option><option value="bill_mch_trade_no">渠道交易单号</option><option value="bill_trade_no">用户交易单号</option><option value="name">商品名称</option><option value="money">订单金额</option><option value="realmoney">实付金额</option><option value="getmoney">分成金额</option><option value="domain">网站域名</option><option value="buyer">支付账号</option><option value="ip">支付IP</option><option value="mobile">手机号码</option><option value="param">扩展参数</option></select>
   </div>
   <div class="form-group">
     <input type="text" class="form-control" name="value" placeholder="搜索内容" value="">
@@ -262,6 +262,9 @@ $(document).ready(function(){
 			},
 		],
 		onLoadSuccess: function(data) {
+			if(data && data.msg){
+				layer.msg(data.msg, {time:3000});
+			}
 			$('.dropdown-group').on('show.bs.dropdown', function (e) {
 				var btnPos = $(e.target)[0].getBoundingClientRect();
 				var screenWidth = $(window).width();
