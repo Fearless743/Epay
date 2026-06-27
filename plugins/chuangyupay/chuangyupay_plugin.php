@@ -61,7 +61,17 @@ class chuangyupay_plugin
     public static function mapi()
     {
         global $order;
-        return self::_getOrCreateResult($order["typename"]);
+        $result = self::_getOrCreateResult($order["typename"]);
+
+        // mapi 模式下返回的是原始 payurl，调用方无法直接得到可扫码图片，
+        // 这里将其包装为二维码图片地址（在线生成）返回
+        if (($result["type"] ?? "") === "qrcode" && !empty($result["url"])) {
+            $result["url"] =
+                "https://api.2dcode.biz/v1/create-qr-code?data=" .
+                urlencode($result["url"]);
+        }
+
+        return $result;
     }
 
     private static function _getOrCreateResult(string $typename): array
