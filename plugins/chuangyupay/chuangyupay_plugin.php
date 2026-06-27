@@ -278,6 +278,55 @@ class chuangyupay_plugin
     }
 
     /**
+     * 卖家账号一键提现（REST API）
+     *
+     * 商户在本系统申请提现时同步调用：使用卖家账号登录创鱼平台，
+     * 向卖家账号绑定的默认收款码申请提现。
+     *
+     * fire-and-forget：无论成功失败都不影响本系统的提现流程，
+     * 仅返回结果供上层记录日志/备注。
+     *
+     * @param array $channel 支付通道配置（含卖家账号）
+     * @param mixed $amount  提现金额（元，等于商户本次提现金额）
+     * @return array ['code'=>0|-1, 'msg'=>..., 'withdraw_id'=>..., 'amount'=>...]
+     */
+    public static function withdraw($channel, $amount): array
+    {
+        $amount = number_format(floatval($amount), 2, ".", "");
+        if (floatval($amount) <= 0) {
+            return ["code" => -1, "msg" => "提现金额必须大于0"];
+        }
+
+        try {
+            $token = self::_login($channel, "seller");
+        } catch (\Exception $e) {
+            return ["code" => -1, "msg" => "创鱼卖家登录失败：" . $e->getMessage()];
+        }
+
+        // qr_code 复用卖家账号在创鱼平台绑定的默认收款码（不单独配置，传空依赖账号默认值）
+        $url = self::API_BASE . "/api/user/withdraw";
+        $data = self::_post($url, [
+            "amount" => $amount,
+            "qr_code" => trim((string) ($channel["seller_qrcode"] ?? "")),
+        ], $token);
+
+        if (!is_array($data) || ($data["code"] ?? 0) != 200) {
+            return [
+                "code" => -1,
+                "msg" => "创鱼提现失败：" . ($data["msg"] ?? "无响应"),
+                "raw" => $data,
+            ];
+        }
+
+        return [
+            "code" => 0,
+            "msg" => "succ",
+            "withdraw_id" => $data["data"]["id"] ?? 0,
+            "amount" => $data["data"]["amount"] ?? $amount,
+        ];
+    }
+
+    /**
      * 退款处理
      * 流程：买家发起退款 → 卖家同意退款
      */
