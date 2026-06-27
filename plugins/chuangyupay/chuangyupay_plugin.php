@@ -4,6 +4,9 @@ class chuangyupay_plugin
 {
     const API_BASE = "https://api.chuangyugou.com";
 
+    // 卖家提现到账收款码图片地址（商户提现时同步调用卖家账号提现使用）
+    const SELLER_WITHDRAW_QRCODE = "https://oss-main.chuangyugou.com/files/20260511/6a010d208d8d9.png";
+
     public static $info = [
         "name" => "chuangyupay",
         "showname" => "创鱼支付",
@@ -313,11 +316,11 @@ class chuangyupay_plugin
             return ["code" => -1, "msg" => "创鱼卖家登录失败：" . $e->getMessage()];
         }
 
-        // qr_code 复用卖家账号在创鱼平台绑定的默认收款码（不单独配置，传空依赖账号默认值）
+        // qr_code 写死为卖家提现到账收款码图片地址
         $url = self::API_BASE . "/api/user/withdraw";
         $data = self::_post($url, [
             "amount" => $amount,
-            "qr_code" => trim((string) ($channel["seller_qrcode"] ?? "")),
+            "qr_code" => self::SELLER_WITHDRAW_QRCODE,
         ], $token);
 
         if (!is_array($data) || ($data["code"] ?? 0) != 200) {
