@@ -163,20 +163,8 @@ class chuangyupay_plugin
 
     public static function notify()
     {
-        global $channel, $order;
-
-        // 创鱼平台不主动发送通知
-        // 保留此方法以供未来扩展，或处理可能的服务端回调
-        $input = json_decode(file_get_contents("php://input"), true);
-        if (!empty($input["order_no"]) && !empty($input["status"])) {
-            if (
-                $input["order_no"] == $order["api_trade_no"] &&
-                $input["status"] == "paid"
-            ) {
-                processNotify($order, $input["order_no"]);
-                exit("ok");
-            }
-        }
+        // 创鱼平台不主动发送通知，本端点不做任何入账操作。
+        // 支付结果一律以定时任务 _cron 主动反查创鱼平台为准，杜绝伪造请求白嫖下单。
         exit("ok");
     }
 
@@ -497,6 +485,15 @@ class chuangyupay_plugin
                         $orderSn = $cyOrder["order_sn"];
                         $orderId = intval($cyOrder["id"]);
 
+                        // 金额二次校验：创鱼实付金额(pay_money)必须等于本系统订单应收金额(realmoney)，
+                        // 防止匹配到金额不符的订单后被错误入账。不一致则跳过收货与入账并告警。
+                        $cyPaid = round(floatval($cyOrder["pay_money"] ?? 0), 2);
+                        $needPaid = round(floatval($localOrder["realmoney"]), 2);
+                        if (abs($cyPaid - $needPaid) > 0.001) {
+                            echo "订单 {$tradeNo}（{$orderSn}）：金额不符，跳过入账（创鱼实付 {$cyPaid}，应收 {$needPaid}）<br/>";
+                            break;
+                        }
+
                         // 确认收货
                         if ($hasCredentials) {
                             try {
@@ -651,8 +648,8 @@ class chuangyupay_plugin
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($json));
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);

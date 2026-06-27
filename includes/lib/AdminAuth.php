@@ -180,7 +180,7 @@ class AdminAuth
         }
 
         // 重新计算 session_hash（与 login.php 生成 token 时一致）
-        $password_hash = '!@#%!s!0';
+        global $password_hash;
         $expectedSession = md5($admin['username'] . $admin['password'] . $password_hash);
 
         if ($expectedSession !== $sid) {
@@ -286,8 +286,7 @@ class AdminAuth
      */
     private static function buildAdminFromConfig(string $username): array
     {
-        global $conf;
-        $password_hash = '!@#%!s!0';
+        global $conf, $password_hash;
         $session = md5($username . $conf['admin_pwd'] . $password_hash);
 
         return [
@@ -314,7 +313,7 @@ class AdminAuth
 
         // 如果 key 是用户名，匹配
         if ($key === $conf['admin_user']) {
-            $password_hash = '!@#%!s!0';
+            global $password_hash;
             $session = md5($conf['admin_user'] . $conf['admin_pwd'] . $password_hash);
             if ($session === $expectedSid) {
                 return self::buildAdminFromConfig($conf['admin_user']);

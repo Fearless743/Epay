@@ -4,7 +4,7 @@ error_reporting(E_ERROR | E_PARSE | E_COMPILE_ERROR);
 if (defined("IN_CRONLITE")) {
     return;
 }
-define("VERSION", "3152");
+define("VERSION", "3153");
 define("DB_VERSION", "2057");
 define("IN_CRONLITE", true);
 define("SYSTEM_ROOT", dirname(__FILE__) . "/");
@@ -88,7 +88,8 @@ define("SYS_KEY", $conf["syskey"]);
 if (!$conf["localurl"]) {
     $conf["localurl"] = $siteurl;
 }
-$password_hash = "!@#%!s!0";
+// 会话签名盐：由每个安装独立的 SYS_KEY 派生，避免使用全局固定盐
+$password_hash = substr(md5("adminsess|" . SYS_KEY), 0, 16);
 
 if ($conf["version"] < DB_VERSION) {
     if (!$install) {
