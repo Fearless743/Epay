@@ -44,6 +44,8 @@ function chuangyupay_seller_withdraw($money, $settleid){
 		if(!$cid) return; // 未配置创鱼支付通道，跳过
 		$channel = \lib\Channel::get($cid);
 		if(!$channel) return;
+		// 开关：关闭时不发起卖家提现请求（默认开启，兼容旧配置）
+		if((string)($channel['seller_withdraw_enable'] ?? '1') === '0') return;
 		$result = \lib\Plugin::call('withdraw', $channel, $money);
 		$note = ($result['code']==0)
 			? '创鱼卖家提现成功，提现单ID:'.($result['withdraw_id']??'').'，金额:'.($result['amount']??$money)

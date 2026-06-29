@@ -49,6 +49,15 @@ class chuangyupay_plugin
                 "type" => "input",
                 "note" => "创鱼平台卖家账号的密码（退款时需要）",
             ],
+            "seller_withdraw_enable" => [
+                "name" => "商户提现同步卖家提现",
+                "type" => "select",
+                "options" => [
+                    1 => "开启（商户提现时同步用卖家账号申请提现）",
+                    0 => "关闭（商户提现时不发起卖家提现请求）",
+                ],
+                "note" => "关闭后，商户在本系统申请提现时不会再调用创鱼卖家账号提现接口",
+            ],
         ],
         "select" => null,
         "note" =>
