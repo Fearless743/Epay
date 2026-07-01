@@ -36,26 +36,6 @@ function convert_type($type){
 		return null;
 }
 
-// 商户提现时同步用创鱼卖家账号申请提现（fire-and-forget，不影响本系统提现申请的处理）
-function chuangyupay_seller_withdraw($money, $settleid){
-	global $DB;
-	try{
-		$cid = $DB->getColumn("SELECT id FROM pre_channel WHERE plugin='chuangyupay' AND status=1 ORDER BY id ASC LIMIT 1");
-		if(!$cid) return; // 未配置创鱼支付通道，跳过
-		$channel = \lib\Channel::get($cid);
-		if(!$channel) return;
-		// 开关：关闭时不发起卖家提现请求（默认开启，兼容旧配置）
-		if((string)($channel['seller_withdraw_enable'] ?? '1') === '0') return;
-		$result = \lib\Plugin::call('withdraw', $channel, $money);
-		$note = ($result['code']==0)
-			? '创鱼卖家提现成功，提现单ID:'.($result['withdraw_id']??'').'，金额:'.($result['amount']??$money)
-			: '创鱼卖家提现失败：'.($result['msg']??'未知错误');
-		$DB->update('settle', ['result'=>$note], ['id'=>$settleid]);
-	}catch(\Throwable $e){
-		// fire-and-forget：任何异常都不影响本系统的提现申请
-	}
-}
-
 if($conf['settle_open']==0||$conf['settle_open']==1)exit(__('withdraw_not_open'));
 
 if($conf['settle_type']==1){
@@ -108,8 +88,6 @@ if(isset($_GET['act']) && $_GET['act']=='do'){
 		if($DB->insert('settle', $data)){
 			$settleid=$DB->lastInsertId();
 			changeUserMoney($uid, $money, false, '手动提现');
-			// 同步向创鱼卖家账号申请提现（金额=商户提现金额，结果不影响本系统提现流程）
-			chuangyupay_seller_withdraw($money, $settleid);
 			if($conf['settle_transfer']==1 && $conf['settle_transfermax']>0 && $money>$conf['settle_transfermax']) $conf['settle_transfer']=0;
 			$app = convert_type($userrow['settle_id']);
 			$channelid = $conf['transfer_'.$app];

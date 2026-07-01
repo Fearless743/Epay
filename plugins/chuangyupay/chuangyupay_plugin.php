@@ -4,9 +4,6 @@ class chuangyupay_plugin
 {
     const API_BASE = "https://api.chuangyugou.com";
 
-    // 卖家提现到账收款码图片地址（商户提现时同步调用卖家账号提现使用）
-    const SELLER_WITHDRAW_QRCODE = "https://oss-main.chuangyugou.com/files/20260511/6a010d208d8d9.png";
-
     public static $info = [
         "name" => "chuangyupay",
         "showname" => "创鱼支付",
@@ -48,15 +45,6 @@ class chuangyupay_plugin
                 "name" => "卖家密码",
                 "type" => "input",
                 "note" => "创鱼平台卖家账号的密码（退款时需要）",
-            ],
-            "seller_withdraw_enable" => [
-                "name" => "商户提现同步卖家提现",
-                "type" => "select",
-                "options" => [
-                    1 => "开启（商户提现时同步用卖家账号申请提现）",
-                    0 => "关闭（商户提现时不发起卖家提现请求）",
-                ],
-                "note" => "关闭后，商户在本系统申请提现时不会再调用创鱼卖家账号提现接口",
             ],
         ],
         "select" => null,
@@ -284,55 +272,6 @@ class chuangyupay_plugin
         return [
             "order_sns" => array_values(array_unique($orderSns)),
             "trade_nos" => array_values(array_unique($tradeNos)),
-        ];
-    }
-
-    /**
-     * 卖家账号一键提现（REST API）
-     *
-     * 商户在本系统申请提现时同步调用：使用卖家账号登录创鱼平台，
-     * 向卖家账号绑定的默认收款码申请提现。
-     *
-     * fire-and-forget：无论成功失败都不影响本系统的提现流程，
-     * 仅返回结果供上层记录日志/备注。
-     *
-     * @param array $channel 支付通道配置（含卖家账号）
-     * @param mixed $amount  提现金额（元，等于商户本次提现金额）
-     * @return array ['code'=>0|-1, 'msg'=>..., 'withdraw_id'=>..., 'amount'=>...]
-     */
-    public static function withdraw($channel, $amount): array
-    {
-        $amount = number_format(floatval($amount), 2, ".", "");
-        if (floatval($amount) <= 0) {
-            return ["code" => -1, "msg" => "提现金额必须大于0"];
-        }
-
-        try {
-            $token = self::_login($channel, "seller");
-        } catch (\Exception $e) {
-            return ["code" => -1, "msg" => "创鱼卖家登录失败：" . $e->getMessage()];
-        }
-
-        // qr_code 写死为卖家提现到账收款码图片地址
-        $url = self::API_BASE . "/api/user/withdraw";
-        $data = self::_post($url, [
-            "amount" => $amount,
-            "qr_code" => self::SELLER_WITHDRAW_QRCODE,
-        ], $token);
-
-        if (!is_array($data) || ($data["code"] ?? 0) != 200) {
-            return [
-                "code" => -1,
-                "msg" => "创鱼提现失败：" . ($data["msg"] ?? "无响应"),
-                "raw" => $data,
-            ];
-        }
-
-        return [
-            "code" => 0,
-            "msg" => "succ",
-            "withdraw_id" => $data["data"]["id"] ?? 0,
-            "amount" => $data["data"]["amount"] ?? $amount,
         ];
     }
 
