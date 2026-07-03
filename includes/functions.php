@@ -1,5 +1,27 @@
 <?php
-function curl_get($url)
+// 在最多 $capMs 毫秒内尝试跑完 $ch 请求；超时则放弃等待响应（连接/请求已经发出，只是不再等结果）
+// 返回 [是否在预算内跑完, 响应内容或null]
+function curl_exec_bounded($ch, $capMs)
+{
+	$mh = curl_multi_init();
+	curl_multi_add_handle($mh, $ch);
+	$start = microtime(true);
+	$active = null;
+	do {
+		curl_multi_exec($mh, $active);
+		if (!$active) break;
+		$remaining = $capMs / 1000 - (microtime(true) - $start);
+		if ($remaining <= 0) break;
+		curl_multi_select($mh, min($remaining, 0.1));
+	} while ((microtime(true) - $start) < $capMs / 1000);
+
+	$finished = !$active;
+	$content = $finished ? curl_multi_getcontent($ch) : null;
+	curl_multi_remove_handle($mh, $ch);
+	curl_multi_close($mh);
+	return [$finished, $content];
+}
+function curl_get($url, $capMs=null)
 {
 	global $conf;
 	$ch=curl_init($url);
@@ -35,11 +57,16 @@ function curl_get($url)
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36');
 	curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+	if ($capMs !== null) {
+		list($finished, $content) = curl_exec_bounded($ch, $capMs);
+		curl_close($ch);
+		return $finished ? $content : null;
+	}
 	$content=curl_exec($ch);
 	curl_close($ch);
 	return $content;
 }
-function get_curl($url, $post=0, $referer=0, $cookie=0, $header=0, $ua=0, $nobaody=0, $addheader=0, $location=0)
+function get_curl($url, $post=0, $referer=0, $cookie=0, $header=0, $ua=0, $nobaody=0, $addheader=0, $location=0, $capMs=null)
 {
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $url);
@@ -80,6 +107,11 @@ function get_curl($url, $post=0, $referer=0, $cookie=0, $header=0, $ua=0, $nobao
 	}
 	curl_setopt($ch, CURLOPT_ENCODING, "gzip");
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	if ($capMs !== null) {
+		list($finished, $ret) = curl_exec_bounded($ch, $capMs);
+		curl_close($ch);
+		return $finished ? $ret : null;
+	}
 	$ret = curl_exec($ch);
 	curl_close($ch);
 	return $ret;
@@ -554,17 +586,19 @@ function get_main_host($url){
 	return $host;
 }
 
-function do_notify($url){
+// $capMs: 不为 null 时最多等待这么多毫秒就不再等响应（连接/请求仍会发出，只是本次调用不阻塞到收到响应为止）。
+// 超预算未完成时返回 false，交由上层的失败重试队列(cron.php?do=notify)兜底确认。
+function do_notify($url, $capMs=null){
 	global $conf;
 	if($conf['proxy'] == 2 && !empty($conf['proxy_apiurl']) && !empty($conf['proxy_apikey'])){
-		$url = base64_encode($url);
+		$encUrl = base64_encode($url);
 		$timestamp = strval(time());
-		$param = ['url' => $url, 'timestamp' => $timestamp, 'sign' => md5($url.$timestamp.$conf['proxy_apikey'])];
-		$return = get_curl($conf['proxy_apiurl'], http_build_query($param));
+		$param = ['url' => $encUrl, 'timestamp' => $timestamp, 'sign' => md5($encUrl.$timestamp.$conf['proxy_apikey'])];
+		$return = get_curl($conf['proxy_apiurl'], http_build_query($param), 0, 0, 0, 0, 0, 0, 0, $capMs);
 	}else{
-		$return = curl_get($url);
+		$return = curl_get($url, $capMs);
 	}
-	if(strpos($return,'success')!==false || strpos($return,'SUCCESS')!==false || strpos($return,'Success')!==false){
+	if($return !== null && (strpos($return,'success')!==false || strpos($return,'SUCCESS')!==false || strpos($return,'Success')!==false)){
 		return true;
 	}else{
 		return false;
@@ -697,7 +731,9 @@ function processOrder(&$srow,$notify=true){
 			}
 		}
 		$url=creat_callback($srow);
-		if(do_notify($url['notify'])){
+		// 首次通知限时 300ms：商户回调地址响应慢/超时时不阻塞下单/收货流程，
+		// 未在预算内确认成功一律按失败处理，交给 cron.php?do=notify 重试队列去确认
+		if(do_notify($url['notify'], 300)){
 			$DB->exec("UPDATE pre_order SET notify=0 WHERE trade_no='{$srow['trade_no']}'");
 		}elseif($notify==true){
 			//通知时间：1分钟，3分钟，20分钟，1小时，2小时

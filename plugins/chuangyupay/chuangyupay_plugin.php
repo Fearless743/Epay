@@ -4,6 +4,9 @@ class chuangyupay_plugin
 {
     const API_BASE = "https://api.chuangyugou.com";
 
+    // 复用同一个 curl handle，避免同一次轮询内多次请求创鱼 API 时重复走 TCP+TLS 握手
+    private static $ch = null;
+
     public static $info = [
         "name" => "chuangyupay",
         "showname" => "创鱼支付",
@@ -427,8 +430,13 @@ class chuangyupay_plugin
                 $title = $cyOrder["order_title"] ?? "";
                 $searchStr = $remark . " " . $title;
 
-                foreach ($remarkMap as $tradeNo => $localOrder) {
-                    if (stripos($searchStr, $tradeNo) !== false) {
+                // 系统订单号固定为 19 位纯数字且在备注中格式干净，直接提取后哈希查找，
+                // 避免对本地待支付订单逐条 stripos 扫描（原为 O(创鱼返回条数 × 本地待支付订单数)）
+                preg_match_all('/(?<!\d)\d{19}(?!\d)/', $searchStr, $candidateMatches);
+
+                foreach ($candidateMatches[0] as $tradeNo) {
+                    if (isset($remarkMap[$tradeNo])) {
+                        $localOrder = $remarkMap[$tradeNo];
                         $matchedCount++;
                         $orderSn = $cyOrder["order_sn"];
                         $orderId = intval($cyOrder["id"]);
@@ -442,7 +450,15 @@ class chuangyupay_plugin
                             break;
                         }
 
-                        // 确认收货
+                        // 标记本地订单为已支付（优先执行，避免创鱼"确认收货"接口慢/超时时拖慢商户到账通知）
+                        if ($localOrder["status"] == 0) {
+                            processNotify($localOrder, $orderSn);
+                            echo "订单 {$tradeNo}（{$orderSn}）：已支付，处理成功<br/>";
+                        } else {
+                            echo "订单 {$tradeNo}（{$orderSn}）：已由其他方式处理<br/>";
+                        }
+
+                        // 确认收货（对创鱼侧的收尾操作，失败不影响本地账目，故放在本地入账之后）
                         if ($hasCredentials) {
                             try {
                                 self::_confirmTake($orderId, $token);
@@ -451,14 +467,6 @@ class chuangyupay_plugin
                             } catch (\Exception $e) {
                                 echo "订单 {$tradeNo}（{$orderSn}）：收货失败 - " . $e->getMessage() . "<br/>";
                             }
-                        }
-
-                        // 标记本地订单为已支付
-                        if ($localOrder["status"] == 0) {
-                            processNotify($localOrder, $orderSn);
-                            echo "订单 {$tradeNo}（{$orderSn}）：已支付，处理成功<br/>";
-                        } else {
-                            echo "订单 {$tradeNo}（{$orderSn}）：已由其他方式处理<br/>";
                         }
 
                         break;
@@ -583,7 +591,6 @@ class chuangyupay_plugin
         $headers = [
             "Accept: */*",
             "Accept-Language: zh-CN,zh;q=0.8",
-            "Connection: close",
             "Content-Type: application/json",
         ];
 
@@ -592,7 +599,10 @@ class chuangyupay_plugin
         }
 
         $t0 = microtime(true);
-        $ch = curl_init();
+        if (self::$ch === null) {
+            self::$ch = curl_init();
+        }
+        $ch = self::$ch;
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($json));
@@ -606,7 +616,6 @@ class chuangyupay_plugin
         $curlErr = curl_error($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $totalTime = curl_getinfo($ch, CURLINFO_TOTAL_TIME);
-        curl_close($ch);
         $elapsed = (microtime(true) - $t0) * 1000;
 
         if ($httpCode < 200 || $httpCode >= 300) {
