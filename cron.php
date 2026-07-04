@@ -401,9 +401,14 @@ elseif($_GET['do']=='plugin'){
 		echo $e->getMessage();
 	}
 }
+// 批量轮询：遍历指定插件下所有启用通道执行 _cron 静态方法
+// CLI:   php cron.php --do=pluginall --plugin=chuangyupay
+// HTTP:  cron.php?do=pluginall&plugin=chuangyupay&key={cronkey}
 elseif($_GET['do']=='pluginall'){
 	$plugin = isset($_GET['plugin']) ? trim($_GET['plugin']) : '';
 	if(!preg_match('/^[a-zA-Z0-9_]+$/', $plugin)) exit('插件名称不合法');
+	// HTTP 模式下输出是带 \n 的纯文本日志，切到 text/plain 避免污染 HTML 响应
+	if(!$is_cli) header('Content-Type: text/plain; charset=UTF-8');
 
 	$rows = $DB->getAll("SELECT id,name FROM pre_channel WHERE plugin=:plugin AND status=1 ORDER BY id ASC", [':plugin'=>$plugin]);
 	if(!$rows || count($rows) == 0){
