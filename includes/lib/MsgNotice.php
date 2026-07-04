@@ -14,6 +14,23 @@ class MsgNotice
         });
     }
 
+    /**
+     * 异步邮件：通过 register_shutdown_function + fastcgi_finish_request 把 SMTP/HTTP 发送
+     * 移出主请求路径，cron 等长任务执行 send_mail 不再阻塞主流程。
+     */
+    public static function queue_mail($receiver, $title, $content){
+        register_shutdown_function(function() use ($receiver, $title, $content) {
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            }
+            try {
+                send_mail($receiver, $title, $content);
+            } catch (\Throwable $e) {
+                // swallow: 异步邮件失败不影响主流程
+            }
+        });
+    }
+
     public static function send($scene, $uid, $param){
         global $DB, $conf;
         $scene_all = ['complain', 'mchrisk'];

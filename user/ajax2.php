@@ -126,11 +126,35 @@ case 'getcount':
 
 	$channels = [];
 	$types = \lib\Channel::getTypes($uid, $userrow['gid']);
-	foreach($types as $row){
-		$order_today = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$today' AND type={$row['id']} AND deleted=0"),2);
-		$order_lastday = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$lastday' AND type={$row['id']} AND deleted=0"),2);
 
-		$orderrow = $DB->getRow("SELECT COUNT(*) allnum,COUNT(IF(status>0, 1, NULL)) sucnum FROM pre_order WHERE uid={$uid} AND addtime>='$today' AND type={$row['id']} AND deleted=0");
+	// 一次性 GROUP BY 拉取今日/昨日按 type 的金额（避免循环内 N 次 SUM 查询）
+	$type_ids = array_column($types, 'id');
+	$amount_map = [];
+	if(!empty($type_ids)){
+		$tid_in = implode(',', array_map('intval', $type_ids));
+		$rs=$DB->query("SELECT type, date, SUM(money) AS s FROM pre_order WHERE uid={$uid} AND status=1 AND date IN ('$today','$lastday') AND type IN ($tid_in) AND deleted=0 GROUP BY type, date");
+		while($r = $rs->fetch()){
+			$amount_map[$r['type']][$r['date']] = (float)$r['s'];
+		}
+		unset($rs);
+	}
+
+	// 一次性 GROUP BY 拉取今日按 type 的成功率统计（总数 + 成功数）
+	$rate_map = [];
+	if(!empty($type_ids)){
+		$rs=$DB->query("SELECT type, COUNT(*) allnum, SUM(IF(status>0, 1, NULL)) sucnum FROM pre_order WHERE uid={$uid} AND addtime>='$today' AND type IN ($tid_in) AND deleted=0 GROUP BY type");
+		while($r = $rs->fetch()){
+			$rate_map[$r['type']] = $r;
+		}
+		unset($rs);
+	}
+
+	foreach($types as $row){
+		$tid = intval($row['id']);
+		$order_today = round(isset($amount_map[$tid][$today]) ? $amount_map[$tid][$today] : 0, 2);
+		$order_lastday = round(isset($amount_map[$tid][$lastday]) ? $amount_map[$tid][$lastday] : 0, 2);
+
+		$orderrow = isset($rate_map[$tid]) ? $rate_map[$tid] : null;
 		$success_rate = $orderrow && $orderrow['allnum'] > 0 ? round($orderrow['sucnum']/$orderrow['allnum']*100,2) : 100;
 
 		$channels[] = ['name'=>$row['name'], 'showname'=>$row['showname'], 'rate'=>round(100-$row['rate'], 2), 'order_today'=>$order_today, 'order_lastday'=>$order_lastday, 'success_rate'=>$success_rate];
@@ -149,11 +173,29 @@ case 'orderCount':
 	$labels = [];
 	$colors = ['alipay'=>'#5279F6', 'wxpay'=>'#07c160', 'qqpay'=>'#12b7f5', 'bank'=>'#C83933', 'total'=>'#742def', 'other'=>'#999999'];
 	for($i=0; $i<$days; $i++){
+		$labels[] = substr(date("Y-m-d",strtotime($starttime)+86400*$i),5);
+	}
+
+	// 一次性 GROUP BY date, type 拉取所有金额（避免 N×days 次单日单类型查询）
+	$type_ids = array_column($types, 'id');
+	$type_name_map = [];
+	foreach($types as $row){ $type_name_map[intval($row['id'])] = $row['name']; }
+
+	$total_map = [];   // date => sum
+	$type_map = [];    // date => [type_id => sum]
+	$rs=$DB->query("SELECT date, type, SUM(money) AS s FROM pre_order WHERE uid={$uid} AND status=1 AND date>='$starttime' AND date<='$endtime' AND deleted=0 GROUP BY date, type");
+	while($r = $rs->fetch()){
+		$total_map[$r['date']] = isset($total_map[$r['date']]) ? $total_map[$r['date']] + (float)$r['s'] : (float)$r['s'];
+		$type_map[$r['date']][intval($r['type'])] = (float)$r['s'];
+	}
+	unset($rs);
+
+	for($i=0; $i<$days; $i++){
 		$theday = date("Y-m-d",strtotime($starttime)+86400*$i);
-		$labels[] = substr($theday,5);
-		$datas['total'][] = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$theday' AND deleted=0"), 2);
+		$datas['total'][] = round(isset($total_map[$theday]) ? $total_map[$theday] : 0, 2);
 		foreach($types as $row){
-			$datas[$row['name']][] = round($DB->getColumn("SELECT sum(money) FROM pre_order WHERE uid={$uid} AND status=1 AND date='$theday' AND type={$row['id']} AND deleted=0"), 2);
+			$tid = intval($row['id']);
+			$datas[$row['name']][] = round(isset($type_map[$theday][$tid]) ? $type_map[$theday][$tid] : 0, 2);
 		}
 	}
 	$datasets = [];
@@ -1021,34 +1063,29 @@ case 'statistics':
 			$sql.=" AND A.`bill_trade_no`='{$kw}'";
 		}
 	}
-    // 统计数据
-    $resultMoneyData = $DB->getRow("SELECT 
-    SUM(money) AS totalMoney,
-    SUM(CASE WHEN A.status = 1 THEN money ELSE 0 END) AS successMoney,
-    SUM(CASE WHEN A.status = 0 THEN money ELSE 0 END) AS unpaidMoney,
-    SUM(CASE WHEN A.status = 2 THEN refundmoney ELSE 0 END) AS refundMoney
-    FROM pre_order A LEFT JOIN pre_channel B ON A.channel=B.id WHERE {$sql} order by trade_no desc");
-
-    $resultCount = $DB->getRow("SELECT 
+    // 一次性聚合：把金额、计数、利润合并到一次扫描完成（原版需要 3 次聚合）
+    $resultAll = $DB->getRow("SELECT
     COUNT(*) AS totalCount,
     SUM(CASE WHEN A.status = 1 THEN 1 ELSE 0 END) AS successCount,
     SUM(CASE WHEN A.status = 0 THEN 1 ELSE 0 END) AS unpaidCount,
-    SUM(CASE WHEN A.status = 2 THEN 1 ELSE 0 END) AS refundCount
-    FROM pre_order A LEFT JOIN pre_channel B ON A.channel=B.id WHERE {$sql} order by trade_no desc");
-
-    // 获取平台总收入利润
-    $platformProfit = $DB->getColumn("SELECT SUM(A.profitmoney) FROM pre_order A LEFT JOIN pre_channel B ON A.channel=B.id WHERE {$sql} AND status = 1 order by trade_no desc");
+    SUM(CASE WHEN A.status = 2 THEN 1 ELSE 0 END) AS refundCount,
+    SUM(money) AS totalMoney,
+    SUM(CASE WHEN A.status = 1 THEN money ELSE 0 END) AS successMoney,
+    SUM(CASE WHEN A.status = 0 THEN money ELSE 0 END) AS unpaidMoney,
+    SUM(CASE WHEN A.status = 2 THEN refundmoney ELSE 0 END) AS refundMoney,
+    SUM(CASE WHEN A.status = 1 THEN A.profitmoney ELSE 0 END) AS platformProfit
+    FROM pre_order A WHERE {$sql}");
 
 	$result = [
-        'totalMoney' => number_format($resultMoneyData['totalMoney'], 2, '.', '') ?? 0.00,
-        'successMoney' => number_format($resultMoneyData['successMoney'], 2, '.', '') ?? 0.00,
-        'unpaidMoney' => number_format($resultMoneyData['unpaidMoney'], 2, '.', '') ?? 0.00,
-        'refundMoney' => number_format($resultMoneyData['refundMoney'], 2, '.', '') ?? 0.00,
-        'totalCount' => $resultCount['totalCount'] ?? '0',
-        'successCount' => $resultCount['successCount'] ?? '0',
-        'unpaidCount' => $resultCount['unpaidCount'] ?? '0',
-        'refundCount' => $resultCount['refundCount'] ?? '0',
-        'platformProfit' => number_format($platformProfit, 2, '.', '') ?? 0.00
+        'totalMoney' => number_format($resultAll['totalMoney'], 2, '.', '') ?? 0.00,
+        'successMoney' => number_format($resultAll['successMoney'], 2, '.', '') ?? 0.00,
+        'unpaidMoney' => number_format($resultAll['unpaidMoney'], 2, '.', '') ?? 0.00,
+        'refundMoney' => number_format($resultAll['refundMoney'], 2, '.', '') ?? 0.00,
+        'totalCount' => $resultAll['totalCount'] ?? '0',
+        'successCount' => $resultAll['successCount'] ?? '0',
+        'unpaidCount' => $resultAll['unpaidCount'] ?? '0',
+        'refundCount' => $resultAll['refundCount'] ?? '0',
+        'platformProfit' => number_format($resultAll['platformProfit'], 2, '.', '') ?? 0.00
     ];
 	$result['successRate'] = $result['totalCount'] > 0 ? round(($result['totalCount']-$result['unpaidCount']) / $result['totalCount'] * 100, 2) : 0;
 	exit(json_encode(['code'=>0, 'data'=>$result]));

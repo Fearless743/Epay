@@ -94,15 +94,17 @@ elseif($_GET['do']=='order'){
 	if(strtotime($order_time)>=strtotime(date("Y-m-d").' 00:00:00')){
 		echo '订单统计与清理任务今日已完成';
 		if($conf['wxnotice_tpl_balance'] || $conf['msgconfig_balance']){
-			$rs=$DB->query("SELECT * from pre_user where status=1");
+			// 只取必要字段（uid、money、msgconfig），并利用 idx_status 索引过滤
+			$rs=$DB->query("SELECT uid, money, msgconfig FROM pre_user WHERE status=1");
 			$i=0;
 			while($row = $rs->fetch())
 			{
+				if(empty($row['msgconfig'])) continue;
 				$row['msgconfig'] = unserialize($row['msgconfig']);
 				if($row['msgconfig']['balance'] > 0 && $row['msgconfig']['balance_money'] > 0 && $row['money'] < $row['msgconfig']['balance_money']){
 					$day = $CACHE->read('balance_notice_'.$row['uid']);
 					if($day && $day == date('Ymd')) continue;
-					\lib\MsgNotice::send('balance', $row['uid'], ['user'=>$row['uid'], 'time'=>date('Y-m-d H:i:s'), 'money'=>$row['money']]);
+					\lib\MsgNotice::sendAsync('balance', $row['uid'], ['user'=>$row['uid'], 'time'=>date('Y-m-d H:i:s'), 'money'=>$row['money']]);
 					$CACHE->save('balance_notice_'.$row['uid'], date('Ymd'), 86400);
 					$i++;
 				}
@@ -139,20 +141,28 @@ elseif($_GET['do']=='order'){
 	$lastday=date("Y-m-d",strtotime("-1 day"));
 	$today=date("Y-m-d");
 
-	$rs=$DB->query("SELECT type,channel,realmoney,profitmoney from pre_order where deleted=0 and (status=1 OR status=3) and date>='$lastday' and date<'$today'");
+	// 按 type / channel 在 SQL 端聚合，避免拉取全量订单行到 PHP 内存
+	$order_paytype=[];
+	$profit_paytype=[];
 	foreach($paytype as $id=>$type){
 		$order_paytype[$id]=0;
 		$profit_paytype[$id]=0;
 	}
+	$order_channel=[];
 	foreach($channel as $id=>$type){
 		$order_channel[$id]=0;
 	}
+	$rs=$DB->query("SELECT type, channel, SUM(realmoney) AS realmoney_sum, SUM(profitmoney) AS profitmoney_sum FROM pre_order WHERE deleted=0 AND (status=1 OR status=3) AND date>='$lastday' AND date<'$today' GROUP BY type, channel");
 	while($row = $rs->fetch())
 	{
-		$order_paytype[$row['type']]+=$row['realmoney'];
-		$order_channel[$row['channel']]+=$row['realmoney'];
-		if(!empty($row['profitmoney'])){
-			$profit_paytype[$row['type']]+=$row['profitmoney'];
+		if(isset($order_paytype[$row['type']])){
+			$order_paytype[$row['type']]+=(float)$row['realmoney_sum'];
+		}
+		if(isset($order_channel[$row['channel']])){
+			$order_channel[$row['channel']]+=(float)$row['realmoney_sum'];
+		}
+		if(!empty($row['profitmoney_sum']) && isset($profit_paytype[$row['type']])){
+			$profit_paytype[$row['type']]+=(float)$row['profitmoney_sum'];
 		}
 	}
 	foreach($order_paytype as $k=>$v){
@@ -164,14 +174,8 @@ elseif($_GET['do']=='order'){
 	foreach($profit_paytype as $k=>$v){
 		$profit_paytype[$k] = round($v,2);
 	}
-	$allmoney=0;
-	foreach($order_paytype as $money){
-		$allmoney+=$money;
-	}
-	$allprofit=0;
-	foreach($profit_paytype as $money){
-		$allprofit+=$money;
-	}
+	$allmoney=array_sum($order_paytype);
+	$allprofit=array_sum($profit_paytype);
 
 	$order_lastday['all']=round($allmoney,2);
 	$order_lastday['profit_all']=round($allprofit,2);
@@ -187,22 +191,20 @@ elseif($_GET['do']=='order'){
 		$this_month_start = date("Y-m-01");
 		$month_key = date("Ym", strtotime("-1 month"));
 
-		$rs=$DB->query("SELECT type,profitmoney from pre_order where deleted=0 and (status=1 OR status=3) and date>='$last_month_start' and date<'$this_month_start'");
+		$month_profit_paytype=[];
 		foreach($paytype as $id=>$type){
 			$month_profit_paytype[$id]=0;
 		}
+		$rs=$DB->query("SELECT type, SUM(profitmoney) AS profitmoney_sum FROM pre_order WHERE deleted=0 AND (status=1 OR status=3) AND date>='$last_month_start' AND date<'$this_month_start' GROUP BY type");
 		while($row = $rs->fetch()){
-			if(!empty($row['profitmoney'])){
-				$month_profit_paytype[$row['type']]+=$row['profitmoney'];
+			if(!empty($row['profitmoney_sum']) && isset($month_profit_paytype[$row['type']])){
+				$month_profit_paytype[$row['type']]+=(float)$row['profitmoney_sum'];
 			}
 		}
 		foreach($month_profit_paytype as $k=>$v){
 			$month_profit_paytype[$k] = round($v,2);
 		}
-		$month_allprofit=0;
-		foreach($month_profit_paytype as $money){
-			$month_allprofit+=$money;
-		}
+		$month_allprofit=array_sum($month_profit_paytype);
 		$month_data = [
 			'profit_all' => round($month_allprofit, 2),
 			'profit_paytype' => $month_profit_paytype
@@ -215,37 +217,63 @@ elseif($_GET['do']=='order'){
 	$DB->exec("update pre_channel set daystatus=0");
 
 	if($conf['invite_mode'] == 1){
-		$moneylist = $DB->getAll("SELECT uid,SUM(realmoney) money FROM pre_order WHERE deleted=0 AND (status=1 OR status=3) AND `date`='$lastday' GROUP BY uid");
+		// 一次性 JOIN 拉取 uid + upid + upgid，避免循环内多次单行查询
+		$moneylist = $DB->getAll(
+			"SELECT o.uid, SUM(o.realmoney) AS money, u.upid, p.gid AS upgid
+			 FROM pre_order o
+			 INNER JOIN pre_user u ON u.uid = o.uid
+			 LEFT JOIN pre_user p ON p.uid = u.upid
+			 WHERE o.deleted=0 AND (o.status=1 OR o.status=3) AND o.date='$lastday' AND u.upid > 0
+			 GROUP BY o.uid, u.upid, p.gid"
+		);
 		foreach($moneylist as $row){
-			$upid = $DB->findColumn('user', 'upid', ['uid'=>$row['uid']]);
-			if($upid > 0){
-				$upgid = $DB->findColumn('user', 'gid', ['uid'=>$upid]);
-				$groupconfig = getGroupConfig($upgid);
-				$conf_n = array_merge($conf, $groupconfig);
-				if($conf_n['invite_open'] == 1 && !empty($conf_n['invite_rate'])){
-					$invite_money = round($row['money'] * $conf_n['invite_rate'] / 100, 2);
-					if($invite_money > 0){
-						changeUserMoney($upid, $invite_money, true, '邀请返现', $row['uid']);
-					}
+			if(empty($row['upid']) || $row['upid'] <= 0) continue;
+			$upgid = isset($row['upgid']) ? $row['upgid'] : 0;
+			$groupconfig = getGroupConfig($upgid);
+			$conf_n = array_merge($conf, $groupconfig);
+			if($conf_n['invite_open'] == 1 && !empty($conf_n['invite_rate'])){
+				$invite_money = round($row['money'] * $conf_n['invite_rate'] / 100, 2);
+				if($invite_money > 0){
+					changeUserMoney($row['upid'], $invite_money, true, '邀请返现', $row['uid']);
 				}
 			}
 		}
 	}
 
 	$expire_users = $DB->getAll("SELECT uid,gid,status,endtime FROM pre_user WHERE gid>0 AND endtime>0 AND endtime<NOW()");
-	foreach($expire_users as $row){
-		$group = $DB->getRow("SELECT * FROM pre_group WHERE gid='{$row['gid']}'");
-		$gid = $group['orig'] > 0 ? $group['orig'] : 0;
-		$DB->exec("UPDATE pre_user SET gid={$gid},endtime=NULL WHERE uid='{$row['uid']}'");
-		if($row['status'] == 1){
-			\lib\MsgNotice::send('group', $row['uid'], ['uid'=>$row['uid'], 'group'=>$group['name'], 'endtime'=>$row['endtime']]);
+	if(!empty($expire_users)){
+		// 一次性把所有需要的 gid 对应的 orig/name 取出，避免循环内逐行查询
+		$gids = array_unique(array_column($expire_users, 'gid'));
+		$gid_list = implode(',', array_map('intval', $gids));
+		$group_map = [];
+		$group_rows = $DB->getAll("SELECT gid, orig, name FROM pre_group WHERE gid IN ({$gid_list})");
+		foreach($group_rows as $g){
+			$group_map[intval($g['gid'])] = $g;
+		}
+		foreach($expire_users as $row){
+			$gid = isset($group_map[intval($row['gid'])]) ? $group_map[intval($row['gid'])] : null;
+			$new_gid = ($gid && $gid['orig'] > 0) ? intval($gid['orig']) : 0;
+			$DB->exec("UPDATE pre_user SET gid={$new_gid},endtime=NULL WHERE uid='{$row['uid']}'");
+			if($row['status'] == 1){
+				\lib\MsgNotice::send('group', $row['uid'], ['uid'=>$row['uid'], 'group'=>$gid ? $gid['name'] : '', 'endtime'=>$row['endtime']]);
+			}
 		}
 	}
 	exit($day.'订单统计与清理任务执行成功');
 }
 elseif($_GET['do']=='notify'){
 	$limit = 20; //每次重试的订单数量
+	// 进程级超时防御：每轮 cron 整体最多 25s，避免外网慢回调把 cron 卡死
+	$tStart = microtime(true);
+	$tBudget = 25;
+	$tCheck = function() use (&$tStart, $tBudget){
+		if((microtime(true) - $tStart) > $tBudget){
+			echo '[time-budget-exceeded '.$tBudget.'s]<br/>';
+			exit;
+		}
+	};
 	for($i=0;$i<$limit;$i++){
+		$tCheck();
 		$srow=$DB->getRow("SELECT * FROM pre_order WHERE deleted=0 AND (TO_DAYS(NOW()) - TO_DAYS(endtime) <= 1) AND notify>0 AND notifytime<NOW() LIMIT 1");
 		if(!$srow)break;
 
@@ -298,7 +326,17 @@ elseif($_GET['do']=='notify'){
 }
 elseif($_GET['do']=='notify2'){
 	$limit = 20; //每次重试的订单数量
+	// 进程级超时防御
+	$tStart = microtime(true);
+	$tBudget = 25;
+	$tCheck = function() use (&$tStart, $tBudget){
+		if((microtime(true) - $tStart) > $tBudget){
+			echo '[time-budget-exceeded '.$tBudget.'s]<br/>';
+			exit;
+		}
+	};
 	for($i=0;$i<$limit;$i++){
+		$tCheck();
 		$srow=$DB->getRow("SELECT * FROM pre_order WHERE deleted=0 AND (TO_DAYS(NOW()) - TO_DAYS(endtime) <= 1) AND notify=-1 LIMIT 1");
 		if(!$srow)break;
 
@@ -325,6 +363,15 @@ elseif($_GET['do']=='complain'){
 	$channelid = intval($_GET['channel']);
 	$source = isset($_GET['source'])?intval($_GET['source']):1;
 	$num = 20;
+	// 进程级超时防御：cron 整体超过 25s 自动退出，下一轮 cron 继续
+	$tStart = microtime(true);
+	$tBudget = 25;
+	$tCheck = function() use (&$tStart, $tBudget){
+		if((microtime(true) - $tStart) > $tBudget){
+			echo '[time-budget-exceeded '.$tBudget.'s]<br/>';
+			exit;
+		}
+	};
 	$channel=\lib\Channel::get($channelid);
 	if(!$channel)exit('当前支付通道不存在');
 	$channel['source'] = $source;
@@ -340,6 +387,7 @@ elseif($_GET['do']=='complain'){
 		if(count($uid)>0){
 			$users = $DB->getAll("SELECT uid,channelinfo FROM pre_user WHERE uid IN (".implode(',',$uid).")");
 			foreach($users as $user){
+				$tCheck();
 				if(empty($user['channelinfo'])) continue;
 				$channel=\lib\Channel::get($channelid, $user['channelinfo']);
 				if(!$channel) continue;
@@ -353,6 +401,7 @@ elseif($_GET['do']=='complain'){
 		}
 		if(count($subchannels)>0){
 			foreach($subchannels as $subchannel){
+				$tCheck();
 				$channel=\lib\Channel::getSub($subchannel);
 				if(!$channel) continue;
 				$channel['source'] = $source;
@@ -374,8 +423,18 @@ elseif($_GET['do']=='complain'){
 elseif($_GET['do']=='complain_complete'){
 	$interval = 5 * 60; //延迟处理时间（秒）
 	$limit = 10; //每次处理的投诉数量
+	// 进程级超时防御
+	$tStart = microtime(true);
+	$tBudget = 25;
+	$tCheck = function() use (&$tStart, $tBudget){
+		if((microtime(true) - $tStart) > $tBudget){
+			echo '[time-budget-exceeded '.$tBudget.'s]<br/>';
+			exit;
+		}
+	};
 	$complain = $DB->getAll("SELECT * FROM pre_complain WHERE status=1 AND paytype=2 AND edittime<DATE_SUB(NOW(), INTERVAL {$interval} SECOND) AND addtime>DATE_SUB(NOW(), INTERVAL 3 DAY) ORDER BY id ASC LIMIT {$limit}");
 	foreach($complain as $row){
+		$tCheck();
 		$channel = \lib\Channel::get($row['channel']);
 		if(!$channel)continue;
 		$channel['thirdmchid'] = $row['thirdmchid'];

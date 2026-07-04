@@ -25,7 +25,7 @@ class Plugin {
 		$filename = PLUGIN_ROOT.$name.'/'.$name.'_plugin.php';
 		$classname = '\\'.$name.'_plugin';
 		if(file_exists($filename)){
-			include $filename;
+			include_once $filename;
 			if (class_exists($classname, false) && property_exists($classname, 'info')) {
 				return $classname::$info;
 			}else{
@@ -160,7 +160,7 @@ class Plugin {
 			if(!defined("IN_PLUGIN")) define("IN_PLUGIN", true);
             define("PAY_ROOT", PLUGIN_ROOT.$plugin.'/');
             define("TRADE_NO", $trade_no);
-            include $filename;
+            include_once $filename;
             if (class_exists($classname, false) && method_exists($classname, $func)) {
                 return $classname::$func();
             } else {
@@ -190,7 +190,7 @@ class Plugin {
 		$filename = PLUGIN_ROOT.$name.'/'.$name.'_plugin.php';
 		$classname = '\\'.$name.'_plugin';
 		if(file_exists($filename)){
-			include $filename;
+			include_once $filename;
 			if (class_exists($classname, false) && method_exists($classname, 'refund')) {
 				return true;
 			}else{
@@ -216,7 +216,7 @@ class Plugin {
 		$func = 'refund';
 		if($order['combine'] == 1) $func = 'refund_combine';
 		if(file_exists($filename)){
-			include $filename;
+			include_once $filename;
 			if (class_exists($classname, false) && method_exists($classname, $func)) {
 				if(!defined("IN_PLUGIN")) define("IN_PLUGIN", true);
 				define("PAY_ROOT", PLUGIN_ROOT.$channel['plugin'].'/');
@@ -251,7 +251,7 @@ class Plugin {
 		$func = 'close';
 		if($order['combine'] == 1) $func = 'close_combine';
 		if(file_exists($filename)){
-			include $filename;
+			include_once $filename;
 			if (class_exists($classname, false) && method_exists($classname, $func)) {
 				if(!defined("IN_PLUGIN")) define("IN_PLUGIN", true);
 				define("PAY_ROOT", PLUGIN_ROOT.$channel['plugin'].'/');

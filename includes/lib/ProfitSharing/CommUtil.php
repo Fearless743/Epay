@@ -76,7 +76,16 @@ class CommUtil
     public static function process_item($row){
         global $DB;
         $id = $row['id'];
-        $channel = $row['subchannel'] > 0 ? \lib\Channel::getSub($row['subchannel']) : \lib\Channel::get($row['channel'], $row['uid']?$DB->findColumn('user', 'channelinfo', ['uid'=>$row['uid']]):null);
+        // 进程内静态缓存 user.channelinfo，避免同一商户在同进程内多次重复查询
+        static $user_channelinfo_cache = [];
+        $channelinfo = null;
+        if($row['uid']){
+            if(!isset($user_channelinfo_cache[$row['uid']])){
+                $user_channelinfo_cache[$row['uid']] = $DB->findColumn('user', 'channelinfo', ['uid'=>$row['uid']]);
+            }
+            $channelinfo = $user_channelinfo_cache[$row['uid']];
+        }
+        $channel = $row['subchannel'] > 0 ? \lib\Channel::getSub($row['subchannel']) : \lib\Channel::get($row['channel'], $channelinfo);
         if(!$channel) return;
         $model = self::getModel($channel);
         // status:0-待分账,1-已提交,2-成功,3-失败

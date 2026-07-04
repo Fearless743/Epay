@@ -163,34 +163,29 @@ case 'statistics':
 			}
 		}
 	}
-    // 统计数据
-    $resultMoneyData = $DB->getRow("SELECT 
-    SUM(money) AS totalMoney,
-    SUM(CASE WHEN A.status = 1 THEN money ELSE 0 END) AS successMoney,
-    SUM(CASE WHEN A.status = 0 THEN money ELSE 0 END) AS unpaidMoney,
-    SUM(CASE WHEN A.status = 2 THEN refundmoney ELSE 0 END) AS refundMoney
-    FROM pre_order A LEFT JOIN pre_channel B ON A.channel=B.id WHERE {$sql} order by trade_no desc");
-
-    $resultCount = $DB->getRow("SELECT 
+    // 一次性聚合：把金额、计数、利润合并到一次扫描完成（原版需要 3 次聚合）
+    $resultAll = $DB->getRow("SELECT
     COUNT(*) AS totalCount,
     SUM(CASE WHEN A.status = 1 THEN 1 ELSE 0 END) AS successCount,
     SUM(CASE WHEN A.status = 0 THEN 1 ELSE 0 END) AS unpaidCount,
-    SUM(CASE WHEN A.status = 2 THEN 1 ELSE 0 END) AS refundCount
-    FROM pre_order A LEFT JOIN pre_channel B ON A.channel=B.id WHERE {$sql} order by trade_no desc");
-
-    // 获取平台总收入利润
-    $platformProfit = $DB->getColumn("SELECT SUM(A.profitmoney) FROM pre_order A LEFT JOIN pre_channel B ON A.channel=B.id WHERE {$sql} AND status = 1 order by trade_no desc");
+    SUM(CASE WHEN A.status = 2 THEN 1 ELSE 0 END) AS refundCount,
+    SUM(money) AS totalMoney,
+    SUM(CASE WHEN A.status = 1 THEN money ELSE 0 END) AS successMoney,
+    SUM(CASE WHEN A.status = 0 THEN money ELSE 0 END) AS unpaidMoney,
+    SUM(CASE WHEN A.status = 2 THEN refundmoney ELSE 0 END) AS refundMoney,
+    SUM(CASE WHEN A.status = 1 THEN A.profitmoney ELSE 0 END) AS platformProfit
+    FROM pre_order A WHERE {$sql}");
 
 	$result = [
-        'totalMoney' => number_format($resultMoneyData['totalMoney'], 2, '.', '') ?? 0.00,
-        'successMoney' => number_format($resultMoneyData['successMoney'], 2, '.', '') ?? 0.00,
-        'unpaidMoney' => number_format($resultMoneyData['unpaidMoney'], 2, '.', '') ?? 0.00,
-        'refundMoney' => number_format($resultMoneyData['refundMoney'], 2, '.', '') ?? 0.00,
-        'totalCount' => $resultCount['totalCount'] ?? '0',
-        'successCount' => $resultCount['successCount'] ?? '0',
-        'unpaidCount' => $resultCount['unpaidCount'] ?? '0',
-        'refundCount' => $resultCount['refundCount'] ?? '0',
-        'platformProfit' => number_format($platformProfit, 2, '.', '') ?? 0.00
+        'totalMoney' => number_format($resultAll['totalMoney'], 2, '.', '') ?? 0.00,
+        'successMoney' => number_format($resultAll['successMoney'], 2, '.', '') ?? 0.00,
+        'unpaidMoney' => number_format($resultAll['unpaidMoney'], 2, '.', '') ?? 0.00,
+        'refundMoney' => number_format($resultAll['refundMoney'], 2, '.', '') ?? 0.00,
+        'totalCount' => $resultAll['totalCount'] ?? '0',
+        'successCount' => $resultAll['successCount'] ?? '0',
+        'unpaidCount' => $resultAll['unpaidCount'] ?? '0',
+        'refundCount' => $resultAll['refundCount'] ?? '0',
+        'platformProfit' => number_format($resultAll['platformProfit'], 2, '.', '') ?? 0.00
     ];
 	$result['successRate'] = $result['totalCount'] > 0 ? round(($result['totalCount']-$result['unpaidCount']) / $result['totalCount'] * 100, 2) : 0;
 	exit(json_encode(['code'=>0, 'data'=>$result]));

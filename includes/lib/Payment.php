@@ -344,26 +344,40 @@ class Payment {
     static public function processOrder($isnotify, $order, $api_trade_no, $buyer = null, $bill_trade_no = null, $bill_mch_trade_no = null, $end_time = null){
         global $DB,$conf,$siteurl;
         if($order['status']==0 || $order['status']==4){
-            if($DB->exec("UPDATE `pre_order` SET `status`=1 WHERE `trade_no`='".$order['trade_no']."' AND (status=0 OR status=4)")){
-
-                $data = ['endtime'=>'NOW()', 'date'=>'CURDATE()'];
-                if(!empty($api_trade_no)){
-                    $data['api_trade_no'] = $api_trade_no;
-                    $order['api_trade_no'] = $api_trade_no;
-                }
-                if(!empty($buyer) && empty($order['buyer'])){
-                    $data['buyer'] = $buyer;
-                    $order['buyer'] = $buyer;
-                }
-                if(!empty($bill_trade_no)) $data['bill_trade_no'] = $bill_trade_no;
-                if(!empty($bill_mch_trade_no)) $data['bill_mch_trade_no'] = $bill_mch_trade_no;
-                if(!empty($end_time)){
-                    $data['endtime'] = $end_time;
-                    $data['date'] = date('Y-m-d', strtotime($end_time));
-                }
-                if($order['settle']>0) $data['settle'] = $order['settle'];
-                $DB->update('order', $data, ['trade_no'=>$order['trade_no']]);
-
+            // 合并两次 UPDATE 为一次：status=1 + 其他字段
+            $sets = ['status=1', 'endtime=NOW()', 'date=CURDATE()'];
+            $params = [':trade_no'=>$order['trade_no']];
+            if(!empty($api_trade_no)){
+                $sets[] = 'api_trade_no=:api_trade_no';
+                $params[':api_trade_no'] = $api_trade_no;
+                $order['api_trade_no'] = $api_trade_no;
+            }
+            if(!empty($buyer) && empty($order['buyer'])){
+                $sets[] = 'buyer=:buyer';
+                $params[':buyer'] = $buyer;
+                $order['buyer'] = $buyer;
+            }
+            if(!empty($bill_trade_no)){
+                $sets[] = 'bill_trade_no=:bill_trade_no';
+                $params[':bill_trade_no'] = $bill_trade_no;
+            }
+            if(!empty($bill_mch_trade_no)){
+                $sets[] = 'bill_mch_trade_no=:bill_mch_trade_no';
+                $params[':bill_mch_trade_no'] = $bill_mch_trade_no;
+            }
+            if(!empty($end_time)){
+                $sets[] = 'endtime=:endtime';
+                $sets[] = 'date=:date';
+                $params[':endtime'] = $end_time;
+                $params[':date'] = date('Y-m-d', strtotime($end_time));
+            }
+            if($order['settle']>0){
+                $sets[] = 'settle=:settle';
+                $params[':settle'] = $order['settle'];
+            }
+            $sql = "UPDATE pre_order SET ".implode(', ', $sets)." WHERE trade_no=:trade_no AND status IN (0,4)";
+            $affected = $DB->exec($sql, $params);
+            if($affected){
                 processOrder($order, $isnotify);
             }
         }elseif(empty($order['api_trade_no']) && !empty($api_trade_no)){
@@ -436,11 +450,24 @@ class Payment {
         $support_plugins = \lib\ProfitSharing\CommUtil::$plugins;
         if(in_array($plugin, $support_plugins)){
             $psreceiver = null;
-            if($order['subchannel'] > 0){
-                $psreceiver = $DB->getRow("SELECT * FROM `pre_psreceiver` WHERE `channel`='{$order['channel']}' AND `uid`='{$order['uid']}' AND `subchannel`='{$order['subchannel']}' AND `status`=1 ORDER BY id ASC LIMIT 1");
+            $channel = intval($order['channel']);
+            $uid = intval($order['uid']);
+            // 一次性 UNION 三个优先级查询，避免连续 3 次单行查询
+            $rows = $DB->getAll(
+                "(SELECT * FROM `pre_psreceiver` WHERE `channel`=:ch AND `uid`=:uid AND `subchannel`=:sub AND `status`=1 ORDER BY id ASC LIMIT 1)
+                 UNION ALL
+                 (SELECT * FROM `pre_psreceiver` WHERE `channel`=:ch AND `uid`=:uid AND `status`=1 ORDER BY id ASC LIMIT 1)
+                 UNION ALL
+                 (SELECT * FROM `pre_psreceiver` WHERE `channel`=:ch AND `uid` IS NULL AND `status`=1 ORDER BY id ASC LIMIT 1)",
+                [':ch'=>$channel, ':uid'=>$uid, ':sub'=>intval($order['subchannel'])]
+            );
+            if($order['subchannel'] > 0 && !empty($rows[0])){
+                $psreceiver = $rows[0];
+            }elseif(!empty($rows[1])){
+                $psreceiver = $rows[1];
+            }elseif(!empty($rows[2])){
+                $psreceiver = $rows[2];
             }
-            if(!$psreceiver) $psreceiver = $DB->getRow("SELECT * FROM `pre_psreceiver` WHERE `channel`='{$order['channel']}' AND `uid`='{$order['uid']}' AND `status`=1 ORDER BY id ASC LIMIT 1");
-            if(!$psreceiver) $psreceiver = $DB->getRow("SELECT * FROM `pre_psreceiver` WHERE `channel`='{$order['channel']}' AND `uid` IS NULL AND `status`=1 ORDER BY id ASC LIMIT 1");
             if($psreceiver){
                 if($psreceiver['subchannel'] > 0 && $order['subchannel']!=$psreceiver['subchannel']) return 0;
                 if(!$psreceiver['minmoney'] || $order['realmoney']>=$psreceiver['minmoney']){

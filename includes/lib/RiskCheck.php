@@ -62,7 +62,7 @@ class RiskCheck
                                 \lib\MsgNotice::robot_webhook($conf['msgrobot_url'], $title, $content, true);
                             }else{
                                 $mail_name = $conf['mail_recv']?$conf['mail_recv']:$conf['mail_name'];
-							    send_mail($mail_name,$title,$content);
+							    \lib\MsgNotice::queue_mail($mail_name, $title, $content);
                             }
 						}
 					}
@@ -84,7 +84,7 @@ class RiskCheck
                             \lib\MsgNotice::robot_webhook($conf['msgrobot_url'], $title, $content, true);
                         }else{
 						    $mail_name = $conf['mail_recv']?$conf['mail_recv']:$conf['mail_name'];
-						    send_mail($mail_name,$title,$content);
+						    \lib\MsgNotice::queue_mail($mail_name, $title, $content);
                         }
 					}
 				}
@@ -103,20 +103,13 @@ class RiskCheck
             echo '未开启商户订单成功率检查功能';
             return;
         }
-		//统计指定时间内每个商户的总订单数量
-		$user_all_stats_rows=$DB->getAll("SELECT uid,count(*) ordernum FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) GROUP BY uid");
-		//统计指定时间内每个商户的成功订单数量
-		$user_suc_stats_rows=$DB->getAll("SELECT uid,count(*) ordernum FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) and status>0 GROUP BY uid");
-		$user_suc_stats = [];
-		foreach($user_suc_stats_rows as $row){
+		//一次性 SUM(CASE) 合并总订单/成功订单统计（避免两次 GROUP BY 全表扫描）
+		$user_stats_rows=$DB->getAll("SELECT uid, COUNT(*) AS total_num, SUM(IF(status>0,1,0)) AS succ_num FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) GROUP BY uid");
+		foreach($user_stats_rows as $row){
 			if(!$row['uid']) continue;
-			$user_suc_stats[$row['uid']] = $row['ordernum'];
-		}
-		foreach($user_all_stats_rows as $row){
-			if(!$row['uid']) continue;
-			$total_num = intval($row['ordernum']);
-			$succ_num = intval($user_suc_stats[$row['uid']]);
-			$user_rate = round($succ_num * 100 / $total_num, 2);
+			$total_num = intval($row['total_num']);
+			$succ_num = intval($row['succ_num']);
+			$user_rate = $total_num > 0 ? round($succ_num * 100 / $total_num, 2) : 0;
 			if($total_num >= $count && $user_rate < $sucrate){
 				$userrow = $DB->find('user', 'uid,email,pay', ['uid'=>$row['uid']]);
 				if($userrow['pay'] == 1){
@@ -124,7 +117,9 @@ class RiskCheck
 					echo 'UID:'.$row['uid'].' 订单成功率'.$user_rate.'%（'.$succ_num.'/'.$total_num.'），已关闭支付权限<br/>';
 					$DB->exec("INSERT INTO `pre_risk` (`uid`, `type`, `content`, `date`) VALUES (:uid, 1, :content, NOW())", [':uid'=>$row['uid'],':content'=>$user_rate.'%（'.$succ_num.'/'.$total_num.'）']);
 					if($conf['check_sucrate_notice'] == 1 && !empty($userrow['email'])){
-						send_mail($userrow['email'],$conf['sitename'].' - 商户支付权限关闭提醒','尊敬的用户：你的商户ID '.$userrow['uid'].' 因在'.$second.'秒内订单支付成功率低于'.$sucrate.'%，已被系统自动关闭支付权限！如有疑问请联系网站客服。<br/>当前订单支付成功率：'.$user_rate.'%（总订单数：'.$succ_num.'，成功订单数：'.$total_num.'）<br/>----------<br/>'.$conf['sitename'].'<br/>'.date('Y-m-d H:i:s'));
+						$mail_title = $conf['sitename'].' - 商户支付权限关闭提醒';
+						$mail_body = '尊敬的用户：你的商户ID '.$userrow['uid'].' 因在'.$second.'秒内订单支付成功率低于'.$sucrate.'%，已被系统自动关闭支付权限！如有疑问请联系网站客服。<br/>当前订单支付成功率：'.$user_rate.'%（总订单数：'.$succ_num.'，成功订单数：'.$total_num.'）<br/>----------<br/>'.$conf['sitename'].'<br/>'.date('Y-m-d H:i:s');
+						\lib\MsgNotice::queue_mail($userrow['email'], $mail_title, $mail_body);
 					}
 				}
 			}
@@ -163,7 +158,9 @@ class RiskCheck
 						echo 'UID:'.$row['uid'].' 投诉率'.$user_rate.'%（'.$complain_num.'/'.$total_num.'），已关闭支付权限<br/>';
 						$DB->exec("INSERT INTO `pre_risk` (`uid`, `type`, `content`, `date`) VALUES (:uid, 3, :content, NOW())", [':uid'=>$row['uid'],':content'=>$user_rate.'%（'.$complain_num.'/'.$total_num.'）']);
 						if($conf['check_complain_notice'] == 1 && !empty($userrow['email'])){
-							send_mail($userrow['email'],$conf['sitename'].' - 商户支付权限关闭提醒','尊敬的用户：你的商户ID '.$userrow['uid'].' 因在7天内订单投诉率高于'.$complain_rate.'%，已被系统自动关闭支付权限！如有疑问请联系网站客服。<br/>当前订单投诉率：'.$user_rate.'%（7天总订单数：'.$total_num.'，投诉订单数：'.$complain_num.'）<br/>----------<br/>'.$conf['sitename'].'<br/>'.date('Y-m-d H:i:s'));
+							$mail_title = $conf['sitename'].' - 商户支付权限关闭提醒';
+							$mail_body = '尊敬的用户：你的商户ID '.$userrow['uid'].' 因在7天内订单投诉率高于'.$complain_rate.'%，已被系统自动关闭支付权限！如有疑问请联系网站客服。<br/>当前订单投诉率：'.$user_rate.'%（7天总订单数：'.$total_num.'，投诉订单数：'.$complain_num.'）<br/>----------<br/>'.$conf['sitename'].'<br/>'.date('Y-m-d H:i:s');
+							\lib\MsgNotice::queue_mail($userrow['email'], $mail_title, $mail_body);
 						}
 					}
 				}
@@ -181,18 +178,13 @@ class RiskCheck
             echo '未开启单个IP连续未支付订单数量检查功能';
             return;
         }
-		//统计指定时间内每个IP的总订单数量
-		$ip_all_stats_rows=$DB->getAll("SELECT ip,count(*) ordernum FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) GROUP BY ip");
-		//统计指定时间内每个IP的成功订单数量
-		$ip_suc_stats_rows=$DB->getAll("SELECT ip,count(*) ordernum FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) and status>0 GROUP BY ip");
-		$ip_suc_stats = [];
-		foreach($ip_suc_stats_rows as $row){
+		//一次性 SUM(CASE) 合并 IP 总订单/成功订单统计
+		$ip_stats_rows=$DB->getAll("SELECT ip, COUNT(*) AS total_num, SUM(IF(status>0,1,0)) AS succ_num FROM pre_order WHERE deleted=0 AND addtime>=DATE_SUB(NOW(), INTERVAL {$second} SECOND) GROUP BY ip");
+		foreach($ip_stats_rows as $row){
 			if(!$row['ip']) continue;
-			$ip_suc_stats[$row['ip']] = $row['ordernum'];
-		}
-		foreach($ip_all_stats_rows as $row){
-			if($row['ordernum'] < $count) continue;
-			$succ_num = intval($ip_suc_stats[$row['ip']]);
+			$total_num = intval($row['total_num']);
+			if($total_num < $count) continue;
+			$succ_num = intval($row['succ_num']);
 			if($succ_num > 0) continue;
 			$black = $DB->getRow("select * from pre_blacklist where type=1 and content=:content limit 1", [':content'=>$row['ip']]);
 			if($black){

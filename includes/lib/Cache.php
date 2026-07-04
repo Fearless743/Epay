@@ -5,6 +5,29 @@ class Cache {
 	private $useRedis = false;
 	private $redis = null;
 	private $mysqlFallback = false;
+	// 进程内静态缓存：避免每个 PHP-FPM worker 启动时第一次访问触发 pre_config 全表扫描
+	// 单进程内多请求复用，Opcache 共享内存层（APCu）跨进程复用
+	private static $processCache = [];
+	private static $apcuAvailable = null;
+
+	private static function isApcuAvailable(){
+		if(self::$apcuAvailable === null){
+			self::$apcuAvailable = function_exists('apcu_enabled') && apcu_enabled();
+		}
+		return self::$apcuAvailable;
+	}
+
+	private static function apcuGet($key){
+		if(!self::isApcuAvailable()) return false;
+		$success = false;
+		$val = apcu_fetch($key, $success);
+		return $success ? $val : false;
+	}
+
+	private static function apcuSet($key, $val, $ttl=0){
+		if(!self::isApcuAvailable()) return false;
+		return apcu_store($key, $val, $ttl);
+	}
 
 	public function __construct() {
 		global $redisconfig;
@@ -102,6 +125,20 @@ class Cache {
 		global $_CACHE;
 		$_CACHE = array();
 
+		// 1. 进程内静态缓存（最快）
+		if(isset(self::$processCache['config']) && is_array(self::$processCache['config'])){
+			$_CACHE = self::$processCache['config'];
+			return $_CACHE;
+		}
+
+		// 2. APCu 共享内存（跨进程复用，避免每个 FPM worker 都查 DB）
+		$apcu_val = self::apcuGet('epay_config');
+		if($apcu_val !== false && is_array($apcu_val)){
+			$_CACHE = $apcu_val;
+			self::$processCache['config'] = $apcu_val;
+			return $_CACHE;
+		}
+
 		if ($this->useRedis && !$this->mysqlFallback) {
 			if ($this->redisConnect()) {
 				try {
@@ -118,7 +155,7 @@ class Cache {
 		if (empty($_CACHE['version'])) {
 			global $DB;
 			$cache = array();
-			$result = $DB->getAll("SELECT * FROM pre_config");
+			$result = $DB->getAll("SELECT k, v FROM pre_config");
 			foreach($result as $row){
 				$cache[ $row['k'] ] = $row['v'];
 			}
@@ -126,17 +163,22 @@ class Cache {
 				$_CACHE = $cache;
 			}
 		}
+		// 写入各级缓存
+		self::$processCache['config'] = $_CACHE;
+		self::apcuSet('epay_config', $_CACHE, 60);
 		return $_CACHE;
 	}
 
 	public function update() {
 		global $DB;
 		$cache = array();
-		$result = $DB->getAll("SELECT * FROM pre_config");
+		$result = $DB->getAll("SELECT k, v FROM pre_config");
 		foreach($result as $row){
 			$cache[ $row['k'] ] = $row['v'];
 		}
 		$this->save('config', $cache);
+		self::$processCache['config'] = $cache;
+		self::apcuSet('epay_config', $cache, 60);
 		return $cache;
 	}
 
@@ -147,12 +189,16 @@ class Cache {
 				try {
 					$this->redis->del($key);
 					unset($_CACHE[$key]);
+					unset(self::$processCache[$key]);
+					self::apcuSet('epay_'.$key, false, 1);
 					return true;
 				} catch (\Exception $e) {
 					$this->mysqlFallback = true;
 				}
 			}
 		}
+		unset(self::$processCache[$key]);
+		self::apcuSet('epay_config', false, 1);
 		global $DB;
 		return $DB->exec("UPDATE pre_cache SET v='' WHERE k=:key", [':key'=>$key]);
 	}
@@ -164,12 +210,14 @@ class Cache {
 				try {
 					$this->redis->del($key);
 					unset($_CACHE[$key]);
+					unset(self::$processCache[$key]);
 					return true;
 				} catch (\Exception $e) {
 					$this->mysqlFallback = true;
 				}
 			}
 		}
+		unset(self::$processCache[$key]);
 		global $DB;
 		return $DB->exec("DELETE FROM pre_cache WHERE k=:key", [':key'=>$key]);
 	}

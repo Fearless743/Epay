@@ -135,8 +135,9 @@ CREATE TABLE `pre_channel` (
   `daymaxorder` int(10) DEFAULT 0,
   `timestart` int(11) DEFAULT NULL,
   `timestop` int(11) DEFAULT NULL,
- PRIMARY KEY (`id`),
- KEY `type` (`type`)
+PRIMARY KEY (`id`),
+  KEY `type` (`type`),
+  KEY `idx_type_status` (`type`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `pre_roll`;
@@ -148,7 +149,8 @@ CREATE TABLE `pre_roll` (
   `info` text DEFAULT NULL,
   `status` tinyint(1) NOT NULL DEFAULT '0',
   `index` int(11) NOT NULL DEFAULT '0',
- PRIMARY KEY (`id`)
+ PRIMARY KEY (`id`),
+  KEY `idx_type_status` (`type`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=101;
 
 DROP TABLE IF EXISTS `pre_weixin`;
@@ -210,13 +212,23 @@ CREATE TABLE `pre_order` (
   `cert_info` varchar(300) DEFAULT NULL,
   `province` varchar(2) DEFAULT NULL,
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
- PRIMARY KEY (`trade_no`),
- KEY `uid` (`uid`),
- KEY `out_trade_no` (`out_trade_no`,`uid`),
- KEY `api_trade_no` (`api_trade_no`),
- KEY `bill_trade_no` (`bill_trade_no`),
- KEY `bill_mch_trade_no` (`bill_mch_trade_no`),
- KEY `date` (`date`)
+PRIMARY KEY (`trade_no`),
+  KEY `uid` (`uid`),
+  KEY `out_trade_no` (`out_trade_no`,`uid`),
+  KEY `api_trade_no` (`api_trade_no`),
+  KEY `bill_trade_no` (`bill_trade_no`),
+  KEY `bill_mch_trade_no` (`bill_mch_trade_no`),
+  KEY `date` (`date`),
+  KEY `idx_notify` (`notify`, `notifytime`, `deleted`),
+  KEY `idx_uid_type` (`uid`, `type`, `deleted`),
+  KEY `idx_uid_channel` (`uid`, `channel`, `deleted`),
+  KEY `idx_date_status` (`date`, `status`, `deleted`),
+  KEY `idx_addtime_status` (`addtime`, `status`, `deleted`),
+  KEY `idx_uid_addtime` (`uid`, `addtime`, `deleted`),
+  KEY `idx_uid_date_type` (`uid`, `date`, `type`, `deleted`),
+  KEY `idx_buyer_status` (`buyer`, `status`, `deleted`),
+  KEY `idx_ip_status` (`ip`, `status`, `deleted`),
+  KEY `idx_chan_sub` (`channel`, `subchannel`, `addtime`, `deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `pre_group`;
@@ -295,9 +307,11 @@ CREATE TABLE `pre_user` (
   `print_config` varchar(300) DEFAULT NULL,
   `pay_maxmoney` varchar(10) DEFAULT NULL,
   `pay_minmoney` varchar(10) DEFAULT NULL,
- PRIMARY KEY (`uid`),
- KEY `email` (`email`),
- KEY `phone` (`phone`)
+PRIMARY KEY (`uid`),
+  KEY `email` (`email`),
+  KEY `phone` (`phone`),
+  KEY `idx_upid` (`upid`),
+  KEY `idx_status` (`status`, `settle`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1000;
 
 DROP TABLE IF EXISTS `pre_settle`;
@@ -354,7 +368,8 @@ CREATE TABLE `pre_record` (
   `date` datetime NOT NULL,
   PRIMARY KEY (`id`),
   KEY `uid` (`uid`),
-  KEY `trade_no` (`trade_no`)
+  KEY `trade_no` (`trade_no`),
+  KEY `idx_uid_type_trade` (`uid`, `type`, `trade_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `pre_batch`;
@@ -422,8 +437,10 @@ CREATE TABLE `pre_psreceiver` (
   `status` tinyint(1) NOT NULL DEFAULT '0',
   `addtime` datetime DEFAULT NULL,
   `info` varchar(1024) DEFAULT NULL,
- PRIMARY KEY (`id`),
- KEY `channel` (`channel`,`uid`)
+PRIMARY KEY (`id`),
+  KEY `channel` (`channel`,`uid`),
+  KEY `idx_channel_uid_status` (`channel`, `uid`, `status`),
+  KEY `idx_channel_sub_status` (`channel`, `subchannel`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `pre_psorder`;
@@ -458,9 +475,10 @@ CREATE TABLE `pre_subchannel` (
   `addtime` datetime DEFAULT NULL,
   `usetime` datetime DEFAULT NULL,
   `apply_id` int(11) DEFAULT NULL,
- PRIMARY KEY (`id`),
- KEY `channel` (`channel`),
- KEY `uid` (`uid`)
+PRIMARY KEY (`id`),
+  KEY `channel` (`channel`),
+  KEY `uid` (`uid`),
+  KEY `idx_uid_status` (`uid`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `pre_blacklist`;
@@ -537,9 +555,10 @@ CREATE TABLE `pre_transfer` (
   `result` varchar(80) DEFAULT NULL,
   `ext` text DEFAULT NULL,
   `deleted` tinyint(1) NOT NULL DEFAULT '0',
- PRIMARY KEY (`biz_no`),
- KEY `uid` (`uid`),
- KEY `out_biz_no` (`out_biz_no`,`uid`)
+PRIMARY KEY (`biz_no`),
+  KEY `uid` (`uid`),
+  KEY `out_biz_no` (`out_biz_no`,`uid`),
+  KEY `idx_uid_addtime` (`uid`, `addtime`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP TABLE IF EXISTS `pre_invitecode`;

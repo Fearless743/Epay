@@ -4,8 +4,8 @@ error_reporting(E_ERROR | E_PARSE | E_COMPILE_ERROR);
 if (defined("IN_CRONLITE")) {
     return;
 }
-define("VERSION", "3157");
-define("DB_VERSION", "2057");
+define("VERSION", "3158");
+define("DB_VERSION", "2058");
 define("IN_CRONLITE", true);
 define("SYSTEM_ROOT", dirname(__FILE__) . "/");
 define("ROOT", dirname(SYSTEM_ROOT) . "/");
@@ -16,7 +16,9 @@ date_default_timezone_set("Asia/Shanghai");
 $date = date("Y-m-d H:i:s");
 
 if (!isset($nosession) || !$nosession) {
-    session_start();
+    session_start([
+        "read_and_close" => true,
+    ]);
 }
 
 if (!function_exists("is_https")) {
@@ -75,7 +77,7 @@ if (!$dbconfig["user"] || !$dbconfig["pwd"] || !$dbconfig["dbname"]) {
 
 $DB = new \lib\PdoHelper($dbconfig);
 
-if ($DB->query("select * from pre_config where 1") == false) {
+if ($DB->query("SELECT 1 FROM " . DBQZ . "config LIMIT 1") === false) {
     //检测安装2
     header("Content-type:text/html;charset=utf-8");
     echo '你还没安装！<a href="/install/">点此安装</a>';

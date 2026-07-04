@@ -1,8 +1,18 @@
 <?php
+// 进程内 cURL handle 复用池：减少 TCP/TLS 握手开销
+function _curl_get_handle(){
+	static $ch = null;
+	if($ch === null){
+		$ch = curl_init();
+	}
+	return $ch;
+}
+
 function curl_get($url)
 {
 	global $conf;
-	$ch=curl_init($url);
+	$ch = _curl_get_handle();
+	curl_setopt($ch, CURLOPT_URL, $url);
 	if($conf['proxy'] == 1){
 		$proxy_server = $conf['proxy_server'];
 		$proxy_port = intval($conf['proxy_port']);
@@ -25,30 +35,28 @@ function curl_get($url)
 			curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxy_userpwd);
 		}
 		curl_setopt($ch, CURLOPT_PROXYTYPE, $proxy_type);
+	}else{
+		curl_setopt($ch, CURLOPT_PROXY, null);
 	}
-	$httpheader[] = "Accept: */*";
-	$httpheader[] = "Accept-Language: zh-CN,zh;q=0.8";
-	$httpheader[] = "Connection: close";
+	$httpheader = ["Accept: */*", "Accept-Language: zh-CN,zh;q=0.8", "Connection: close"];
 	curl_setopt($ch, CURLOPT_HTTPHEADER, $httpheader);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36');
-	curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+	curl_setopt($ch, CURLOPT_TIMEOUT, isset($conf['curl_timeout']) ? intval($conf['curl_timeout']) : 8);
 	$content=curl_exec($ch);
-	curl_close($ch);
 	return $content;
 }
 function get_curl($url, $post=0, $referer=0, $cookie=0, $header=0, $ua=0, $nobaody=0, $addheader=0, $location=0)
 {
-	$ch = curl_init();
+	global $conf;
+	$ch = _curl_get_handle();
 	curl_setopt($ch, CURLOPT_URL, $url);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-	$httpheader[] = "Accept: */*";
-	$httpheader[] = "Accept-Encoding: gzip,deflate,sdch";
-	$httpheader[] = "Accept-Language: zh-CN,zh;q=0.8";
-	$httpheader[] = "Connection: close";
+	$httpheader = ["Accept: */*", "Accept-Encoding: gzip,deflate,sdch", "Accept-Language: zh-CN,zh;q=0.8", "Connection: close"];
 	if($addheader){
 		$httpheader = array_merge($httpheader, $addheader);
 	}
@@ -56,15 +64,24 @@ function get_curl($url, $post=0, $referer=0, $cookie=0, $header=0, $ua=0, $nobao
 	if ($post) {
 		curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+	}else{
+		curl_setopt($ch, CURLOPT_POST, 0);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, null);
 	}
 	if ($header) {
 		curl_setopt($ch, CURLOPT_HEADER, true);
+	}else{
+		curl_setopt($ch, CURLOPT_HEADER, false);
 	}
 	if ($cookie) {
 		curl_setopt($ch, CURLOPT_COOKIE, $cookie);
+	}else{
+		curl_setopt($ch, CURLOPT_COOKIE, null);
 	}
 	if($referer){
 		curl_setopt($ch, CURLOPT_REFERER, $referer);
+	}else{
+		curl_setopt($ch, CURLOPT_REFERER, null);
 	}
 	if ($ua) {
 		curl_setopt($ch, CURLOPT_USERAGENT, $ua);
@@ -74,14 +91,19 @@ function get_curl($url, $post=0, $referer=0, $cookie=0, $header=0, $ua=0, $nobao
 	}
 	if ($nobaody) {
 		curl_setopt($ch, CURLOPT_NOBODY, 1);
+	}else{
+		curl_setopt($ch, CURLOPT_NOBODY, 0);
 	}
 	if ($location) {
 		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+	}else{
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
 	}
 	curl_setopt($ch, CURLOPT_ENCODING, "gzip");
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
+	curl_setopt($ch, CURLOPT_TIMEOUT, isset($conf['curl_timeout']) ? intval($conf['curl_timeout']) : 8);
 	$ret = curl_exec($ch);
-	curl_close($ch);
 	return $ret;
 }
 function real_ip($type=0){

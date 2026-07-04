@@ -417,6 +417,10 @@ class chuangyupay_plugin
         $pageCount = 0;
         $url = self::API_BASE . "/api/orders/lists";
         $hasCredentials = !empty($channel["username"]) && !empty($channel["password"]);
+        // 超时兜底：cron 单次执行累计 API + 匹配耗时不能超过 25s，
+        // 防止创鱼 API 慢响应拖死整个 cron
+        $tCronStart = microtime(true);
+        $tCronBudget = 25.0;
 
         do {
             $parameter = [
@@ -505,6 +509,11 @@ class chuangyupay_plugin
             echo "第 {$page} 页：API 耗时 " . number_format($tPage * 1000, 1) . "ms，匹配耗时 " . number_format($tMatchPage * 1000, 1) . "ms，返回 " . count($orderList) . " 条<br/>";
 
             $page++;
+            // 累计耗时兜底：超过预算时间后退出，下一轮 cron 继续
+            if((microtime(true) - $tCronStart) > $tCronBudget){
+                echo "[time-budget-exceeded {$tCronBudget}s，第 {$page} 页停止翻页]<br/>";
+                break;
+            }
         } while ($page <= $lastPage);
 
         if ($matchedCount == 0 && $apiErrors == 0) {

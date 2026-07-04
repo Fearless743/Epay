@@ -22,8 +22,13 @@ if($act=='query')
 	$orders=$DB->getColumn("SELECT count(*) from pre_order WHERE uid={$pid} AND deleted=0");
 	$lastday=date("Y-m-d",strtotime("-1 day"));
 	$today=date("Y-m-d");
-	$order_today=$DB->getColumn("SELECT count(*) from pre_order where uid={$pid} and status=1 and deleted=0 and date='$today'");
-	$order_lastday=$DB->getColumn("SELECT count(*) from pre_order where uid={$pid} and status=1 and deleted=0 and date='$lastday'");
+	// 一次性 SUM(CASE) 把今日/昨日订单计数合并（避免 2 次额外扫描）
+	$stat_row=$DB->getRow("SELECT
+		SUM(CASE WHEN status=1 AND deleted=0 AND date=:today THEN 1 ELSE 0 END) AS today_cnt,
+		SUM(CASE WHEN status=1 AND deleted=0 AND date=:lastday THEN 1 ELSE 0 END) AS lastday_cnt
+		FROM pre_order WHERE uid=:pid AND deleted=0", [':pid'=>$pid, ':today'=>$today, ':lastday'=>$lastday]);
+	$order_today = intval($stat_row['today_cnt']);
+	$order_lastday = intval($stat_row['lastday_cnt']);
 
 	$result=array("code"=>1,"pid"=>$pid,"key"=>$key,"active"=>$userrow['status'],"money"=>$userrow['money'],"type"=>$userrow['settle_id'],"account"=>$userrow['account'],"username"=>$userrow['username'],"orders"=>$orders,"orders_today"=>$order_today,"orders_lastday"=>$order_lastday);
 	exit(json_encode($result));
