@@ -4,7 +4,7 @@ error_reporting(E_ERROR | E_PARSE | E_COMPILE_ERROR);
 if (defined("IN_CRONLITE")) {
     return;
 }
-define("VERSION", "3160");
+define("VERSION", "3161");
 define("DB_VERSION", "2058");
 define("IN_CRONLITE", true);
 define("SYSTEM_ROOT", dirname(__FILE__) . "/");
@@ -93,6 +93,11 @@ if (!$conf["localurl"]) {
 // 会话签名盐：由每个安装独立的 SYS_KEY 派生，避免使用全局固定盐
 $password_hash = substr(md5("adminsess|" . SYS_KEY), 0, 16);
 
+if ($conf["version"] < DB_VERSION) {
+    // 缓存可能过期（例如升级时 APCu 在 CLI/HTTP 模式下未成功清除），
+    // 强制从数据库重载并刷新所有缓存层
+    $conf = $CACHE->update();
+}
 if ($conf["version"] < DB_VERSION) {
     if (!$install) {
         header("Content-type:text/html;charset=utf-8");

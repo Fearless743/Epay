@@ -2,7 +2,6 @@
 error_reporting(0);
 require '../config.php';
 require __DIR__ . '/db_upgrade.php';
-require __DIR__ . '/../includes/lib/Cache.php';
 
 @header('Content-Type: text/html; charset=UTF-8');
 
@@ -51,13 +50,7 @@ foreach ($sql_files as $sql_file) {
 }
 $db->exec("UPDATE `{$dbconfig['dbqz']}_config` SET `v` = '$latest_version' where `k` = 'version'");
 
-// 升级后必须清掉所有缓存层（包括进程内静态 + APCu 共享内存 + Redis + MySQL pre_cache），
-// 否则 PHP-FPM worker 内的 processCache 仍会返回旧的 conf['version']，
-// 触发 common.php 中 "请先完成网站升级" 的判断。
-$DB = $db;
-$_CACHE = [];
-$cache = new \lib\Cache();
-$cache->clear('config');
+// common.php 在检测到版本不匹配时会自动重载缓存，无需在此显式操作。
 
 echo '成功执行SQL语句'.$success.'条！<br/>';
 if($errorMsg){
