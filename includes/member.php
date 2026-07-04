@@ -14,7 +14,7 @@ if(isset($_COOKIE["user_token"]))
 		$expiretime = intval($expiretime);
 		// 先快速判断 cookie 中的 expiretime，避免每次请求都查 pre_user
 		if($uid > 0 && $expiretime > time()){
-			$userrow=$DB->getRow("SELECT uid, `key` FROM pre_user WHERE uid=:uid limit 1", [':uid'=>$uid]);
+			$userrow=$DB->getRow("SELECT * FROM pre_user WHERE uid=:uid limit 1", [':uid'=>$uid]);
 			$session=md5($userrow['uid'].$userrow['key'].$password_hash);
 			if($userrow && $session==$sid) {
 				$islogin2=1;
