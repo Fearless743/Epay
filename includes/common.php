@@ -4,7 +4,7 @@ error_reporting(E_ERROR | E_PARSE | E_COMPILE_ERROR);
 if (defined("IN_CRONLITE")) {
     return;
 }
-define("VERSION", "3162");
+define("VERSION", "3163");
 define("DB_VERSION", "2058");
 define("IN_CRONLITE", true);
 define("SYSTEM_ROOT", dirname(__FILE__) . "/");
@@ -16,9 +16,7 @@ date_default_timezone_set("Asia/Shanghai");
 $date = date("Y-m-d H:i:s");
 
 if (!isset($nosession) || !$nosession) {
-    session_start([
-        "read_and_close" => true,
-    ]);
+    session_start();
 }
 
 if (!function_exists("is_https")) {
