@@ -17,7 +17,7 @@ $db->exec("set sql_mode = ''");
 $db->exec("set names utf8");
 
 $version = 0;
-if($rs = $db->query("SELECT v FROM pay_config WHERE k='version'")){
+if($rs = $db->query("SELECT v FROM `{$dbconfig['dbqz']}_config` WHERE k='version'")){
 	$version = $rs->fetchColumn();
 }
 
@@ -48,8 +48,8 @@ foreach ($sql_files as $sql_file) {
 		}
 	}
 }
-$db->exec("UPDATE `pre_config` SET `v` = '$latest_version' where `k` = 'version'");
-$db->exec("UPDATE `pre_cache` SET `v` = '' where `k` = 'config'");
+$db->exec("UPDATE `{$dbconfig['dbqz']}_config` SET `v` = '$latest_version' where `k` = 'version'");
+$db->exec("UPDATE `{$dbconfig['dbqz']}_cache` SET `v` = '' where `k` = 'config'");
 echo '成功执行SQL语句'.$success.'条！<br/>';
 if($errorMsg){
 //echo '<div class="alert alert-danger text-center" role="alert">'.$errorMsg.'</div>';

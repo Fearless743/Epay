@@ -1,4 +1,27 @@
 <?php
+$is_cli = PHP_SAPI === 'cli';
+if ($is_cli && !empty($argv)) {
+	foreach (array_slice($argv, 1) as $arg) {
+		if (substr($arg, 0, 2) === '--') {
+			$arg = substr($arg, 2);
+		}
+		if (strpos($arg, '=') === false) {
+			continue;
+		}
+		[$key, $value] = explode('=', $arg, 2);
+		if ($key !== '') {
+			$_GET[$key] = $value;
+			$_REQUEST[$key] = $value;
+		}
+	}
+	if (empty($_SERVER['HTTP_HOST'])) {
+		$_SERVER['HTTP_HOST'] = 'localhost';
+	}
+	if (empty($_SERVER['REMOTE_ADDR'])) {
+		$_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+	}
+}
+
 $nosession = true;
 require './includes/common.php';
 
@@ -13,8 +36,10 @@ if (function_exists("ignore_user_abort"))
 
 @header('Content-Type: text/html; charset=UTF-8');
 
-if(empty($conf['cronkey']))exit("请先设置好监控密钥");
-if($conf['cronkey']!=$_GET['key'])exit("监控密钥不正确");
+if (!$is_cli) {
+	if(empty($conf['cronkey']))exit("请先设置好监控密钥");
+	if(!isset($_GET['key']) || $conf['cronkey']!=$_GET['key'])exit("监控密钥不正确");
+}
 
 if($_GET['do']=='settle'){
 	$settle_time=getSetting('settle_time', true);
@@ -375,6 +400,43 @@ elseif($_GET['do']=='plugin'){
 	}catch(Exception $e){
 		echo $e->getMessage();
 	}
+}
+// 批量轮询：遍历指定插件下所有启用通道执行 _cron 静态方法
+// CLI:   php cron.php --do=pluginall --plugin=chuangyupay
+// HTTP:  cron.php?do=pluginall&plugin=chuangyupay&key={cronkey}
+elseif($_GET['do']=='pluginall'){
+	$plugin = isset($_GET['plugin']) ? trim($_GET['plugin']) : '';
+	if(!preg_match('/^[a-zA-Z0-9_]+$/', $plugin)) exit('插件名称不合法');
+	// HTTP 模式下输出是带 \n 的纯文本日志，切到 text/plain 避免污染 HTML 响应
+	if(!$is_cli) header('Content-Type: text/plain; charset=UTF-8');
+
+	$rows = $DB->getAll("SELECT id,name FROM pre_channel WHERE plugin=:plugin AND status=1 ORDER BY id ASC", [':plugin'=>$plugin]);
+	if(!$rows || count($rows) == 0){
+		exit(date('Y-m-d H:i:s').' '.$plugin." 没有启用的支付通道\n");
+	}
+
+	$total = count($rows);
+	$success = 0;
+	$failed = 0;
+	foreach($rows as $row){
+		$channelid = intval($row['id']);
+		echo date('Y-m-d H:i:s').' '.$plugin.' 通道 '.$channelid.' '.$row['name']." 开始执行\n";
+		$channel = \lib\Channel::get($channelid);
+		if(!$channel){
+			$failed++;
+			echo date('Y-m-d H:i:s').' '.$plugin.' 通道 '.$channelid." 不存在，跳过\n";
+			continue;
+		}
+		try{
+			\lib\Plugin::loadForAdmin('_cron');
+			$success++;
+			echo date('Y-m-d H:i:s').' '.$plugin.' 通道 '.$channelid." 执行完成\n";
+		}catch(Exception $e){
+			$failed++;
+			echo date('Y-m-d H:i:s').' '.$plugin.' 通道 '.$channelid.' 执行失败：'.$e->getMessage()."\n";
+		}
+	}
+	echo date('Y-m-d H:i:s').' '.$plugin.' 多通道任务完成 total='.$total.' success='.$success.' failed='.$failed."\n";
 }
 elseif($_GET['do']=='transfer'){
 	if(!$conf['auto_settle_money']) exit('未开启自动结算转账功能');
