@@ -79,11 +79,35 @@ class chuangyupay_plugin
 
     private static function _getOrCreateResult(string $typename): array
     {
-        global $order;
+        global $DB, $order;
+
+        // submit.php 复用未支付订单时，全局 $order 可能没有带出 api_trade_no/payurl。
+        // 这里回库补齐，避免重复打开支付页时重复创建创鱼订单并覆盖上游单号。
+        if (empty($order["api_trade_no"]) || empty($order["payurl"])) {
+            $savedOrder = $DB->getRow(
+                "SELECT api_trade_no,payurl FROM pre_order WHERE trade_no=:trade_no AND deleted=0 LIMIT 1",
+                [":trade_no" => TRADE_NO],
+            );
+            if ($savedOrder) {
+                if (!empty($savedOrder["api_trade_no"])) {
+                    $order["api_trade_no"] = $savedOrder["api_trade_no"];
+                }
+                if (!empty($savedOrder["payurl"])) {
+                    $order["payurl"] = $savedOrder["payurl"];
+                }
+            }
+        }
 
         // 已创建过API订单，直接复用
         if (!empty($order["api_trade_no"]) && !empty($order["payurl"])) {
             return self::_showResult($typename, $order["payurl"]);
+        }
+
+        if (!empty($order["api_trade_no"]) || !empty($order["payurl"])) {
+            return [
+                "type" => "error",
+                "msg" => "创鱼订单状态不完整，请联系管理员处理",
+            ];
         }
 
         try {
@@ -93,8 +117,10 @@ class chuangyupay_plugin
         }
 
         \lib\Payment::updateOrder(TRADE_NO, $result["order_no"]);
+        $order["api_trade_no"] = $result["order_no"];
         if (!empty($result["payment_url"])) {
             \lib\Payment::updateOrderPayUrl(TRADE_NO, $result["payment_url"]);
+            $order["payurl"] = $result["payment_url"];
         }
 
         return self::_showResult($typename, $result["payment_url"]);
