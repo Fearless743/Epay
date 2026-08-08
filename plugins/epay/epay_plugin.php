@@ -367,95 +367,37 @@ class epay_plugin
 		$failed = 0;
 		$tStart = microtime(true);
 
-		// 并发反查：分批并行查询所有待支付订单，避免串行逐单 HTTP 在订单量大时拖慢整个 cron
-		// 上游为普通 PHP-FPM 服务，并发过大易触发 500/连接失败，取 3 一批并批间停顿
-		$mh = null;
-		$batch = [];
-		$ordersCount = count($orders);
-		$orderIndex = 0;
-		$batchSize = 3;
+		// 串行逐单反查：单订单 HTTP 请求，避免并发给上游 PHP-FPM 造成短时连接峰值
+		// 导致的 Internal Server Error / HTTP 0 / 查询订单号成功但无订单返回
+		foreach($orders as $order){
+			$result = $epay->queryOrderByOut($order['trade_no']);
 
-		$flushBatch = function() use (&$mh, &$batch, &$matched, &$skipped, &$failed, $epay){
-			if(empty($batch)) return;
-			if($mh === null){
-				$mh = curl_multi_init();
-				foreach($batch as $b){
-					curl_multi_add_handle($mh, $b['ch']);
-				}
-			}
-			// 执行多句柄（非阻塞推进，直到全部完成）
-			do{
-				$status = curl_multi_exec($mh, $running);
-				if($running){
-					curl_multi_select($mh, 0.2);
-				}
-			}while($running && $status === CURLM_OK);
-
-			// 逐条取回结果并入账
-			foreach($batch as $b){
-				$httpcode = curl_getinfo($b['ch'], CURLINFO_HTTP_CODE);
-				$response = curl_multi_getcontent($b['ch']);
-				$result = $response ? json_decode($response, true) : null;
-				$order = $b['order'];
-
-				// 连接/响应层面失败（超时、拒绝、HTTP 非 200、非 JSON）→ 真失败
-				if(!is_array($result)){
-					$failed++;
-					echo '订单 '.$order['trade_no'].'：查询失败（'.($httpcode!==200 && $httpcode!==0 ? 'HTTP '.$httpcode : ($httpcode===0 ? '连接失败/超时' : '响应非JSON')).'）<br/>';
-					continue;
-				}
-
-				// 上游把订单数据包在 data 里返回（部分网关结构），合并到顶层
-				if(isset($result['data']) && is_array($result['data'])){
-					$result = array_merge($result, $result['data']);
-				}
-
-				if($result['code']!=1){
-					$failed++;
-					echo '订单 '.$order['trade_no'].'：查询失败（'.(!empty($result['msg'])?$result['msg']:'code='.$result['code']).'）<br/>';
-					continue;
-				}
-
-				// code==1 但无订单数据 → 上游不存在该订单/未支付，属正常跳过，不计失败
-				if(empty($result['trade_no'])){
-					$skipped++;
-					echo '订单 '.$order['trade_no'].'：未支付或不存在，跳过<br/>';
-					continue;
-				}
-
-				self::_handleQueryResult($order, $result, $matched, $failed);
+			// 连接/响应层面失败（超时、拒绝、HTTP 非 200、非 JSON）→ 真失败
+			if(!is_array($result)){
+				$failed++;
+				echo '订单 '.$order['trade_no'].'：查询失败（响应非JSON/连接失败）<br/>';
+				continue;
 			}
 
-			// 清理本批句柄
-			foreach($batch as $b){
-				curl_multi_remove_handle($mh, $b['ch']);
-				curl_close($b['ch']);
+			// 上游把订单数据包在 data 里返回（部分网关结构），合并到顶层
+			if(isset($result['data']) && is_array($result['data'])){
+				$result = array_merge($result, $result['data']);
 			}
-			$batch = [];
-		};
 
-		while($orderIndex < $ordersCount){
-			$order = $orders[$orderIndex++];
-			$ch = curl_init($epay->queryOrderUrl($order['trade_no']));
-			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-			curl_setopt($ch, CURLOPT_HEADER, false);
-			curl_setopt($ch, CURLOPT_HTTPHEADER, ["Accept: */*", "Accept-Language: zh-CN,zh;q=0.8", "Connection: close"]);
-			$batch[] = ['ch'=>$ch, 'order'=>$order];
-			if(count($batch) >= $batchSize){
-				$flushBatch();
+			if($result['code']!=1){
+				$failed++;
+				echo '订单 '.$order['trade_no'].'：查询失败（'.(!empty($result['msg'])?$result['msg']:'code='.$result['code']).'）<br/>';
+				continue;
 			}
-			// 批间小停顿，缓解上游短时连接峰值
-			usleep(80000);
-		}
-		// 收尾剩余批次
-		if(!empty($batch)){
-			$flushBatch();
-		}
-		if($mh !== null){
-			curl_multi_close($mh);
+
+			// code==1 但无订单数据 → 上游不存在该订单/未支付，属正常跳过，不计失败
+			if(empty($result['trade_no'])){
+				$skipped++;
+				echo '订单 '.$order['trade_no'].'：未支付或不存在，跳过<br/>';
+				continue;
+			}
+
+			self::_handleQueryResult($order, $result, $matched, $failed);
 		}
 
 		$tTotal = microtime(true) - $tStart;
