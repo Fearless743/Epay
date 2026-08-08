@@ -86,10 +86,9 @@ class EpayCore
 		}
 	}
 
-	// 查询订单
+	// 查询订单（平台订单号 trade_no）
 	public function queryOrder($trade_no){
-		$url = $this->api_url.'?act=order&pid=' . $this->pid . '&key=' . $this->key . '&trade_no=' . $trade_no;
-		$response = $this->getHttpResponse($url);
+		$response = $this->getHttpResponse($this->queryOrderUrl('', $trade_no));
 		$arr = json_decode($response, true);
 		return $arr;
 	}
@@ -101,9 +100,16 @@ class EpayCore
 		return $arr;
 	}
 
-	// 构建按商户订单号(out_trade_no)查询订单的 URL（供并发轮询复用）
-	public function queryOrderUrl($out_trade_no){
-		return $this->api_url.'?act=order&pid=' . $this->pid . '&key=' . $this->key . '&out_trade_no=' . $out_trade_no;
+	// 构建查询订单 URL；$out_trade_no 与 $trade_no 二选一
+	public function queryOrderUrl($out_trade_no = '', $trade_no = ''){
+		$url = $this->api_url.'?act=order&pid=' . $this->pid . '&key=' . $this->key;
+		if($out_trade_no !== ''){
+			$url .= '&out_trade_no=' . $out_trade_no;
+		}
+		if($trade_no !== ''){
+			$url .= '&trade_no=' . $trade_no;
+		}
+		return $url;
 	}
 
 	// 订单退款

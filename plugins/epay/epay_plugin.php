@@ -363,18 +363,19 @@ class epay_plugin
 		$epay = new EpayCore($epay_config);
 
 		$matched = 0;
+		$skipped = 0;
 		$failed = 0;
 		$tStart = microtime(true);
 
 		// 并发反查：分批并行查询所有待支付订单，避免串行逐单 HTTP 在订单量大时拖慢整个 cron
-		// 上游为普通 PHP-FPM 服务，并发过大易触发 500/连接失败，取 5 一批
+		// 上游为普通 PHP-FPM 服务，并发过大易触发 500/连接失败，取 3 一批并批间停顿
 		$mh = null;
 		$batch = [];
 		$ordersCount = count($orders);
 		$orderIndex = 0;
-		$batchSize = 5;
+		$batchSize = 3;
 
-		$flushBatch = function() use (&$mh, &$batch, &$matched, &$failed, $epay){
+		$flushBatch = function() use (&$mh, &$batch, &$matched, &$skipped, &$failed, $epay){
 			if(empty($batch)) return;
 			if($mh === null){
 				$mh = curl_multi_init();
@@ -396,11 +397,32 @@ class epay_plugin
 				$response = curl_multi_getcontent($b['ch']);
 				$result = $response ? json_decode($response, true) : null;
 				$order = $b['order'];
-				if(!is_array($result) || $result['code']!=1 || empty($result['trade_no'])){
+
+				// 连接/响应层面失败（超时、拒绝、HTTP 非 200、非 JSON）→ 真失败
+				if(!is_array($result)){
 					$failed++;
-					echo '订单 '.$order['trade_no'].'：查询失败（'.(is_array($result)&&!empty($result['msg'])?$result['msg']:($httpcode!==200?'HTTP '.$httpcode:'无响应')).'）<br/>';
+					echo '订单 '.$order['trade_no'].'：查询失败（'.($httpcode!==200 && $httpcode!==0 ? 'HTTP '.$httpcode : ($httpcode===0 ? '连接失败/超时' : '响应非JSON')).'）<br/>';
 					continue;
 				}
+
+				// 上游把订单数据包在 data 里返回（部分网关结构），合并到顶层
+				if(isset($result['data']) && is_array($result['data'])){
+					$result = array_merge($result, $result['data']);
+				}
+
+				if($result['code']!=1){
+					$failed++;
+					echo '订单 '.$order['trade_no'].'：查询失败（'.(!empty($result['msg'])?$result['msg']:'code='.$result['code']).'）<br/>';
+					continue;
+				}
+
+				// code==1 但无订单数据 → 上游不存在该订单/未支付，属正常跳过，不计失败
+				if(empty($result['trade_no'])){
+					$skipped++;
+					echo '订单 '.$order['trade_no'].'：未支付或不存在，跳过<br/>';
+					continue;
+				}
+
 				self::_handleQueryResult($order, $result, $matched, $failed);
 			}
 
@@ -426,7 +448,7 @@ class epay_plugin
 				$flushBatch();
 			}
 			// 批间小停顿，缓解上游短时连接峰值
-			usleep(50000);
+			usleep(80000);
 		}
 		// 收尾剩余批次
 		if(!empty($batch)){
@@ -437,7 +459,7 @@ class epay_plugin
 		}
 
 		$tTotal = microtime(true) - $tStart;
-		echo '彩虹易支付['.$channel['name'].']：轮询完成，匹配 '.$matched.' 个订单，失败 '.$failed.' 个<br/>';
+		echo '彩虹易支付['.$channel['name'].']：轮询完成，入账 '.$matched.' 个，未支付跳过 '.$skipped.' 个，失败 '.$failed.' 个<br/>';
 		echo '<b>耗时统计</b>：总计 '.number_format($tTotal*1000, 1).'ms<br/>';
 	}
 

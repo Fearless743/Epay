@@ -4,7 +4,7 @@ error_reporting(E_ERROR | E_PARSE | E_COMPILE_ERROR);
 if (defined("IN_CRONLITE")) {
     return;
 }
-define("VERSION", "3168");
+define("VERSION", "3169");
 define("DB_VERSION", "2058");
 define("IN_CRONLITE", true);
 define("SYSTEM_ROOT", dirname(__FILE__) . "/");
