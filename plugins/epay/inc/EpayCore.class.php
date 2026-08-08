@@ -63,28 +63,17 @@ class EpayCore
 
 		$sign = $this->getSign($param);
 
-		if($sign === $param['sign']){
-			$signResult = true;
-		}else{
-			$signResult = false;
-		}
-
-		return $signResult;
+		return hash_equals($param['sign'], $sign);
 	}
 
 	// 同步回调验证
 	public function verifyReturn(){
 		if(empty($_GET)) return false;
+		if(empty($_GET['sign'])) return false;
 
 		$sign = $this->getSign($_GET);
 
-		if($sign === $_GET['sign']){
-			$signResult = true;
-		}else{
-			$signResult = false;
-		}
-
-		return $signResult;
+		return hash_equals($_GET['sign'], $sign);
 	}
 
 	// 查询订单支付状态

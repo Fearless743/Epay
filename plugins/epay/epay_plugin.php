@@ -250,39 +250,46 @@ class epay_plugin
 	}
 
 	//异步回调
+	//分层校验模式：验签 → 强制成功状态 → 金额校验 → 幂等入账
 	static public function notify(){
 		global $channel, $order;
 
 		require(PAY_ROOT."inc/epay.config.php");
 		require(PAY_ROOT."inc/EpayCore.class.php");
 
-		//计算得出通知验证结果
+		$param = !empty($_POST) ? $_POST : $_GET;
+
+		//① 验签（时间常数比较，防时序攻击）
 		$epayNotify = new EpayCore($epay_config);
-		$verify_result = $epayNotify->verifyNotify();
-
-		if($verify_result) {//验证成功
-			$param = !empty($_POST) ? $_POST : $_GET;
-
-			//商户订单号
-			$out_trade_no = $param['out_trade_no'];
-
-			//易支付交易号
-			$trade_no = $param['trade_no'];
-
-			//交易金额
-			$money = $param['money'];
-
-			if ($param['trade_status'] == 'TRADE_SUCCESS') {
-				if($out_trade_no == TRADE_NO && round($money,2)==round($order['realmoney'],2)){
-					processNotify($order, $trade_no);
-				}
-			}
-			return ['type'=>'html','data'=>'success'];
-		}
-		else {
-			//验证失败
+		if(!$epayNotify->verifyNotify()){
 			return ['type'=>'html','data'=>'fail'];
 		}
+
+		//② 强制交易状态为成功，避免未支付/处理中状态被误入账
+		if(!isset($param['trade_status']) || $param['trade_status'] !== 'TRADE_SUCCESS'){
+			return ['type'=>'html','data'=>'fail'];
+		}
+
+		//③ 商户订单号校验
+		if(!isset($param['out_trade_no']) || $param['out_trade_no'] != TRADE_NO){
+			return ['type'=>'html','data'=>'fail'];
+		}
+
+		//④ 金额校验：必须可解析为金额，且拒绝少付（按分为单位比较）
+		if(!isset($param['money']) || !is_numeric($param['money'])){
+			return ['type'=>'html','data'=>'fail'];
+		}
+		$paid = (int) round(((float)$param['money']) * 100);
+		$expected = (int) round(((float)$order['realmoney']) * 100);
+		if($paid < $expected){
+			return ['type'=>'html','data'=>'fail'];
+		}
+
+		//⑤ 幂等入账：processOrder 内部对 status IN (0,4) 才真正入账，重复通知安全
+		$trade_no = isset($param['trade_no']) ? $param['trade_no'] : null;
+		processNotify($order, $trade_no);
+
+		return ['type'=>'html','data'=>'success'];
 	}
 
 	//同步回调
