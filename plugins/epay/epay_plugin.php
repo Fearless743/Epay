@@ -261,16 +261,18 @@ class epay_plugin
 		$verify_result = $epayNotify->verifyNotify();
 
 		if($verify_result) {//验证成功
+			$param = !empty($_POST) ? $_POST : $_GET;
+
 			//商户订单号
-			$out_trade_no = $_GET['out_trade_no'];
+			$out_trade_no = $param['out_trade_no'];
 
 			//易支付交易号
-			$trade_no = $_GET['trade_no'];
+			$trade_no = $param['trade_no'];
 
 			//交易金额
-			$money = $_GET['money'];
+			$money = $param['money'];
 
-			if ($_GET['trade_status'] == 'TRADE_SUCCESS') {
+			if ($param['trade_status'] == 'TRADE_SUCCESS') {
 				if($out_trade_no == TRADE_NO && round($money,2)==round($order['realmoney'],2)){
 					processNotify($order, $trade_no);
 				}

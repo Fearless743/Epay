@@ -50,13 +50,20 @@ class EpayCore
 		return $arr;
 	}
 
-	// 异步回调验证
+	// 异步回调验证（兼容 GET/POST 方式推送）
 	public function verifyNotify(){
-		if(empty($_GET)) return false;
+		if(!empty($_POST)) {
+			$param = $_POST;
+		}elseif(!empty($_GET)) {
+			$param = $_GET;
+		}else{
+			return false;
+		}
+		if(empty($param['sign'])) return false;
 
-		$sign = $this->getSign($_GET);
+		$sign = $this->getSign($param);
 
-		if($sign === $_GET['sign']){
+		if($sign === $param['sign']){
 			$signResult = true;
 		}else{
 			$signResult = false;
