@@ -31,7 +31,7 @@ class epay_plugin
 			],
 		],
 		'select' => null,
-		'note' => '', //支付密钥填写说明
+		'note' => '如上游平台异步通知不稳定，可配置定时任务轮询订单状态兜底。定时任务地址：<a href="cron.php?do=plugin&channel={channel_id}&key={cronkey}" target="_blank">cron.php?do=plugin&channel={channel_id}&key={cronkey}</a>', //支付密钥填写说明
 		'bindwxmp' => false, //是否支持绑定微信公众号
 		'bindwxa' => false, //是否支持绑定微信小程序
 	];
@@ -338,12 +338,128 @@ class epay_plugin
 
 		$epay = new EpayCore($epay_config);
 		$result = $epay->refund($order['refund_no'], $order['api_trade_no'], $order['refundmoney']);
-		
+
 		if($result['code'] == 0){
 			return ['code'=>0];
 		}else{
 			return ['code'=>-1, 'msg'=>$result['msg']?$result['msg']:'返回数据解密失败'];
 		}
+	}
+
+	//定时任务轮询：通过上游 [API]查询单个订单(act=order) 反查待支付订单，金额校验通过后入账
+	//通过 cron.php?do=plugin&channel={id}&key={key} 或 cron.php?do=pluginall&plugin=epay&key={key} 调用
+	static public function _cron($channel){
+		global $DB;
+
+		//查询最近24小时内未支付的订单
+		$orders = $DB->getAll("SELECT * FROM pre_order WHERE channel=:channel AND deleted=0 AND status=0 AND addtime>DATE_SUB(NOW(), INTERVAL 24 HOUR) ORDER BY addtime ASC", [':channel'=>$channel['id']]);
+		if(empty($orders)){
+			echo '彩虹易支付['.$channel['name'].']：没有待查询的订单<br/>';
+			return;
+		}
+
+		require(PAY_ROOT."inc/epay.config.php");
+		require(PAY_ROOT."inc/EpayCore.class.php");
+		$epay = new EpayCore($epay_config);
+
+		$matched = 0;
+		$failed = 0;
+		$tStart = microtime(true);
+
+		// 并发反查：分批并行查询所有待支付订单，避免串行逐单 HTTP 在订单量大时拖慢整个 cron
+		// 上游是普通 PHP-FPM 服务，单机并发数不宜过大，取 10 一批
+		$mh = null;
+		$batch = [];
+		$ordersCount = count($orders);
+		$orderIndex = 0;
+		$batchSize = 10;
+
+		$flushBatch = function() use (&$mh, &$batch, &$matched, &$failed, $epay){
+			if(empty($batch)) return;
+			if($mh === null){
+				$mh = curl_multi_init();
+				foreach($batch as $b){
+					curl_multi_add_handle($mh, $b['ch']);
+				}
+			}
+			// 执行多句柄（非阻塞推进，直到全部完成）
+			do{
+				$status = curl_multi_exec($mh, $running);
+				if($running){
+					curl_multi_select($mh, 0.2);
+				}
+			}while($running && $status === CURLM_OK);
+
+			// 逐条取回结果并入账
+			foreach($batch as $b){
+				$httpcode = curl_getinfo($b['ch'], CURLINFO_HTTP_CODE);
+				$response = curl_multi_getcontent($b['ch']);
+				$result = $response ? json_decode($response, true) : null;
+				$order = $b['order'];
+				if(!is_array($result) || $result['code']!=1 || empty($result['trade_no'])){
+					$failed++;
+					echo '订单 '.$order['trade_no'].'：查询失败（'.(is_array($result)&&!empty($result['msg'])?$result['msg']:($httpcode!==200?'HTTP '.$httpcode:'无响应')).'）<br/>';
+					continue;
+				}
+				self::_handleQueryResult($order, $result, $matched, $failed);
+			}
+
+			// 清理本批句柄
+			foreach($batch as $b){
+				curl_multi_remove_handle($mh, $b['ch']);
+				curl_close($b['ch']);
+			}
+			$batch = [];
+		};
+
+		while($orderIndex < $ordersCount){
+			$order = $orders[$orderIndex++];
+			$ch = curl_init($epay->queryOrderUrl($order['trade_no']));
+			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+			curl_setopt($ch, CURLOPT_HEADER, false);
+			curl_setopt($ch, CURLOPT_HTTPHEADER, ["Accept: */*", "Accept-Language: zh-CN,zh;q=0.8", "Connection: close"]);
+			$batch[] = ['ch'=>$ch, 'order'=>$order];
+			if(count($batch) >= $batchSize){
+				$flushBatch();
+			}
+		}
+		// 收尾剩余批次
+		if(!empty($batch)){
+			$flushBatch();
+		}
+		if($mh !== null){
+			curl_multi_close($mh);
+		}
+
+		$tTotal = microtime(true) - $tStart;
+		echo '彩虹易支付['.$channel['name'].']：轮询完成，匹配 '.$matched.' 个订单，失败 '.$failed.' 个<br/>';
+		echo '<b>耗时统计</b>：总计 '.number_format($tTotal*1000, 1).'ms<br/>';
+	}
+
+	//单个订单查询结果处理：状态校验→金额校验→幂等入账
+	private static function _handleQueryResult($order, $result, &$matched, &$failed){
+		//① 强制支付状态为成功(1=待支付,2=支付成功,3=退款成功,4=异常)
+		if(intval($result['status']) != 2){
+			return;
+		}
+
+		//② 金额校验：按分比较，拒绝少付
+		$paid = (int) round((float)$result['money'] * 100);
+		$need = (int) round((float)$order['realmoney'] * 100);
+		if($paid < $need){
+			echo '订单 '.$order['trade_no'].'：金额不符，跳过入账（上游实付 '.$result['money'].'，应收 '.$order['realmoney'].'）<br/>';
+			$failed++;
+			return;
+		}
+
+		//③ 幂等入账：processOrder 内部对 status IN (0,4) 才真正入账，重复轮询安全
+		$buyer = !empty($result['buyer']) ? $result['buyer'] : null;
+		processNotify($order, $result['trade_no'], $buyer);
+		$matched++;
+		echo '订单 '.$order['trade_no'].'（'.$result['trade_no'].'）：已支付，处理成功<br/>';
 	}
 
 }

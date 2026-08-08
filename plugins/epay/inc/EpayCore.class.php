@@ -94,6 +94,18 @@ class EpayCore
 		return $arr;
 	}
 
+	// 按商户订单号(out_trade_no)查询订单
+	public function queryOrderByOut($out_trade_no){
+		$response = $this->getHttpResponse($this->queryOrderUrl($out_trade_no));
+		$arr = json_decode($response, true);
+		return $arr;
+	}
+
+	// 构建按商户订单号(out_trade_no)查询订单的 URL（供并发轮询复用）
+	public function queryOrderUrl($out_trade_no){
+		return $this->api_url.'?act=order&pid=' . $this->pid . '&key=' . $this->key . '&out_trade_no=' . $out_trade_no;
+	}
+
 	// 订单退款
 	public function refund($refund_no, $trade_no, $money){
 		$url = $this->api_url.'?act=refund';
