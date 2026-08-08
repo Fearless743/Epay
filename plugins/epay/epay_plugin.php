@@ -359,7 +359,7 @@ class epay_plugin
 		}
 
 		require(PAY_ROOT."inc/epay.config.php");
-		require(PAY_ROOT."inc/EpayCore.class.php");
+		require_once(PAY_ROOT."inc/EpayCore.class.php");
 		$epay = new EpayCore($epay_config);
 
 		$matched = 0;
@@ -367,12 +367,12 @@ class epay_plugin
 		$tStart = microtime(true);
 
 		// 并发反查：分批并行查询所有待支付订单，避免串行逐单 HTTP 在订单量大时拖慢整个 cron
-		// 上游是普通 PHP-FPM 服务，单机并发数不宜过大，取 10 一批
+		// 上游为普通 PHP-FPM 服务，并发过大易触发 500/连接失败，取 5 一批
 		$mh = null;
 		$batch = [];
 		$ordersCount = count($orders);
 		$orderIndex = 0;
-		$batchSize = 10;
+		$batchSize = 5;
 
 		$flushBatch = function() use (&$mh, &$batch, &$matched, &$failed, $epay){
 			if(empty($batch)) return;
@@ -425,6 +425,8 @@ class epay_plugin
 			if(count($batch) >= $batchSize){
 				$flushBatch();
 			}
+			// 批间小停顿，缓解上游短时连接峰值
+			usleep(50000);
 		}
 		// 收尾剩余批次
 		if(!empty($batch)){
